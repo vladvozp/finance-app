@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Tockens (Tailwind 4) */
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-brand: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --radius-none: 0px;
+}
+
+/* Base Styles */
+body { @apply bg-white text-gray-900 font-sans antialiased; }
+a { @apply text-[--color-brand] hover:underline; }

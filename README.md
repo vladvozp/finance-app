@@ -1,13 +1,48 @@
-# React + Vite
+# Budget Tracker App  EN
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple and modern web application for managing household budgets.  
+Built with **React, Vite, TailwindCSS, Backend API: Node.js Java, Spring boot**.  
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
+- Add and manage transactions  
+- Categorize income and expenses  
+- Data visualization (charts and summaries)  
+- Save and load your budget data  
 
-## Expanding the ESLint configuration
+# Roadmap
+🔐 User authentication
+📊 Export data (Excel/CSV)
+🎨 Improved UI & animations
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-# finance-app
+## ⚙️ Installation
+```bash
+git clone https://github.com/USERNAME/budget-tracker.git
+cd budget-tracker
+npm install
+npm run dev
+
+
+## Budget Tracker App DE
+
+Eine einfache und moderne Webanwendung zur Verwaltung des Haushaltsbudgets.
+Erstellt mit React, Vite, TailwindCSS.
+
+# Funktionen
+Transaktionen hinzufügen und verwalten
+Einnahmen und Ausgaben kategorisieren
+Datenvisualisierung (Diagramme und Zusammenfassungen)
+Budgetdaten speichern und laden
+
+# Installation
+git clone https://github.com/USERNAME/budget-tracker.git
+cd budget-tracker
+npm install
+npm run dev
+
+# Geplante Features
+
+🔐 Benutzer-Authentifizierung
+📊 Export von Daten (Excel/CSV)
+🎨 Verbesserte Benutzeroberfläche & Animationen

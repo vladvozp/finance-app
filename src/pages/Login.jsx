@@ -3,7 +3,7 @@ export default function Login() {
     <main className="min-h-dvh flex items-start sm:items-center justify-center">
       <section className="w-full max-w-sm px-5 py-10 sm:py-14 space-y-7">
         {/* Title */}
-        <h1 className="text-xl sm:text-2xl text-center">
+        <h1 className="ml-4 mb-10 text-[14px] font-bold text-left">
           Willkommen bei Finance Tracker!
         </h1>
 
@@ -71,7 +71,7 @@ export default function Login() {
           </a>
           </div>
           <div>
-            <a href="#" className="text-[--color-brand] hover:underline">Passwort vergessen?</a>
+            <a href="#" className="text-blue-400 hover:underline">Passwort vergessen?</a>
           </div>
           <div>
             <a href="#" className="text-gray-600 hover:underline">Ohne Anmeldung testen</a>

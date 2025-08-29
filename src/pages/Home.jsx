@@ -1,5 +1,10 @@
 // src/pages/Home.jsx
 import { Link } from "react-router-dom";
+import Settings from "../assets/Settings.svg?react";
+import Plus from "../assets/Plus.svg?react";
+import Barchart2 from "../assets/Barchart2.svg?react";
+import Filetext from "../assets/Filetext.svg?react"; 
+import { motion } from "framer-motion";
 
 export default function Home() {
   /**
@@ -7,19 +12,18 @@ export default function Home() {
    * If your Login page uses the same sizes, you’ll get a 1:1 visual match.
    */
   const BTN_BASE =
-    "h-14 w-full border text-base leading-none " + // size & typography
-    "inline-flex items-center gap-3 px-5 " +                   // layout
-    "shadow-sm";                                               // subtle elevation
-
+    "h-12 w-full border text-base leading-none " + // size & typography
+    "inline-flex items-center gap-3 px-5  justify-center shadow-sm "   // layout
+    
   const BTN_PRIMARY =
     BTN_BASE +
-    " border-gray-400 bg-blue-400 text-white hover:opacity-95";
+    "border-gray-400 bg-blue-400 text-white hover:opacity-95";
 
   const BTN_SECONDARY =
     BTN_BASE +
-    " border-gray-400 bg-white text-blue-500 hover:bg-gray-50";
+    "border-gray-400 bg-white text-blue-500 hover:bg-gray-50";
 
-  const ICON = "size-5 shrink-0"; // same icon size everywhere
+ //const ICON = "size-5 shrink-0"; 
 
   return (
     <div className="min-h-dvh bg-white">
@@ -38,14 +42,17 @@ export default function Home() {
           </div>
 
           {/* settings icon */}
-          <Link to="/settings" aria-label="Einstellungen" className="text-gray-600 hover:text-gray-800">
-            <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="3" strokeWidth="2" />
-              <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                d="M19.4 15a2 2 0 0 1 .4 2.2l.04.06a2 2 0 1 1-2.83 2.83l-.06-.04A2 2 0 0 1 15 19.4a2 2 0 0 1-2 .6 2 2 0 0 1-2-.6 2 2 0 0 1-2.95.85l-.06.04A2 2 0 1 1 5.1 17.2l.04-.06A2 2 0 0 1 4.6 15a2 2 0 0 1-.6-2 2 2 0 0 1 .6-2 2 2 0 0 1-.85-2.95l-.04-.06A2 2 0 1 1 6.8 5.1l.06.04A2 2 0 0 1 9 4.6a2 2 0 0 1 2-.6 2 2 0 0 1 2 .6 2 2 0 0 1 2.95-.85l.06-.04A2 2 0 1 1 18.9 6.8l-.04.06A2 2 0 0 1 19.4 9c.4.64.6 1.36.6 2s-.2 1.36-.6 2Z" />
-            </svg>
-          </Link>
-        </header>
+       { /*  <Link to="/settings" aria-label="Einstellungen" className="text-gray-600 hover:text-gray-800">
+         <motion.div
+         initial={{rotate: 0}}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 2, ease: "easeOut" }}
+    style={{ cursor: "default"}}
+>
+    <Settings className="size-6 text-gray-600" /> 
+    </motion.div> 
+           </Link> */}
+     </header>
 
         {/* Main section (same vertical spacing logic as on Login) */}
         <section className="flex-1">
@@ -57,37 +64,25 @@ export default function Home() {
           <div className="space-y-5">
             {/* Transaktion (primary) */}
             <button type="button" className={BTN_PRIMARY}>
-              <svg className={ICON} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M12 5v14M5 12h14" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+             <Plus className="size-5 text-gray-600" />
               <span>Transaktion</span>
             </button>
 
             {/* Dashboard */}
             <button type="button" className={BTN_SECONDARY}>
-              <svg className={ICON} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M6 14v4M12 10v8M18 6v12" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+            <Barchart2 className="size-5 text-gray-600" />
               <span>Dashboard</span>
             </button>
 
             {/* Berichte */}
             <button type="button" className={BTN_SECONDARY}>
-              <svg className={ICON} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M8 7h5l3 3v7a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" strokeWidth="2" />
-                <path d="M13 7v3h3" strokeWidth="2" />
-                <path d="M9 13h6M9 16h6" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <Filetext className="size-5 text-gray-600" /> 
               <span>Berichte</span>
             </button>
 
             {/* Einstellungen */}
             <button type="button" className={BTN_SECONDARY}>
-              <svg className={ICON} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="3" strokeWidth="2" />
-                <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  d="M19.4 15a2 2 0 0 1 .4 2.2l.04.06a2 2 0 1 1-2.83 2.83l-.06-.04A2 2 0 0 1 15 19.4a2 2 0 0 1-2 .6 2 2 0 0 1-2-.6 2 2 0 0 1-2.95.85l-.06.04A2 2 0 1 1 5.1 17.2l.04-.06A2 2 0 0 1 4.6 15a2 2 0 0 1-.6-2 2 2 0 0 1 .6-2 2 2 0 0 1-.85-2.95l-.04-.06A2 2 0 1 1 6.8 5.1l.06.04A2 2 0 0 1 9 4.6a2 2 0 0 1 2-.6 2 2 0 0 1 2 .6 2 2 0 0 1 2.95-.85l.06-.04A2 2 0 1 1 18.9 6.8l-.04.06A2 2 0 0 1 19.4 9c.4.64.6 1.36.6 2s-.2 1.36-.6 2Z" />
-              </svg>
+              <Settings className="size-5 text-gray-600" />
               <span>Einstellungen</span>
             </button>
           </div>

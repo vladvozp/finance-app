@@ -54,6 +54,15 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+button svg {
+  width: 1.25rem;   /* w-5 */
+  height: 1.25rem;  /* h-5 */
+  display: inline-block;
+  vertical-align: middle;
+}
+
+
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

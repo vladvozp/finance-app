@@ -9,7 +9,7 @@ export default function Login() {
 
   // Buttons (same geometry as on Home)
   const BTN_BASE =
-    "h-14 w-full border text-base leading-none " +
+    "h-12 w-full border text-base leading-none " +
     "inline-flex items-center justify-center gap-3 px-5 shadow-sm";
 
   const BTN_PRIMARY =

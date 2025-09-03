@@ -4,7 +4,7 @@ import Settings from "../assets/Settings.svg?react";
 import Plus from "../assets/Plus.svg?react";
 import Barchart2 from "../assets/Barchart2.svg?react";
 import Filetext from "../assets/Filetext.svg?react"; 
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 
 export default function Home() {
   /**
@@ -12,18 +12,17 @@ export default function Home() {
    * If your Login page uses the same sizes, you’ll get a 1:1 visual match.
    */
   const BTN_BASE =
-    "h-12 w-full border text-base leading-none " + // size & typography
-    "inline-flex items-center gap-3 px-5  justify-center shadow-sm "   // layout
-    
+    "relative h-12 w-full border shadow-sm px-5 text-base flex items-center" + // size & typography
+    ""   // layout
   const BTN_PRIMARY =
     BTN_BASE +
-    "border-gray-400 bg-blue-400 text-white hover:opacity-95";
-
+    "border border-gray-400 bg-blue-400 text-white hover:opacity-95";
   const BTN_SECONDARY =
     BTN_BASE +
-    "border-gray-400 bg-white text-blue-500 hover:bg-gray-50";
+    "border border-gray-400 bg-white text-blue-500 hover:bg-gray-50";
 
- //const ICON = "size-5 shrink-0"; 
+   const ICON = "absolute left-15 size-5 block self-center"; 
+   const LABEL = "block w-full text-center leading-none self-center";
 
   return (
     <div className="min-h-dvh bg-white">
@@ -56,35 +55,32 @@ export default function Home() {
 
         {/* Main section (same vertical spacing logic as on Login) */}
         <section className="flex-1">
-          <h1 className="text-center text-2xl font-semibold text-gray-800 mb-8">
+          <h1 className="text-center text-xl font-semibold text-gray-600 mb-8">
             Was möchtest du tun?
           </h1>
 
           {/* Buttons block with consistent gaps */}
-          <div className="space-y-5">
+          <div className="space-y-5 pt-10">
             {/* Transaktion (primary) */}
-            <button type="button" className={BTN_PRIMARY}>
-             <Plus className="size-5 text-gray-600" />
-              <span>Transaktion</span>
-            </button>
+         <button className={BTN_PRIMARY}>
+  <Plus className={ICON} aria-hidden />
+  <span className={LABEL}>Transaktion</span>
+</button>
 
-            {/* Dashboard */}
-            <button type="button" className={BTN_SECONDARY}>
-            <Barchart2 className="size-5 text-gray-600" />
-              <span>Dashboard</span>
-            </button>
+<button className={BTN_SECONDARY}>
+  <Barchart2 className={ICON} aria-hidden />
+  <span className={LABEL}>Dashboard</span>
+</button>
 
-            {/* Berichte */}
-            <button type="button" className={BTN_SECONDARY}>
-              <Filetext className="size-5 text-gray-600" /> 
-              <span>Berichte</span>
-            </button>
+<button className={BTN_SECONDARY}>
+  <Filetext className={ICON} aria-hidden />
+  <span className={LABEL}>Berichte</span>
+</button>
 
-            {/* Einstellungen */}
-            <button type="button" className={BTN_SECONDARY}>
-              <Settings className="size-5 text-gray-600" />
-              <span>Einstellungen</span>
-            </button>
+<button className={BTN_SECONDARY}>
+  <Settings className={ICON} aria-hidden />
+  <span className={LABEL}>Einstellungen</span>
+</button>
           </div>
         </section>
 

@@ -17,12 +17,9 @@ export function GoogleLoginButton({ onClick, disabled, loading }) {
 }
 
 // Button "Ohne Anmeldung testen"
-export function GuestLoginButton({ to }) {
+export function GuestLoginButton({ onClick  }) {
   return (
-    <Button
-      variant="link"
-      to={to}
-    >
+    <Button variant="ghostDim" onClick={onClick }>
       Ohne Anmeldung testen
     </Button>
   );

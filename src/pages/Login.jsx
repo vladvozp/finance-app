@@ -10,14 +10,6 @@ export default function Login() {
   const CONTAINER = "w-full max-w-[360px] px-5 py-10 sm:py-14 space-y-7";
 
 
-  // Buttons (same geometry as on Home)
-  const BTN_BASE =
-    "h-12 w-full border text-base leading-none " +
-    "inline-flex items-center justify-center gap-3 px-5 shadow-sm";
-  
-  const BTN_GHOST_DIM =
-    BTN_BASE + " border-gray-300 bg-gray-100 text-gray-500 hover:bg-gray-200";
-
   // Inputs
   const INPUT =
     "w-full border border-gray-300 px-3 py-3 outline-none " +
@@ -31,7 +23,10 @@ export default function Login() {
     console.log("Google login clicked");
     // TODO: trigger your OAuth flow here
   }
-
+function handleGuestLogin() {
+  localStorage.setItem("guest", "true");
+  navigate("/home?guest=1");
+}
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -92,9 +87,7 @@ export default function Login() {
           </div>
           <div>
             {/* Guest login (demo) */}
-            <Link to="/home?guest=1" className={BTN_GHOST_DIM}>
-              Ohne Anmeldung testen
-            </Link>
+            <GuestLoginButton onClick={handleGuestLogin}/>
           </div>
         </nav>
 

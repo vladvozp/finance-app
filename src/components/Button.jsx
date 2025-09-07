@@ -23,6 +23,7 @@ export default function Button({
   const variants = {
     primary: baseStyle + " border-gray-400 bg-blue-400 text-white hover:opacity-95",
     secondary: baseStyle + " border-gray-400 bg-white text-blue-500 hover:bg-gray-50",
+     ghostDim:  baseStyle + " border-gray-300 bg-gray-100 text-gray-500 hover:bg-gray-200",
   };
 
   const disabledStyle = "opacity-50 cursor-not-allowed pointer-events-none";

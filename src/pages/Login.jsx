@@ -24,8 +24,7 @@ export default function Login() {
     // TODO: trigger your OAuth flow here
   }
 function handleGuestLogin() {
-  localStorage.setItem("guest", "true");
-  navigate("/home?guest=1");
+  navigate("/guest");
 }
   async function handleSubmit(e) {
     e.preventDefault();

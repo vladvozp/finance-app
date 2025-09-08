@@ -11,7 +11,7 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
-    <footer className="border-t border-gray-200 py-4 text-center text-xs text-gray-500">
+    <footer className="border-t border-transparent py-4 text-center text-xs text-gray-500">
         <a href="/impressum" className="underline hover:text-gray-700">Impressum</a>
         <span> · </span>
         <a href="/datenschutz" className="underline hover:text-gray-700">Datenschutz</a>

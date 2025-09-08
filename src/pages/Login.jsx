@@ -6,7 +6,7 @@ import Button from "../components/Button";
 
 export default function Login() {
   // --- design tokens / utility presets (keep in sync with Home.jsx) ---
-  const WRAPPER = "min-h-dvh flex items-start sm:items-center justify-center bg-white";
+  const WRAPPER = " flex items-start sm:items-center justify-center bg-white";
   const CONTAINER = "w-full max-w-[360px] px-5 py-10 sm:py-14 space-y-7";
 
 
@@ -18,7 +18,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // ✅ define the function used by onClick
+  // define the function used by onClick
   function handleGoogleLogin() {
     console.log("Google login clicked");
     // TODO: trigger your OAuth flow here
@@ -90,15 +90,6 @@ function handleGuestLogin() {
             <GuestLoginButton onClick={handleGuestLogin}/>
           </div>
         </nav>
-
-        {/* Footer */}
-       <footer className="mt-12 text-center text-xs text-gray-400">
-          <a href="/impressum" className="underline hover:text-gray-600">Impressum</a>
-          <span> · </span>
-          <a href="/datenschutz" className="underline hover:text-gray-600">Datenschutz</a>
-          <span> · </span>
-          <Link to="/settings" className="underline hover:text-gray-600">Privatsphäre-Einstellungen</Link>
-        </footer>
       </section>
     </main>
   );

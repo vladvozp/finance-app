@@ -9,8 +9,8 @@ import Button from "../components/Button";
 
 export default function Home() {
   return (
-    <div className="min-h-dvh bg-white">
-      <main className="mx-auto w-full max-w-[360px] px-5 py-6 flex flex-col min-h-dvh">
+    <div className=" bg-white">
+      <main className="mx-auto w-full max-w-[360px] px-5 py-6 flex flex-col ">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <svg className="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -34,14 +34,6 @@ export default function Home() {
             <Button variant="secondary" icon={Settings}>Einstellungen</Button>
           </div>
         </section>
-
-        <footer className="mt-12 text-center text-xs text-gray-400">
-          <a href="/impressum" className="underline hover:text-gray-600">Impressum</a>
-          <span> · </span>
-          <a href="/datenschutz" className="underline hover:text-gray-600">Datenschutz</a>
-          <span> · </span>
-          <Link to="/settings" className="underline hover:text-gray-600">Privatsphäre-Einstellungen</Link>
-        </footer>
       </main>
     </div>
   );

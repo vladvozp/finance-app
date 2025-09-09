@@ -5,10 +5,12 @@ import Barchart2 from "../assets/Barchart2.svg?react";
 import Filetext from "../assets/Filetext.svg?react";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Button from "../components/Button";
-
+import { useNavigate } from "react-router-dom";
 
 export default function Guest() {
-  return (
+ const navigate = useNavigate();
+ 
+ return (
     <div className=" bg-white">
       <main className="mx-auto w-full max-w-[360px] px-5 py-6 flex flex-col ">
         <header className="flex items-center justify-between mb-8">
@@ -31,7 +33,7 @@ export default function Guest() {
       </p>
 
           <div className="space-y-5 pt-15">
-            <Button variant="primary" icon={Plus}>Transaktion</Button>
+            <Button variant="primary" icon={Plus}  onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
             <Button variant="secondary" icon={Barchart2}>Dashboard</Button>
             <Button variant="secondary" icon={Filetext}>Berichte</Button>
             <Button variant="secondary" icon={Settings}>Einstellungen</Button>

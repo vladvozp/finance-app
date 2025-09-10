@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
-
+import { useState, useEffect, useRef } from "react";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 
@@ -12,6 +11,42 @@ export default function TransactionStep3() {
   const [spinOnce, setSpinOnce] = useState(false);
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState(""); // amount input
+
+ // ---- Accounts combobox state ----
+const [query, setQuery] = useState("");             // search text
+const [open, setOpen] = useState(false);           // dropdown visibility
+const [selectedId, setSelectedId] = useState("");  // chosen account id
+const comboboxRef = useRef(null);                  // for outside-click
+ 
+
+// demo data — replace with real accounts from store/api
+const accounts = [
+  { id: "n26", name: "N26", balance: 100000 },   // cents
+  { id: "pp",  name: "PayPal", balance: 40000  },
+];
+
+const filtered = query.trim()
+  ? accounts.filter(a => a.name.toLowerCase().includes(query.trim().toLowerCase()))
+  : accounts;
+
+// German currency formatting (from cents)
+const fmtDe = (cents) =>
+  (cents / 100).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// close dropdown on outside click
+useEffect(() => {
+  const onDoc = (e) => {
+    if (!open) return;
+    if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+      setOpen(false);
+    }
+  };
+  document.addEventListener("mousedown", onDoc);
+  return () => document.removeEventListener("mousedown", onDoc);
+}, [open]);
+
+
+ 
   // Convert string to cents (integer)
   const toCents = (s) => {
     if (!s) return 0;
@@ -51,6 +86,8 @@ export default function TransactionStep3() {
       setAmount(formatDe(cents));
     }
   };
+
+
 
 
   // Trigger a single rotation on click
@@ -112,18 +149,18 @@ export default function TransactionStep3() {
           </h1>
 
           {/* Section title */}
-          <h2 className="text-center text-black-800 text-base font-medium mb-1">
+          <h2 className="text-center text-black text-base font-medium mb-1">
             Transaction Typ
           </h2>
 
           {/* Toggle */}
-          <div className="relative h-12 flex w-full shadow-sm  overflow-hidden ">
+          <div className="flex w-full shadow-sm overflow-hidden ">
             {/* Expense */}
             <button
               type="button"
               onClick={() => setType("expense")}
               aria-pressed={type === "expense"}
-              className={`w-1/2 py-2 text-center font-medium transition border border-gray-400
+              className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
                 ${type === "expense"
                   ? "bg-blue-400 text-white"
                   : "bg-white text-blue-500 hover:bg-blue-50"}`}
@@ -136,7 +173,7 @@ export default function TransactionStep3() {
               type="button"
               onClick={() => setType("income")}
               aria-pressed={type === "income"}
-              className={`w-1/2 py-2 text-center font-medium transition border border-gray-400
+              className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
                 ${type === "income"
                   ? "bg-blue-400 text-white"
                   : "bg-white text-blue-500 hover:bg-blue-50"}`}
@@ -147,7 +184,7 @@ export default function TransactionStep3() {
   
    {/* Amount input */}
         <div className="mt-6">
-          <h2 className="text-center text-black-800 text-base font-medium mb-1">
+          <h2 className="text-center text-black text-base font-medium mb-1">
             Betrag eingeben
           </h2>
           <input
@@ -157,7 +194,7 @@ export default function TransactionStep3() {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
-            className="relative h-12 w-full border border-gray-400 px-3 py-3 text-lg placeholder-gray-400 outline-none
+            className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none
                        focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Betrag"
           />
@@ -170,6 +207,112 @@ export default function TransactionStep3() {
           {/* (Optional) Add next form fields below */}
           {/* e.g., amount input, account search, etc. */}
         </section>
+{/* Account selection */}
+<section className="mt-6" ref={comboboxRef}>
+  {/* Section title */}
+  <h2 className="text-center text-black text-base font-medium mb-1">Konto auswählen</h2>
+
+  {/* Input with search icon + clear button */}
+  <div className="relative">
+    {/* left search icon */}
+    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+      {/* use your own SVG if you have; emoji as fallback */}
+      <span className="text-gray-500">🔍</span>
+    </span>
+
+    <input
+      type="text"
+      placeholder="Sparkasse"
+      value={query}
+      onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+      onFocus={() => setOpen(true)}
+      className="h-12 w-full border shadow-sm border-gray-500/80 pl-9 pr-10
+                 outline-none placeholder-gray-400
+                 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      aria-autocomplete="list"
+      aria-expanded={open}
+      aria-controls="account-listbox"
+      role="combobox"
+    />
+
+    {/* clear button (right) */}
+    {query && (
+      <button
+        type="button"
+        aria-label="Eingabe löschen"
+        onClick={() => { setQuery(""); setOpen(true); }}
+        className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
+      >
+        ✕
+      </button>
+    )}
+  </div>
+
+  {/* Dropdown */}
+  {open && (
+    <div
+      className="relative z-20"
+      role="listbox"
+      id="account-listbox"
+      aria-label="Kontoliste"
+    >
+      <ul className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-200 bg-[#F6F0FF] p-2 shadow">
+        {filtered.map((acc) => (
+          <li key={acc.id}>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedId(acc.id);
+                setQuery(acc.name);   // put chosen name into the input
+                setOpen(false);
+              }}
+              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
+                ${selectedId === acc.id ? "bg-white shadow-sm" : "hover:bg-white/70"}`}
+              role="option"
+              aria-selected={selectedId === acc.id}
+            >
+              <span className="flex items-center gap-2">
+                {/* replace with your account icon if you have */}
+                <span className="text-gray-600">✎</span>
+                <span>{acc.name}</span>
+              </span>
+              <span className="tabular-nums">{fmtDe(acc.balance)}</span>
+            </button>
+          </li>
+        ))}
+
+        {/* Create new account */}
+        <li className="mt-1 border-t border-gray-200 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              // TODO: open your "create account" modal/route here
+              console.log("Create new account");
+            }}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-white/70 transition"
+          >
+            <span className="text-gray-700">＋</span>
+            <span>Neues Konto erstellen</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  )}
+
+  {/* “All accounts” link */}
+  <button
+    type="button"
+    onClick={() => console.log("Show all accounts")}
+    className="mt-3 flex items-center gap-2 text-sm text-gray-700 hover:underline"
+  >
+    <span>▾</span>
+    <span>Alle Konten anzeigen</span>
+  </button>
+</section>
+
+
+
       </main>
     </div>
   );

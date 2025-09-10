@@ -10,9 +10,48 @@ import PageHeader from "../components/PageHeader.jsx";
 export default function TransactionStep3() {
   // spinOnce controls a single 360° rotation of the gear icon
   const [spinOnce, setSpinOnce] = useState(false);
-
-  // selected transaction type: "expense" | "income"
   const [type, setType] = useState("expense");
+  const [amount, setAmount] = useState(""); // amount input
+  // Convert string to cents (integer)
+  const toCents = (s) => {
+    if (!s) return 0;
+    const n = Number(s.replace(/\s/g, "").replace(",", "."));
+    return Number.isFinite(n) ? Math.round(n * 100) : 0;
+  };
+
+  // Format number of cents into German locale format
+  const formatDe = (cents) =>
+    (cents / 100).toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  // Handle typing in input
+  const handleChange = (e) => {
+    let v = e.target.value;
+    v = v.replace(/[^\d.,]/g, ""); // allow digits, comma, dot
+    const parts = v.split(/[.,]/);
+    if (parts.length > 2) {
+      v = parts[0] + "," + parts.slice(1).join(""); // collapse multiple separators
+    }
+    setAmount(v);
+  };
+
+  // Block invalid keys
+  const handleKeyDown = (e) => {
+    if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+  };
+
+  // On blur, format nicely or reset
+  const handleBlur = () => {
+    const cents = toCents(amount);
+    if (cents <= 0) {
+      setAmount("");
+    } else {
+      setAmount(formatDe(cents));
+    }
+  };
+
 
   // Trigger a single rotation on click
   const onGearClick = () => {
@@ -21,6 +60,8 @@ export default function TransactionStep3() {
     setSpinOnce(true);
     // remove the class after animation completes (duration must match CSS)
     setTimeout(() => setSpinOnce(false), 600);
+
+     // selected transaction type: "expense" | "income"
   };
 
   return (
@@ -76,7 +117,7 @@ export default function TransactionStep3() {
           </h2>
 
           {/* Toggle */}
-          <div className=" relative h-12 flex w-full shadow-sm  overflow-hidden ">
+          <div className="relative h-12 flex w-full shadow-sm  overflow-hidden ">
             {/* Expense */}
             <button
               type="button"
@@ -103,6 +144,28 @@ export default function TransactionStep3() {
               Einnahme
             </button>
           </div>
+  
+   {/* Amount input */}
+        <div className="mt-6">
+          <h2 className="text-center text-black-800 text-base font-medium mb-1">
+            Betrag eingeben
+          </h2>
+          <input
+            inputMode="decimal"
+            placeholder="0,00"
+            value={amount}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            className="relative h-12 w-full border border-gray-400 px-3 py-3 text-lg placeholder-gray-400 outline-none
+                       focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            aria-label="Betrag"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+           Nur positive Beträge. Beispiel: 12,99
+          </p>
+        </div>
+
 
           {/* (Optional) Add next form fields below */}
           {/* e.g., amount input, account search, etc. */}

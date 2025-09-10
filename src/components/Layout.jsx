@@ -5,9 +5,12 @@ import { Outlet, Link } from "react-router-dom";
 export default function Layout() {
   return (
     <div className="h-dvh grid grid-rows-[auto,1fr,auto] overflow-hidden">
+     
       {/* Main Content */}
       <main className="overflow-auto min-h-0">
-        <Outlet /> 
+         <div className="mx-auto w-full max-w-[360px] px-5">
+        <Outlet />
+         </div>
       </main>
 
       {/* Footer */}

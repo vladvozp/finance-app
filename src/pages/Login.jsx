@@ -7,7 +7,7 @@ import Button from "../components/Button";
 export default function Login() {
   // --- design tokens / utility presets (keep in sync with Home.jsx) ---
   const WRAPPER = " flex items-start sm:items-center justify-center bg-white";
-  const CONTAINER = "w-full max-w-[360px] px-5 py-10 sm:py-14 space-y-7";
+  const CONTAINER = "py-10 sm:py-14 space-y-7";
 
 
   // Inputs

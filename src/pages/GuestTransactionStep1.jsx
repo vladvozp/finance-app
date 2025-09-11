@@ -1,13 +1,23 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "../components/Button";
+
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
+
+import Plus from "../assets/Plus.svg?react";
+import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
+import PensilIcon from "../assets/PensilIcon.svg?react";
+import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
+
 
 import PageHeader from "../components/PageHeader.jsx";
 
 
 export default function TransactionStep3() {
   // spinOnce controls a single 360° rotation of the gear icon
+  const navigate = useNavigate();
   const [spinOnce, setSpinOnce] = useState(false);
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState(""); // amount input
@@ -86,8 +96,6 @@ useEffect(() => {
       setAmount(formatDe(cents));
     }
   };
-
-
 
 
   // Trigger a single rotation on click
@@ -217,8 +225,8 @@ useEffect(() => {
     {/* left search icon */}
     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
       {/* use your own SVG if you have; emoji as fallback */}
-      <span className="text-gray-500">🔍</span>
-    </span>
+      <MagnifyingGlass className="w-5 h-5"/></span>
+  
 
     <input
       type="text"
@@ -273,7 +281,7 @@ useEffect(() => {
             >
               <span className="flex items-center gap-2">
                 {/* replace with your account icon if you have */}
-                <span className="text-gray-600">✎</span>
+                <PensilIcon className="w-4 h-4"/>
                 <span>{acc.name}</span>
               </span>
               <span className="tabular-nums">{fmtDe(acc.balance)}</span>
@@ -292,7 +300,7 @@ useEffect(() => {
             }}
             className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-white/70 transition"
           >
-            <span className="text-gray-700">＋</span>
+            <Plus className="w-5 h-5"/>
             <span>Neues Konto erstellen</span>
           </button>
         </li>
@@ -306,9 +314,13 @@ useEffect(() => {
     onClick={() => console.log("Show all accounts")}
     className="mt-3 flex items-center gap-2 text-sm text-gray-700 hover:underline"
   >
-    <span>▾</span>
+    <DoubleDownArrow className="w-3 h-3"/>
     <span>Alle Konten anzeigen</span>
   </button>
+<div className="pt-10"></div>
+ <Button variant="primary" onClick={() => navigate("/guestTransactionStep1")} >Weiter</Button>
+
+
 </section>
 
 

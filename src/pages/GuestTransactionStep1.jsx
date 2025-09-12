@@ -9,10 +9,10 @@ import Plus from "../assets/Plus.svg?react";
 import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
 import PensilIcon from "../assets/PensilIcon.svg?react";
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
-
+import Cross from "../assets/Cross.svg?react";
 import PageHeader from "../components/PageHeader.jsx";
 
-export default function TransactionStep3() {
+export default function GuestTransactionStep1() {
   const navigate = useNavigate();
 
   // --- helpers ---
@@ -98,8 +98,8 @@ export default function TransactionStep3() {
       account: selectedId,
     }).toString();
 
-    navigate(`/guest/transaction/groups?${qs}`);
-    // navigate(`/guest/transaction/confirm?${qs}`);
+    navigate(`/guestTransactionStep2?${qs}`);
+
   };
 
   return (
@@ -117,7 +117,7 @@ export default function TransactionStep3() {
               to="/guest"
               className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
             >
-              <Arrowleft className="w-5 h-5" />
+              <Arrowleft className="w-5 h-5" />    
               Zurück
             </Link>
           }
@@ -235,7 +235,7 @@ export default function TransactionStep3() {
                 }}
                 className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
               >
-                ✕
+                <Cross className="w-4 h-4" /> 
               </button>
             )}
           </div>

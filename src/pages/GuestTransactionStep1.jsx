@@ -1,16 +1,16 @@
+import PageHeader from "../components/PageHeader.jsx";
+
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import Button from "../components/Button";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
-
 import Plus from "../assets/Plus.svg?react";
 import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
 import PensilIcon from "../assets/PensilIcon.svg?react";
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 import Cross from "../assets/Cross.svg?react";
-import PageHeader from "../components/PageHeader.jsx";
 
 export default function GuestTransactionStep1() {
   const navigate = useNavigate();
@@ -60,8 +60,8 @@ export default function GuestTransactionStep1() {
   ];
   const filtered = query.trim()
     ? accounts.filter((a) =>
-        a.name.toLowerCase().includes(query.trim().toLowerCase())
-      )
+      a.name.toLowerCase().includes(query.trim().toLowerCase())
+    )
     : accounts;
 
   // --- handlers ---
@@ -117,7 +117,7 @@ export default function GuestTransactionStep1() {
               to="/guest"
               className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
             >
-              <Arrowleft className="w-5 h-5" />    
+              <Arrowleft className="w-5 h-5" />
               Zurück
             </Link>
           }
@@ -151,10 +151,9 @@ export default function GuestTransactionStep1() {
               onClick={() => setType("expense")}
               aria-pressed={type === "expense"}
               className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${
-                  type === "expense"
-                    ? "bg-blue-400 text-white"
-                    : "bg-white text-blue-500 hover:bg-blue-50"
+                ${type === "expense"
+                  ? "bg-blue-400 text-white"
+                  : "bg-white text-blue-500 hover:bg-blue-50"
                 }`}
             >
               Ausgabe
@@ -164,10 +163,9 @@ export default function GuestTransactionStep1() {
               onClick={() => setType("income")}
               aria-pressed={type === "income"}
               className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${
-                  type === "income"
-                    ? "bg-blue-400 text-white"
-                    : "bg-white text-blue-500 hover:bg-blue-50"
+                ${type === "income"
+                  ? "bg-blue-400 text-white"
+                  : "bg-white text-blue-500 hover:bg-blue-50"
                 }`}
             >
               Einnahme
@@ -235,7 +233,7 @@ export default function GuestTransactionStep1() {
                 }}
                 className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
               >
-                <Cross className="w-4 h-4" /> 
+                <Cross className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -258,10 +256,9 @@ export default function GuestTransactionStep1() {
                         setOpen(false);
                       }}
                       className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
-                        ${
-                          selectedId === acc.id
-                            ? "bg-white shadow-sm"
-                            : "hover:bg-white/70"
+                        ${selectedId === acc.id
+                          ? "bg-white shadow-sm"
+                          : "hover:bg-white/70"
                         }`}
                       role="option"
                       aria-selected={selectedId === acc.id}
@@ -307,11 +304,10 @@ export default function GuestTransactionStep1() {
             variant="primary"
             disabled={!canContinue}
             onClick={handleContinue}
-            className={`${
-              !canContinue
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
-            }`}
+            className={`${!canContinue
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
+              }`}
           >
             Weiter
           </Button>

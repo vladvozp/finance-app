@@ -12,7 +12,7 @@ function classNames(...xs) { return xs.filter(Boolean).join(" "); }
 export default function DatePickerInput({
   value,                 // Date | null
   onChange,              // (Date|null)=>void
-  label = "Datum",
+  label,
   placeholder = "MM/DD/YYYY",
   displayFormat = "dd.MM.yyyy",
   locale = de,           // DE local for Calender
@@ -55,7 +55,7 @@ export default function DatePickerInput({
   }
 
   const footer = useMemo(() => {
-    if (!value) return <p className="text-xs text-gray-500 px-2 pb-2">Wähle ein Datum.</p>;
+    if (!value) return <p className="text-xs text-gray-500 px-2 pb-2">Wähle ein Datum</p>;
     return <p className="text-xs text-gray-600 px-2 pb-2">Ausgewählt: {fmt(value, displayFormat)}</p>;
   }, [value, displayFormat]);
 
@@ -100,7 +100,7 @@ export default function DatePickerInput({
               weekStartsOn={1}
               fromDate={minDate}
               toDate={maxDate}
-              captionLayout="dropdown-buttons"
+              captionLayout="buttons"
               className="p-2"
               modifiersClassNames={{
                 selected: "!bg-blue-400 !text-white !rounded-full hover:!bg-blue-400",
@@ -128,7 +128,7 @@ export default function DatePickerInput({
               }}
             />
             {footer}
-            <div className="flex justify-end gap-2 px-3 pb-3">
+            <div className="sticky bottom-0 flex justify-end gap-2 border bg-white px-3 py-2">
               <button className="px-3 py-1 text-sm hover:bg-gray-100"
                 onClick={() => setOpen(false)}>Cancel</button>
               <button className="bg-blue-400 px-3 py-1 text-sm text-white hover:bg-blue-400"
@@ -179,7 +179,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
         <button
           type="button"
           onClick={() => setEnabled(v => !v)}
-          className={`h-6 w-11 rounded-full transition ${enabled ? "bg-indigo-600" : "bg-gray-300"}`}
+          className={`h-6 w-11 rounded-full transition ${enabled ? "bg-blue-400" : "bg-gray-300"}`}
         >
           <span className={`block h-6 w-6 rounded-full bg-white transition ${enabled ? "translate-x-5" : "translate-x-0"}`} />
         </button>
@@ -199,6 +199,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                 <option value="WEEKLY">Wöchentlich</option>
                 <option value="MONTHLY">Monatlich</option>
                 <option value="YEARLY">Jährlich</option>
+
               </select>
             </label>
             <label className="text-sm">
@@ -224,7 +225,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                       key={n}
                       type="button"
                       onClick={() => toggleWd(n)}
-                      className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-indigo-600 text-white border-indigo-600" : "bg-white hover:bg-gray-50"
+                      className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-blue-400 text-white border-blue-400" : "bg-white hover:bg-gray-50"
                         }`}
                     >
                       {label}

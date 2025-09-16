@@ -8,6 +8,8 @@ import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 
 import DatePickerInput from "../components/DatePickerInput";
+
+
 import draft from "../store/transactionDraft";
 
 export default function GuestTransactionStep2() {
@@ -15,18 +17,15 @@ export default function GuestTransactionStep2() {
     const [params] = useSearchParams();
 
     const [date, setDate] = useState(draft.get("date") || null);
-    const [repeat, setRepeat] = useState(!!draft.get("repeat"));
 
     useEffect(() => {
         draft.set("date", date);
-        draft.set("repeat", repeat);
-    }, [date, repeat]);
+    }, [date]);
 
     function next() {
         const qs = new URLSearchParams({
             ...Object.fromEntries(params),
             date: date ? date.toISOString() : "",
-            repeat: String(repeat),
         }).toString();
         navigate(`/guestTransactionStep3?${qs}`);
     }
@@ -88,12 +87,12 @@ export default function GuestTransactionStep2() {
                     <DatePickerInput
                         value={date}
                         onChange={setDate}
-                        label="Datum"
-                        placeholder="MM/DD/YYYY"
-                        displayFormat="dd.MM.yyy"
+
+                        placeholder="Tag/Monat/Yahr"
+                        displayFormat="dd.MM.yyyy"
                     />
 
-                    <div className="flex items-center justify-between border p-3 mb-10">
+                    {/*  <div className="flex items-center justify-between border p-3 mb-10">
                         <span className="text-sm font-medium">Wiederholen</span>
                         <button
                             type="button"
@@ -103,16 +102,18 @@ export default function GuestTransactionStep2() {
                         >
                             <span className={`block h-7 w-7 rounded-full bg-white transition ${repeat ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
+                    </div> */}
+
+
+                    <div className="flex gap-3 mt-6">
+                        <Button
+                            variant="primary"
+                            onClick={next}
+                            disabled={!date}
+                        >
+                            Weiter
+                        </Button>
                     </div>
-
-
-                    <Button
-                        variant="primary"
-                        onClick={next}
-                        disabled={!date}
-                    >
-                        Weiter
-                    </Button>
                 </section>
             </main>
         </div>

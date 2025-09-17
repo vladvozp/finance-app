@@ -4,7 +4,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Button from "../components/Button";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
+import PencilIcon from "../assets/PencilIcon.svg?react";
+
 import draft from "../store/transactionDraft";
+
+
 
 /** Generic searchable Combobox with inline Create/Edit/Delete */
 function Combobox({
@@ -46,12 +50,13 @@ function Combobox({
 
     return (
         <div className="mb-6" ref={ref}>
-            <div className="flex items-baseline justify-between">
-                <label className="block text-black text-base font-medium mb-1">
-                    {label} {required && <span className="text-red-500">*</span>}
-                </label>
-                {helperText && <span className="text-xs text-gray-500">{helperText}</span>}
-            </div>
+
+            <label className="block text-center text-black text-base font-medium mb-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+
+            {helperText && <span className="text-xs text-gray-500">{helperText}</span>}
+
 
             <div className="relative">
                 <input
@@ -62,7 +67,7 @@ function Combobox({
                     onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
                     onFocus={() => setOpen(true)}
                     className={`h-12 w-full border shadow-sm border-gray-500/80 px-3 outline-none placeholder-gray-400
-                      focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                      focus:border-blue-400 focus:ring-1 focus:ring-blue-400
                       ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     role="combobox"
                     aria-expanded={open}
@@ -104,14 +109,17 @@ function Combobox({
 
                                     {allowEdit && (
                                         <div className="ml-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
+                                            {/* Bearbeiten */}
                                             <button
                                                 type="button"
-                                                className="text-xs text-blue-600 hover:underline"
+                                                className="p-1 text-blue-400 hover:bg-blue-50 rounded"
                                                 onClick={() => {
                                                     const newName = prompt("Neuer Name:", o.name);
                                                     if (newName && newName.trim()) onEdit?.(o.id, newName.trim());
                                                 }}
-                                            >Bearbeiten</button>
+                                            >
+                                                <PencilIcon className="w-4 h-4" />
+                                            </button>
                                             <button
                                                 type="button"
                                                 className="text-xs text-red-600 hover:underline"
@@ -149,7 +157,7 @@ function Combobox({
     );
 }
 
-export default function GuestTransactionStep2() {
+export default function GuestTransactionStep3() {
     const navigate = useNavigate();
     const [params] = useSearchParams();
 
@@ -297,6 +305,18 @@ export default function GuestTransactionStep2() {
         if (kategorieId === id) setKategorieId("");
     };
 
+    // --- remark (note) ---
+    const [remark, setRemark] = useState("");   // Text
+    const remarkMax = 100;                      // Limit
+
+    // --- Save remark (note) ---
+    useEffect(() => {
+        draft.set?.("remark", remark);
+    }, [remark]);
+    const initialRemark = draft.get?.("remark") || "";
+    useEffect(() => { if (initialRemark) setRemark(initialRemark); }, []);
+
+
     // navigate
     function next() {
         const qs = new URLSearchParams({
@@ -304,9 +324,10 @@ export default function GuestTransactionStep2() {
             gruppeId,
             anbieterId,
             kategorieId,
+            remark,
             date: date ? new Date(date).toISOString() : "",
         }).toString();
-        navigate(`/test-ergebnis?${qs}`);
+        navigate(`/TestErgebniss?${qs}`);
     }
 
     return (
@@ -320,7 +341,7 @@ export default function GuestTransactionStep2() {
                 <PageHeader
                     left={
                         <Link
-                            to="/guestTransactionStep1"
+                            to="/guestTransactionStep2"
                             className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
                         >
                             <Arrowleft className="w-5 h-5" />
@@ -343,11 +364,6 @@ export default function GuestTransactionStep2() {
                 <section className="flex-1">
                     <h1 className="text-lg text-gray-600 mb-4">Demo-Zugang ohne Speicherung</h1>
 
-                    <div className="flex gap-2 mb-6">
-                        <Button variant="secondary" onClick={() => console.log("Manage: Gruppen / Anbieter / Kategorien")}>
-                            Verwalten (separate Seite)
-                        </Button>
-                    </div>
 
                     {/* GRUPPE (required) */}
                     <Combobox
@@ -395,6 +411,34 @@ export default function GuestTransactionStep2() {
                         onDelete={handleDeleteKategorie}
                     />
 
+                    {/* BEMERKUNG */}
+                    <div className="mt-6">
+                        <div className="flex justify-center items-center text-black text-base gap-2 font-medium mb-1">
+                            <span>Bemerkung</span>
+                            <PencilIcon className="w-4 h-4" />
+                        </div>
+
+                        <div className="relative">
+                            <textarea
+                                value={remark}
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (v.length <= remarkMax) setRemark(v);
+                                }}
+                                placeholder="Optionale Notiz (z. B. 'Aktion', 'für Schule' …)"
+                                className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm
+                 focus:border-blue-400 focus:ring-1 focus:ring-blue-400
+                 resize-none outline-none placeholder-gray-400"
+                                maxLength={remarkMax}
+                            />
+
+                            {/* Symbol Count */}
+                            <span className="absolute bottom-1 right-3 text-xs text-gray-500">
+                                {remark.length}/{remarkMax}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="flex gap-3 mt-4">
                         <Button variant="primary" onClick={next} disabled={!canProceed}>
                             Weiter
@@ -402,6 +446,6 @@ export default function GuestTransactionStep2() {
                     </div>
                 </section>
             </main>
-        </div>
+        </div >
     );
 }

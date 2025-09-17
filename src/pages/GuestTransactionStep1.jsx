@@ -8,7 +8,7 @@ import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 import Plus from "../assets/Plus.svg?react";
 import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
-import PensilIcon from "../assets/PensilIcon.svg?react";
+import PencilIcon from "../assets/PencilIcon.svg?react";
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 import Cross from "../assets/Cross.svg?react";
 
@@ -185,7 +185,7 @@ export default function GuestTransactionStep1() {
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none
-                         focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                         focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
               aria-label="Betrag"
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -216,7 +216,7 @@ export default function GuestTransactionStep1() {
               onFocus={() => setOpen(true)}
               className="h-12 w-full border shadow-sm border-gray-500/80 pl-9 pr-10
                          outline-none placeholder-gray-400
-                         focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                         focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
               aria-autocomplete="list"
               aria-expanded={open}
               aria-controls="account-listbox"
@@ -264,7 +264,7 @@ export default function GuestTransactionStep1() {
                       aria-selected={selectedId === acc.id}
                     >
                       <span className="flex items-center gap-2">
-                        <PensilIcon className="w-4 h-4" />
+                        <PencilIcon className="w-4 h-4" />
                         <span>{acc.name}</span>
                       </span>
                       <span className="tabular-nums">{formatDe(acc.balance)}</span>

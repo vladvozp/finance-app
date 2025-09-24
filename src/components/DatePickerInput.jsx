@@ -1,11 +1,11 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format as fmt, parse } from "date-fns";
 import { de } from "date-fns/locale";
 import Kalender from "../assets/Kalender.svg?react";
-import draft from "../store/transactionDraft";
+import { txDraft } from "../store/transactionDraft";
+
 
 function classNames(...xs) { return xs.filter(Boolean).join(" "); }
 
@@ -109,21 +109,21 @@ export default function DatePickerInput({
             />
             <RepeatPanel
               initial={{
-                enabled: draft.get("repeat") ?? false,
-                freq: draft.get("repeat_freq") ?? "WEEKLY",    // DAILY | WEEKLY | MONTHLY | YEARLY
-                interval: draft.get("repeat_interval") ?? 1,   // Evry N
-                byweekday: draft.get("repeat_byweekday") ?? [],// [1,2,3] (Mon=1..Son=7)
-                until: draft.get("repeat_until") ? new Date(draft.get("repeat_until")) : null,
+                enabled: txDraft.getField("repeat") ?? false,
+                freq: txDraft.getField("repeat_freq") ?? "WEEKLY",    // DAILY | WEEKLY | MONTHLY | YEARLY
+                interval: txDraft.getField("repeat_interval") ?? 1,   // Evry N
+                byweekday: txDraft.getField("repeat_byweekday") ?? [],// [1,2,3] (Mon=1..Son=7)
+                until: txDraft.getField("repeat_until") ? new Date(txDraft.getField("repeat_until")) : null,
               }}
               anchorDate={value ?? null}
               onChange={(r) => {
                 // Save
                 try {
-                  draft.set("repeat", r.enabled);
-                  draft.set("repeat_freq", r.freq);
-                  draft.set("repeat_interval", r.interval);
-                  draft.set("repeat_byweekday", r.byweekday);
-                  draft.set("repeat_until", r.until ? r.until.toISOString() : "");
+                  txDraft.set("repeat", r.enabled);
+                  txDraft.set("repeat_freq", r.freq);
+                  txDraft.set("repeat_interval", r.interval);
+                  txDraft.set("repeat_byweekday", r.byweekday);
+                  txDraft.set("repeat_until", r.until ? r.until.toISOString() : "");
                 } catch { }
               }}
             />

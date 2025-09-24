@@ -1,7 +1,10 @@
 import PageHeader from "../components/PageHeader.jsx";
-
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+
+import { useTxDraft } from "../hooks/useTxDraft";
+import { txDraft } from "../store/transactionDraft";
+
 import Button from "../components/Button";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
@@ -16,32 +19,37 @@ export default function GuestTransactionStep1() {
   const navigate = useNavigate();
 
   // --- helpers ---
-  function toCents(s) {
+  const toCents = (s) => {
     if (!s) return 0;
-    const n = Number(s.replace(/\s/g, "").replace(",", "."));
+    const n = Number(String(s).replace(/\s/g, "").replace(",", "."));
     return Number.isFinite(n) ? Math.round(n * 100) : 0;
-  }
-  function formatDe(cents) {
-    return (cents / 100).toLocaleString("de-DE", {
+  };
+  const formatDe = (cents) =>
+    (cents / 100).toLocaleString("de-DE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  }
 
-  // --- state ---
+  // --- GLOBAL ---
+  const {
+    amount = "",               // "12,34"
+    amountCents = 0,
+    accountId = "",
+    kind = "expense",
+    step = 1,
+  } = useTxDraft();
+
+  // --- UI-only state ---
   const [spinOnce, setSpinOnce] = useState(false);
-  const [type, setType] = useState("expense");
-
-  const [amount, setAmount] = useState("");
-  const amountCents = toCents(amount);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState("");
   const comboboxRef = useRef(null);
 
-  const canContinue = amountCents > 0 && !!selectedId;
+  const [amountStr, setAmountStr] = useState(typeof amount === "string" ? amount : "");
+  useEffect(() => {
+    if (typeof amount === "string") setAmountStr(amount);
+  }, [amount]);
 
-  // --- effects ---
   useEffect(() => {
     const onDoc = (e) => {
       if (!open) return;
@@ -53,7 +61,7 @@ export default function GuestTransactionStep1() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  // --- demo data ---
+  // --- demo accounts ---
   const accounts = [
     { id: "n26", name: "N26", balance: 100000 },
     { id: "pp", name: "PayPal", balance: 40000 },
@@ -65,14 +73,10 @@ export default function GuestTransactionStep1() {
     : accounts;
 
   // --- handlers ---
-  const handleChange = (e) => {
-    let v = e.target.value;
-    v = v.replace(/[^\d.,]/g, "");
-    const parts = v.split(/[.,]/);
-    if (parts.length > 2) {
-      v = parts[0] + "," + parts.slice(1).join("");
-    }
-    setAmount(v);
+  const onAmountChange = (e) => {
+    const v = e.target.value;
+    const cleaned = v.replace(/[^\d.,\s]/g, "");
+    setAmountStr(cleaned);
   };
 
   const handleKeyDown = (e) => {
@@ -80,9 +84,31 @@ export default function GuestTransactionStep1() {
   };
 
   const handleBlur = () => {
-    const cents = toCents(amount);
-    if (cents <= 0) setAmount("");
-    else setAmount(formatDe(cents));
+    const cents = toCents(amountStr);
+    if (cents <= 0) {
+      txDraft.setMany({
+        amount: "",
+        amountCents: 0,
+      });
+      setAmountStr("");
+    } else {
+      const pretty = formatDe(cents);
+      txDraft.setMany({
+        amount: pretty,
+        amountCents: cents,
+      });
+      setAmountStr(pretty);
+    }
+  };
+
+  const onKindChange = (nextKind) => {
+    txDraft.set("kind", nextKind);
+  };
+
+  const onAccountPick = (acc) => {
+    txDraft.setMany({ accountId: acc.id, kontoName: acc.name });
+    setQuery(acc.name);
+    setOpen(false);
   };
 
   const onGearClick = () => {
@@ -91,20 +117,23 @@ export default function GuestTransactionStep1() {
     setTimeout(() => setSpinOnce(false), 600);
   };
 
-  const handleContinue = () => {
-    const qs = new URLSearchParams({
-      type,
-      amount: String(amountCents),
-      account: selectedId,
-    }).toString();
-
-    navigate(`/guestTransactionStep2?${qs}`);
-
+  const onNext = () => {
+    const cents = toCents(amountStr || amount);
+    const pretty = cents > 0 ? formatDe(cents) : "";
+    txDraft.setMany({
+      amount: pretty,
+      amountCents: cents,
+      step: step + 1,
+    });
+    navigate("/guestTransactionStep2");
   };
+
+  // --- derived ---
+  const derivedCents = toCents(amountStr || amount);
+  const canContinue = derivedCents > 0 && !!accountId;
 
   return (
     <div className="bg-white">
-      {/* one-time spin animation */}
       <style>{`
         @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
         .rotate-once { animation: spin-once 0.6s linear 1; }
@@ -148,10 +177,10 @@ export default function GuestTransactionStep1() {
           <div className="flex w-full shadow-sm overflow-hidden">
             <button
               type="button"
-              onClick={() => setType("expense")}
-              aria-pressed={type === "expense"}
+              aria-pressed={kind === "expense"}
+              onClick={() => onKindChange("expense")}
               className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${type === "expense"
+                ${kind === "expense"
                   ? "bg-blue-400 text-white"
                   : "bg-white text-blue-500 hover:bg-blue-50"
                 }`}
@@ -160,10 +189,10 @@ export default function GuestTransactionStep1() {
             </button>
             <button
               type="button"
-              onClick={() => setType("income")}
-              aria-pressed={type === "income"}
+              aria-pressed={kind === "income"}
+              onClick={() => onKindChange("income")}
               className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${type === "income"
+                ${kind === "income"
                   ? "bg-blue-400 text-white"
                   : "bg-white text-blue-500 hover:bg-blue-50"
                 }`}
@@ -180,12 +209,12 @@ export default function GuestTransactionStep1() {
             <input
               inputMode="decimal"
               placeholder="0,00"
-              value={amount}
-              onChange={handleChange}
+              value={amountStr}
+              onChange={onAmountChange}
               onKeyDown={handleKeyDown}
               onBlur={handleBlur}
               className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none
-                         focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+               focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
               aria-label="Betrag"
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -246,31 +275,30 @@ export default function GuestTransactionStep1() {
               aria-label="Kontoliste"
             >
               <ul className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-200 bg-[#F6F0FF] p-2 shadow">
-                {filtered.map((acc) => (
-                  <li key={acc.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(acc.id);
-                        setQuery(acc.name);
-                        setOpen(false);
-                      }}
-                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
-                        ${selectedId === acc.id
-                          ? "bg-white shadow-sm"
-                          : "hover:bg-white/70"
-                        }`}
-                      role="option"
-                      aria-selected={selectedId === acc.id}
-                    >
-                      <span className="flex items-center gap-2">
-                        <PencilIcon className="w-4 h-4" />
-                        <span>{acc.name}</span>
-                      </span>
-                      <span className="tabular-nums">{formatDe(acc.balance)}</span>
-                    </button>
-                  </li>
-                ))}
+                {accounts
+                  .filter((acc) =>
+                    (query || "").trim()
+                      ? acc.name.toLowerCase().includes(query.trim().toLowerCase())
+                      : true
+                  )
+                  .map((acc) => (
+                    <li key={acc.id}>
+                      <button
+                        type="button"
+                        onClick={() => onAccountPick(acc)}
+                        className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
+                          ${accountId === acc.id ? "bg-white shadow-sm" : "hover:bg-white/70"}`}
+                        role="option"
+                        aria-selected={accountId === acc.id}
+                      >
+                        <span className="flex items-center gap-2">
+                          <PencilIcon className="w-4 h-4" />
+                          <span>{acc.name}</span>
+                        </span>
+                        <span className="tabular-nums">{formatDe(acc.balance)}</span>
+                      </button>
+                    </li>
+                  ))}
 
                 <li className="mt-1 border-t border-gray-200 pt-1">
                   <button
@@ -303,7 +331,7 @@ export default function GuestTransactionStep1() {
           <Button
             variant="primary"
             disabled={!canContinue}
-            onClick={handleContinue}
+            onClick={onNext}
             className={`${!canContinue
               ? "bg-gray-200 text-gray-500 cursor-not-allowed"
               : "bg-blue-600 text-white hover:opacity-95 active:scale-95"

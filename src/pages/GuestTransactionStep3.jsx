@@ -1,14 +1,13 @@
 import PageHeader from "../components/PageHeader.jsx";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Button from "../components/Button";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 import PencilIcon from "../assets/PencilIcon.svg?react";
 
-import draft from "../store/transactionDraft";
-
-
+import { useTxDraft } from "../hooks/useTxDraft";
+import { txDraft } from "../store/transactionDraft";
 
 /** Generic searchable Combobox with inline Create/Edit/Delete */
 function Combobox({
@@ -40,7 +39,7 @@ function Combobox({
         return () => document.removeEventListener("mousedown", onDocClick);
     }, []);
 
-    const selected = options.find(o => o.id === value) || null;
+    const selected = (options || []).find(o => o.id === value) || null;
     const list = useMemo(() => {
         const base = options || [];
         if (!query.trim()) return base;
@@ -50,13 +49,11 @@ function Combobox({
 
     return (
         <div className="mb-6" ref={ref}>
-
             <label className="block text-center text-black text-base font-medium mb-1">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
 
             {helperText && <span className="text-xs text-gray-500">{helperText}</span>}
-
 
             <div className="relative">
                 <input
@@ -96,7 +93,7 @@ function Combobox({
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            onChange(o.id, o);
+                                            onChange?.(o.id, o);
                                             setOpen(false);
                                             setQuery("");
                                         }}
@@ -169,7 +166,19 @@ export default function GuestTransactionStep3() {
         setTimeout(() => setSpinOnce(false), 600);
     };
 
-    // ======== DATA in state (editable) ========
+    // ======== DATA from Store ========
+
+    const {
+        date = null,
+        gruppeId = "",
+        anbieterId = "",
+        kategorieId = "",
+        remark = "",
+    } = useTxDraft();
+
+    const requireCategory = true;
+
+    // ======== demo datasets  ========
     const [gruppen, setGruppen] = useState([
         { id: "essen", name: "Essen & Trinken" },
         { id: "haushalt", name: "Haushalt" },
@@ -214,14 +223,6 @@ export default function GuestTransactionStep3() {
     });
 
     // ======== SELECTION ========
-    const [gruppeId, setGruppeId] = useState("");
-    const [anbieterId, setAnbieterId] = useState(""); // optional
-    const [kategorieId, setKategorieId] = useState("");
-
-    // pass-through date
-    const date = draft.get?.("date") || null;
-
-    // derived options
     const anbieterOptions = useMemo(() => {
         if (!gruppeId) return anbieter;
         return anbieter.filter(a => a.gruppen.includes(gruppeId));
@@ -233,12 +234,10 @@ export default function GuestTransactionStep3() {
 
     // reset dependent on group change
     useEffect(() => {
-        setAnbieterId("");
-        setKategorieId("");
+        txDraft.setMany({ anbieterId: "", kategorieId: "" });
     }, [gruppeId]);
 
-    // ======== VALIDATION RULE: requireCategory can be toggled ========
-    const requireCategory = true; // set to false if you want to proceed with Group only
+    // ======== VALIDATION ========
     const canProceed = Boolean(gruppeId && (requireCategory ? kategorieId : true));
 
     // ======== CRUD handlers ========
@@ -247,39 +246,37 @@ export default function GuestTransactionStep3() {
         const id = name.toLowerCase().replace(/\s+/g, "-");
         if (gruppen.some(g => g.id === id)) return alert("Gruppe existiert bereits.");
         setGruppen([...gruppen, { id, name }]);
-        setGruppeId(id);
+        txDraft.set("gruppeId", id);
     };
     const handleEditGruppe = (id, newName) => {
         setGruppen(gruppen.map(g => g.id === id ? { ...g, name: newName } : g));
     };
     const handleDeleteGruppe = (id) => {
         setGruppen(gruppen.filter(g => g.id !== id));
-        // remove links in Anbieter
         setAnbieter(anbieter.map(a => ({ ...a, gruppen: a.gruppen.filter(gid => gid !== id) })));
-        // remove kategorien
         const copy = { ...kategorien };
         delete copy[id];
         setKategorien(copy);
-        if (gruppeId === id) { setGruppeId(""); setAnbieterId(""); setKategorieId(""); }
+        if (gruppeId === id) txDraft.setMany({ gruppeId: "", anbieterId: "", kategorieId: "" });
     };
 
-    // Anbieter (created under current Gruppe if selected)
+    // Anbieter
     const handleCreateAnbieter = (name) => {
         const id = name.toLowerCase().replace(/\s+/g, "-");
         if (anbieter.some(a => a.id === id)) return alert("Anbieter existiert bereits.");
         const groups = gruppeId ? [gruppeId] : [];
         setAnbieter([...anbieter, { id, name, gruppen: groups }]);
-        setAnbieterId(id);
+        txDraft.set("anbieterId", id);
     };
     const handleEditAnbieter = (id, newName) => {
         setAnbieter(anbieter.map(a => a.id === id ? { ...a, name: newName } : a));
     };
     const handleDeleteAnbieter = (id) => {
         setAnbieter(anbieter.filter(a => a.id !== id));
-        if (anbieterId === id) setAnbieterId("");
+        if (anbieterId === id) txDraft.set("anbieterId", "");
     };
 
-    // Kategorie (belongs to current Gruppe)
+    // Kategorie
     const handleCreateKategorie = (name) => {
         if (!gruppeId) return alert("Zuerst Gruppe wählen.");
         const id = name.toLowerCase().replace(/\s+/g, "-");
@@ -287,7 +284,7 @@ export default function GuestTransactionStep3() {
         if (arr.some(k => k.id === id)) return alert("Kategorie existiert bereits.");
         const next = { ...kategorien, [gruppeId]: [...arr, { id, name }] };
         setKategorien(next);
-        setKategorieId(id);
+        txDraft.set("kategorieId", id);
     };
     const handleEditKategorie = (id, newName) => {
         if (!gruppeId) return;
@@ -302,20 +299,8 @@ export default function GuestTransactionStep3() {
             ...kategorien,
             [gruppeId]: (kategorien[gruppeId] || []).filter(k => k.id !== id)
         });
-        if (kategorieId === id) setKategorieId("");
+        if (kategorieId === id) txDraft.set("kategorieId", "");
     };
-
-    // --- remark (note) ---
-    const [remark, setRemark] = useState("");   // Text
-    const remarkMax = 100;                      // Limit
-
-    // --- Save remark (note) ---
-    useEffect(() => {
-        draft.set?.("remark", remark);
-    }, [remark]);
-    const initialRemark = draft.get?.("remark") || "";
-    useEffect(() => { if (initialRemark) setRemark(initialRemark); }, []);
-
 
     // navigate
     function next() {
@@ -353,7 +338,7 @@ export default function GuestTransactionStep3() {
                         <button
                             aria-label="Einstellungen"
                             className="p-2 hover:bg-gray-100 transition"
-                            onClick={() => { onGearClick(); }}
+                            onClick={onGearClick}
                             type="button"
                         >
                             <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
@@ -364,14 +349,13 @@ export default function GuestTransactionStep3() {
                 <section className="flex-1">
                     <h1 className="text-lg text-gray-600 mb-4">Demo-Zugang ohne Speicherung</h1>
 
-
                     {/* GRUPPE (required) */}
                     <Combobox
                         label="Gruppe"
                         required
                         options={gruppen}
                         value={gruppeId}
-                        onChange={(id) => setGruppeId(id)}
+                        onChange={(id) => txDraft.set("gruppeId", id)}
                         placeholder="Gruppe wählen…"
                         allowCreate
                         onCreate={handleCreateGruppe}
@@ -386,7 +370,7 @@ export default function GuestTransactionStep3() {
                         helperText={gruppeId ? "gefiltert nach Gruppe" : undefined}
                         options={anbieterOptions}
                         value={anbieterId}
-                        onChange={(id) => setAnbieterId(id)}
+                        onChange={(id) => txDraft.set("anbieterId", id)}
                         placeholder="z. B. Rewe"
                         allowCreate
                         onCreate={handleCreateAnbieter}
@@ -401,7 +385,7 @@ export default function GuestTransactionStep3() {
                         required={requireCategory}
                         options={kategorieOptions}
                         value={kategorieId}
-                        onChange={(id) => setKategorieId(id)}
+                        onChange={(id) => txDraft.set("kategorieId", id)}
                         placeholder={gruppeId ? "Kategorie wählen…" : "Erst Gruppe wählen"}
                         disabled={!gruppeId}
                         allowCreate
@@ -423,18 +407,18 @@ export default function GuestTransactionStep3() {
                                 value={remark}
                                 onChange={(e) => {
                                     const v = e.target.value;
-                                    if (v.length <= remarkMax) setRemark(v);
+                                    if (v.length <= 100) txDraft.set("remark", v);
                                 }}
                                 placeholder="Optionale Notiz (z. B. 'Aktion', 'für Schule' …)"
                                 className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm
-                 focus:border-blue-400 focus:ring-1 focus:ring-blue-400
-                 resize-none outline-none placeholder-gray-400"
-                                maxLength={remarkMax}
+                            focus:border-blue-400 focus:ring-1 focus:ring-blue-400
+                            resize-none outline-none placeholder-gray-400"
+                                maxLength={100}
                             />
 
                             {/* Symbol Count */}
                             <span className="absolute bottom-1 right-3 text-xs text-gray-500">
-                                {remark.length}/{remarkMax}
+                                {remark.length}/100
                             </span>
                         </div>
                     </div>
@@ -446,6 +430,6 @@ export default function GuestTransactionStep3() {
                     </div>
                 </section>
             </main>
-        </div >
+        </div>
     );
 }

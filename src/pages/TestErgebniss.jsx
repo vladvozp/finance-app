@@ -1,45 +1,183 @@
-// src/pages/GuestTransactionStep3.jsx
-import { useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import draft from "../store/transactionDraft";
-import { format } from "date-fns";
+// src/pages/TestErgebniss.jsx
+import PageHeader from "../components/PageHeader.jsx";
+import Button from "../components/Button";
+import Arrowleft from "../assets/Arrowleft.svg?react";
+import Settings from "../assets/Settings.svg?react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
-export default function GuestTransactionStep3() {
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTxDraft } from "../hooks/useTxDraft";
+import { txDraft } from "../store/transactionDraft";
+
+export default function TestErgebniss() {
     const navigate = useNavigate();
     const [params] = useSearchParams();
 
+    // settings gear spin
+    const [spinOnce, setSpinOnce] = useState(false);
+    const onGearClick = () => {
+        if (spinOnce) return;
+        setSpinOnce(true);
+        setTimeout(() => setSpinOnce(false), 600);
+    };
 
-    const type = params.get("type") || draft.get("type") || "expense";
-    const amount = params.get("amount") || draft.get("amount") || "";
-    const account = params.get("account") || draft.get("account") || "";
-    const repeat = (params.get("repeat") ?? draft.get("repeat")) === "true" || draft.get("repeat") === true;
+    const {
+        kind = "expense",        // "expense" | "income"
+        amount = "",             //  "12,34"
+        amountCents = 0,
+        accountId = "",
+        kontoName = "",
+        gruppeId = "",
+        anbieterId = "",
+        kategorieId = "",
+        remark = "",
+        date: dateRaw = null,
+        repeat = false,
+    } = useTxDraft();
 
 
-    const dateStr = useMemo(() => {
-        const qsDate = params.get("date");
-        const d = qsDate ? new Date(qsDate) : (draft.get("date") || null);
-        return d && !isNaN(d) ? format(d, "MM/dd/yyyy") : "—";
-    }, [params]);
+    const fmtEur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
+    const fmtDate = (d) => (d ? new Intl.DateTimeFormat("de-DE").format(d) : "—");
 
-    return (
-        <div className="mx-auto max-w-md space-y-6 p-4">
-            <h1 className="text-xl font-semibold">Step 3 — Zusammenfassung</h1>
 
-            <div className="rounded-2xl border p-4 space-y-2">
-                <Row label="Type" value={type} />
-                <Row label="Amount" value={amount} />
-                <Row label="Account" value={account} />
-                <Row label="Date" value={dateStr} />
-                <Row label="Repeat" value={repeat ? "Yes" : "No"} />
+    const paramOr = (key, fallback) => (params.get(key) ?? fallback);
+
+
+    const isExpense = (paramOr("type", kind) === "expense") || kind === "expense";
+
+
+    const centsFromQuery = params.get("amountCents");
+    const effectiveCents =
+        (centsFromQuery != null && /^\d+$/.test(centsFromQuery))
+            ? parseInt(centsFromQuery, 10)
+            : (Number.isFinite(amountCents) && amountCents > 0 ? amountCents : null);
+
+    let amountNum;
+    if (effectiveCents != null) {
+        const euros = effectiveCents / 100;
+        amountNum = isExpense ? -Math.abs(euros) : Math.abs(euros);
+    } else {
+        const parsed = Number(String(paramOr("amount", amount)).replace(",", "."));
+        amountNum = Number.isFinite(parsed) ? (isExpense ? -Math.abs(parsed) : Math.abs(parsed)) : NaN;
+    }
+    const amountView = Number.isFinite(amountNum) ? fmtEur.format(amountNum) : "—";
+
+
+    const dateObj = useMemo(() => {
+        const s = paramOr("date", dateRaw);
+        const d = s ? new Date(s) : null;
+        return d && !isNaN(d.getTime()) ? d : null;
+    }, [dateRaw, params]);
+    const dateView = fmtDate(dateObj);
+
+
+    const gruppeName = paramOr("gruppeName", "") || gruppeId || "—";
+    const anbieterName = paramOr("anbieterName", "") || anbieterId || "—";
+    const kategorieName = paramOr("kategorieName", "") || kategorieId || "—";
+    const kontoLabel = kontoName || accountId || "—";
+
+
+    const errors = [];
+    if (!Number.isFinite(amountNum)) errors.push("Betrag ungültig");
+    if (!gruppeId) errors.push("Gruppe fehlt");
+    if (!kategorieId) errors.push("Kategorie fehlt");
+    const canSave = errors.length === 0;
+
+    function saveTransaction() {
+        if (!canSave) return;
+
+        const tx = {
+            id: `txn_${Date.now()}`,
+            kind: isExpense ? "expense" : "income",
+            amount: amountNum,
+            kontoId: accountId || null,
+            gruppeId,
+            anbieterId: anbieterId || null,
+            kategorieId,
+            remark: remark || "",
+            date: dateObj ? dateObj.toISOString() : null,
+            repeat: !!(typeof repeat === "string" ? repeat === "true" : repeat),
+        };
+
+        const KEY = "ft_transactions";
+        const list = JSON.parse(localStorage.getItem(KEY) || "[]");
+        list.push(tx);
+        localStorage.setItem(KEY, JSON.stringify(list));
+
+
+        txDraft.set("lastSavedId", tx.id);
+        alert("Gespeichert ✅");
+        // navigate("/transactions");
+    }
+
+
+
+    return (<div className="bg-white">
+        <style>{`
+        @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+        .rotate-once { animation: spin-once 0.6s linear 1; }
+      `}</style>
+
+        <main className="py-6 flex flex-col">
+            <PageHeader
+                left={
+                    <Link
+                        to="/guestTransactionStep3"
+                        className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                    >
+                        <Arrowleft className="w-5 h-5" />
+                        Zurück
+                    </Link>
+                }
+                center={null}
+                right={
+                    <button
+                        aria-label="Einstellungen"
+                        className="p-2 hover:bg-gray-100 transition"
+                        onClick={onGearClick}
+                        type="button"
+                    >
+                        <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                    </button>
+                }
+            />
+
+            <div className="border p-4 space-y-2">
+                <Row label="Gruppe" value={gruppeName} />
+                <Row label="Anbieter" value={anbieterName} />
+                <Row label="Kategorie" value={kategorieName} />
+                <Row label="Bemerkung" value={remark || "—"} />
+                <Row label="Konto" value={kontoLabel} />
+                <Row label="Betrag" value={amountView} />
+                <Row label="Datum" value={dateView} />
+                <Row label="Wiederholen" value={(typeof repeat === "string" ? repeat === "true" : repeat) ? "Ja" : "Nein"} />
             </div>
 
+            {!canSave && (
+                <div className="text-sm text-red-600">
+                    Bitte prüfen: {errors.join(" · ")}
+                </div>
+            )}
+
             <div className="flex gap-3">
-                <button className="rounded-xl border px-4 py-2 hover:bg-gray-50" onClick={() => navigate(-1)}>Zurück</button>
-                <button className="rounded-xl bg-indigo-600 px-4 py-2 text-white" onClick={() => alert("Submit/Save TODO")}>
+                <button
+                    className="rounded-xl border px-4 py-2 hover:bg-gray-50"
+                    onClick={() => navigate(-1)}
+                    type="button"
+                >
+                    Zurück
+                </button>
+                <button
+                    className="rounded-xl bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
+                    disabled={!canSave}
+                    onClick={saveTransaction}
+                    type="button"
+                >
                     Speichern
                 </button>
             </div>
-        </div>
+        </main>
+    </div>
     );
 }
 

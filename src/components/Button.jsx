@@ -16,30 +16,31 @@ export default function Button({
   type = "button",
   to,
   disabled = false,
-  loading = false,  
+  loading = false,
 }) {
   const baseStyle =
     "relative h-12 w-full border shadow-sm px-5 text-base flex items-center";
   const variants = {
     primary: baseStyle + " border-gray-400 bg-blue-400 text-white hover:opacity-95",
     secondary: baseStyle + " border-gray-400 bg-white text-blue-500 hover:bg-gray-50",
-     ghostDim:  baseStyle + " border-gray-300 bg-gray-100 text-gray-500 hover:bg-gray-200",
+    ghostDim: baseStyle + " border-gray-300 bg-gray-100 text-gray-500 hover:bg-gray-200",
   };
 
   const disabledStyle = "opacity-50 cursor-not-allowed pointer-events-none";
 
   const iconStyle = "absolute left-10 size-5 block self-center";
   const labelStyle = "block w-full text-center leading-none self-center";
-  
-  const content =  loading ? (
-   <span className={labelStyle}>Lädt…</span> 
-  ) : ( <>
-      {Icon && <Icon className={iconStyle} aria-hidden />}
-      <span className={labelStyle}>{children}</span>
-    </>
+
+  const content = loading ? (
+    <span className={labelStyle}>Lädt…</span>
+  ) : (<>
+    {Icon && <Icon className={iconStyle} aria-hidden />}
+    <span className={labelStyle}>{children}</span>
+  </>
   );
 
-  if (to) {    return (
+  if (to) {
+    return (
       <Link
         to={to}
         className={`${variants[variant]} ${disabled ? disabledStyle : ""}`}
@@ -52,7 +53,7 @@ export default function Button({
   }
 
   return (
-     <button
+    <button
       type={type}
       onClick={onClick}
       className={`${variants[variant]} ${disabled ? disabledStyle : ""}`}

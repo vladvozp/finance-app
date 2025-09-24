@@ -3,6 +3,10 @@ import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
+import Plus from "../assets/Plus.svg?react";
+import Barchart2 from "../assets/Barchart2.svg?react";
+import Confirm from "../assets/Confirm.svg?react";
+
 import { useState, useEffect, useMemo, useRef } from "react";
 
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -106,8 +110,7 @@ export default function TestErgebniss() {
 
 
         txDraft.set("lastSavedId", tx.id);
-        alert("Gespeichert ✅");
-        // navigate("/transactions");
+        alert("Erfolgreich gespeichert ✅");
     }
 
 
@@ -158,23 +161,10 @@ export default function TestErgebniss() {
                     Bitte prüfen: {errors.join(" · ")}
                 </div>
             )}
-
-            <div className="flex gap-3">
-                <button
-                    className="rounded-xl border px-4 py-2 hover:bg-gray-50"
-                    onClick={() => navigate(-1)}
-                    type="button"
-                >
-                    Zurück
-                </button>
-                <button
-                    className="rounded-xl bg-indigo-600 px-4 py-2 text-white disabled:opacity-50"
-                    disabled={!canSave}
-                    onClick={saveTransaction}
-                    type="button"
-                >
-                    Speichern
-                </button>
+            <div className="space-y-5 pt-15">
+                <Button variant="primary" icon={Confirm} disabled={!canSave} onClick={saveTransaction} >Speichern</Button>
+                <Button variant="secondary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
+                <Button variant="secondary" icon={Barchart2}>Dashboard</Button>
             </div>
         </main>
     </div>

@@ -5,7 +5,7 @@ import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 import Plus from "../assets/Plus.svg?react";
 import Barchart2 from "../assets/Barchart2.svg?react";
-import Confirm from "../assets/Confirm.svg?react";
+import Check from "../assets/Check.svg?react";
 
 import { useState, useEffect, useMemo, useRef } from "react";
 
@@ -145,7 +145,7 @@ export default function TestErgebniss() {
                 }
             />
 
-            <div className="border p-4 space-y-2">
+            <div className="border shadow-sm p-4 space-y-2">
                 <Row label="Gruppe" value={gruppeName} />
                 <Row label="Anbieter" value={anbieterName} />
                 <Row label="Kategorie" value={kategorieName} />
@@ -162,9 +162,9 @@ export default function TestErgebniss() {
                 </div>
             )}
             <div className="space-y-5 pt-15">
-                <Button variant="primary" icon={Confirm} disabled={!canSave} onClick={saveTransaction} >Speichern</Button>
+                <Button variant="primary" icon={Check} disabled={!canSave} onClick={saveTransaction} >Speichern</Button>
                 <Button variant="secondary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
-                <Button variant="secondary" icon={Barchart2}>Dashboard</Button>
+                <Button variant="secondary" icon={Barchart2} onClick={() => navigate("/Dashboard")}   >Dashboard</Button>
             </div>
         </main>
     </div>

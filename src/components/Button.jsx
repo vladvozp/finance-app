@@ -29,6 +29,7 @@ export default function Button({
   const disabledStyle = "opacity-50 cursor-not-allowed pointer-events-none";
 
   const iconStyle = "absolute left-10 size-5 block self-center";
+
   const labelStyle = "block w-full text-center leading-none self-center";
 
   const content = loading ? (

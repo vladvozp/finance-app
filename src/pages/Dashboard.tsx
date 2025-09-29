@@ -12,7 +12,7 @@ import PageHeader from "../components/PageHeader";
  * ВАЖНО: Ниже есть блок ADAPTER — там подключаемся к твоему ft-store.
  * Замени TODO на реальные селекторы/экшены из твоего стора.
  *
- * UI: React + Tailwind + (опционально DaisyUI классы для красоты)
+ * UI: React + Tailwind классы для красоты)
  */
 
 /** =========================

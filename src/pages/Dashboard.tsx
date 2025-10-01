@@ -7,9 +7,10 @@ import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 
 /**
- * TransactionsDashboard — простая страница "Список + Edit".
+ * Dashboard — простая страница "Список + Edit".
  *
  * ВАЖНО: Ниже есть блок ADAPTER — там подключаемся к твоему ft-store.
+ * 
  * Замени TODO на реальные селекторы/экшены из твоего стора.
  *
  * UI: React + Tailwind классы для красоты)

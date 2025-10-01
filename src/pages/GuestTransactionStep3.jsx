@@ -1,5 +1,5 @@
 import PageHeader from "../components/PageHeader.jsx";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Button from "../components/Button";
 import Arrowleft from "../assets/Arrowleft.svg?react";
@@ -156,7 +156,6 @@ function Combobox({
 
 export default function GuestTransactionStep3() {
     const navigate = useNavigate();
-    const [params] = useSearchParams();
 
     // settings gear spin
     const [spinOnce, setSpinOnce] = useState(false);
@@ -304,15 +303,7 @@ export default function GuestTransactionStep3() {
 
     // navigate
     function next() {
-        const qs = new URLSearchParams({
-            ...Object.fromEntries(params),
-            gruppeId,
-            anbieterId,
-            kategorieId,
-            remark,
-            date: date ? new Date(date).toISOString() : "",
-        }).toString();
-        navigate(`/TestErgebniss?${qs}`);
+        navigate("/TestErgebniss");
     }
 
     return (
@@ -409,6 +400,7 @@ export default function GuestTransactionStep3() {
                                     const v = e.target.value;
                                     if (v.length <= 100) txDraft.set("remark", v);
                                 }}
+
                                 placeholder="Optionale Notiz (z. B. 'Aktion', 'für Schule' …)"
                                 className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm
                             focus:border-blue-400 focus:ring-1 focus:ring-blue-400

@@ -1,5 +1,5 @@
 import PageHeader from "../components/PageHeader.jsx";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Button from "../components/Button";
 
@@ -13,7 +13,7 @@ import { txDraft } from "../store/transactionDraft";
 
 export default function GuestTransactionStep2() {
     const navigate = useNavigate();
-    const [params] = useSearchParams();
+
 
     const { date: dateRaw } = useTxDraft();
 
@@ -23,11 +23,7 @@ export default function GuestTransactionStep2() {
             : null;
 
     function next() {
-        const qs = new URLSearchParams({
-            ...Object.fromEntries(params),
-            date: date && !isNaN(date.getTime()) ? date.toISOString() : "",
-        }).toString();
-        navigate(`/guestTransactionStep3?${qs}`);
+        navigate("/guestTransactionStep3");
     }
 
     // --- state ---
@@ -85,7 +81,10 @@ export default function GuestTransactionStep2() {
                     <DatePickerInput
                         value={date} // Date | null
                         onChange={(val) => {
-                            txDraft.set("date", val || null);
+                            if (!val) { txDraft.set("date", null); return; }
+                            const atNoon = new Date(val);
+                            atNoon.setHours(12, 0, 0, 0);
+                            txDraft.set("date", atNoon);
                         }}
                         placeholder="Tag/Monat/Jahr"
                         displayFormat="dd.MM.yyyy"

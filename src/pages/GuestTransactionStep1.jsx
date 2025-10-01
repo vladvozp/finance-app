@@ -45,9 +45,15 @@ export default function GuestTransactionStep1() {
   const [open, setOpen] = useState(false);
   const comboboxRef = useRef(null);
 
-  const [amountStr, setAmountStr] = useState(typeof amount === "string" ? amount : "");
+  const [amountStr, setAmountStr] = useState(
+    typeof amount === "number" && amount > 0 ? formatDe(Math.round(amount * 100)) : ""
+  );
   useEffect(() => {
-    if (typeof amount === "string") setAmountStr(amount);
+    if (typeof amount === "number" && amount > 0) {
+      setAmountStr(formatDe(Math.round(amount * 100)));
+    } else if (!amount) {
+      setAmountStr("");
+    }
   }, [amount]);
 
   useEffect(() => {
@@ -87,14 +93,14 @@ export default function GuestTransactionStep1() {
     const cents = toCents(amountStr);
     if (cents <= 0) {
       txDraft.setMany({
-        amount: "",
+        amount: 0,
         amountCents: 0,
       });
       setAmountStr("");
     } else {
       const pretty = formatDe(cents);
       txDraft.setMany({
-        amount: pretty,
+        amount: cents / 100,
         amountCents: cents,
       });
       setAmountStr(pretty);
@@ -121,9 +127,8 @@ export default function GuestTransactionStep1() {
     const cents = toCents(amountStr || amount);
     const pretty = cents > 0 ? formatDe(cents) : "";
     txDraft.setMany({
-      amount: pretty,
+      amount: cents / 100,
       amountCents: cents,
-      step: step + 1,
     });
     navigate("/guestTransactionStep2");
   };

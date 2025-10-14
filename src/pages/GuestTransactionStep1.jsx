@@ -1,6 +1,7 @@
+// src/pages/GuestTransactionStep1.jsx
 import PageHeader from "../components/PageHeader.jsx";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
@@ -15,47 +16,168 @@ import PencilIcon from "../assets/PencilIcon.svg?react";
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 import Cross from "../assets/Cross.svg?react";
 
+const ACC_KEY = "ft_accounts";
+
+// ---------- Helpers ----------
+const fmtEur = (n) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
+// Parse "12,34" → 1234 cents
+const toCents = (s) => {
+  if (!s) return 0;
+  const n = Number(String(s).replace(/\s/g, "").replace(",", "."));
+  return Number.isFinite(n) ? Math.round(n * 100) : 0;
+};
+
+// Create a new account object with sane defaults
+function createDefaultAccount(name) {
+  const now = new Date().toISOString();
+  const id = crypto?.randomUUID ? crypto.randomUUID() : `acc_${Date.now()}`;
+  return {
+    id,
+    name,
+    currency: "EUR",
+    openingBalance: 0,   // editable
+    openingDate: null,
+    archived: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+// Ensure ft_accounts exists and has at least one account
+export function ensureAccounts() {
+  try {
+    const raw = localStorage.getItem(ACC_KEY);
+    if (!raw) {
+      const seed = [createDefaultAccount("Bargeld")];
+      localStorage.setItem(ACC_KEY, JSON.stringify(seed));
+      console.log("[ft_accounts] initialized:", seed);
+      return seed;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      const seed = [createDefaultAccount("Bargeld")];
+      localStorage.setItem(ACC_KEY, JSON.stringify(seed));
+      console.warn("[ft_accounts] invalid/empty → reset to default");
+      return seed;
+    }
+    return parsed;
+  } catch {
+    const seed = [createDefaultAccount("Bargeld")];
+    localStorage.setItem(ACC_KEY, JSON.stringify(seed));
+    console.warn("[ft_accounts] parse error → reset to default");
+    return seed;
+  }
+}
+
+// Quick create (replace with modal later)
+function createNewAccountInteractive(onPicked) {
+  const name = (window.prompt("Kontoname eingeben:", "Neues Konto") || "").trim();
+  if (!name) return null;
+
+  const newAcc = createDefaultAccount(name);
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(ACC_KEY) || "[]");
+    if (!Array.isArray(list)) list = [];
+  } catch { list = []; }
+
+  const next = [...list, newAcc];
+  localStorage.setItem(ACC_KEY, JSON.stringify(next));
+  if (typeof onPicked === "function") onPicked(newAcc);
+  return next;
+}
+
+// Rename account inline
+function renameAccountInteractive(accId, currentName, onDone) {
+  const nextName = (window.prompt("Neuer Kontoname:", currentName) || "").trim();
+  if (!nextName || nextName === currentName) return null;
+
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(ACC_KEY) || "[]");
+    if (!Array.isArray(list)) list = [];
+  } catch { list = []; }
+
+  const idx = list.findIndex((a) => a.id === accId);
+  if (idx === -1) return null;
+
+  list[idx] = { ...list[idx], name: nextName, updatedAt: new Date().toISOString() };
+  localStorage.setItem(ACC_KEY, JSON.stringify(list));
+  if (typeof onDone === "function") onDone(list[idx], list);
+  return list;
+}
+
+// Edit opening balance (current balance stays computed)
+function editOpeningBalanceInteractive(accId, currentOpening, onDone) {
+  const input = window.prompt("Anfangssaldo (EUR):", String(currentOpening ?? 0));
+  if (input == null) return null;
+  const n = Number(String(input).replace(",", "."));
+  if (!Number.isFinite(n)) { alert("Ungültiger Betrag"); return null; }
+
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(ACC_KEY) || "[]");
+    if (!Array.isArray(list)) list = [];
+  } catch { list = []; }
+
+  const idx = list.findIndex((a) => a.id === accId);
+  if (idx === -1) return null;
+
+  list[idx] = { ...list[idx], openingBalance: n, updatedAt: new Date().toISOString() };
+  localStorage.setItem(ACC_KEY, JSON.stringify(list));
+  if (typeof onDone === "function") onDone(list[idx], list);
+  return list;
+}
+
+// ---------- Page ----------
 export default function GuestTransactionStep1() {
   const navigate = useNavigate();
 
-  // --- helpers ---
-  const toCents = (s) => {
-    if (!s) return 0;
-    const n = Number(String(s).replace(/\s/g, "").replace(",", "."));
-    return Number.isFinite(n) ? Math.round(n * 100) : 0;
-  };
-  const formatDe = (cents) =>
-    (cents / 100).toLocaleString("de-DE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-  // --- GLOBAL ---
+  // global draft (store)
   const {
-    amount = "",               // "12,34"
+    amount = "",
     amountCents = 0,
     accountId = "",
-    kind = "expense",
-    step = 1,
+    kind = "expense", // "expense" | "income"
   } = useTxDraft();
 
-  // --- UI-only state ---
+  // UI state
   const [spinOnce, setSpinOnce] = useState(false);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false); // full accounts list
   const comboboxRef = useRef(null);
 
+  // accounts state (loaded from localStorage)
+  const [accounts, setAccounts] = useState([]);
+
+  // derive amount string from store on mount/changes
   const [amountStr, setAmountStr] = useState(
-    typeof amount === "number" && amount > 0 ? formatDe(Math.round(amount * 100)) : ""
+    typeof amount === "number" && amount > 0
+      ? (amount).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : ""
   );
+
+  // Ensure accounts
+  useEffect(() => {
+    const accs = ensureAccounts();
+    setAccounts(accs);
+  }, []);
+
+  // sync external amount → local input
   useEffect(() => {
     if (typeof amount === "number" && amount > 0) {
-      setAmountStr(formatDe(Math.round(amount * 100)));
+      setAmountStr(
+        amount.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      );
     } else if (!amount) {
       setAmountStr("");
     }
   }, [amount]);
 
+  // close combobox on outside click
   useEffect(() => {
     const onDoc = (e) => {
       if (!open) return;
@@ -67,16 +189,36 @@ export default function GuestTransactionStep1() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  // --- demo accounts ---
-  const accounts = [
-    { id: "n26", name: "N26", balance: 100000 },
-    { id: "pp", name: "PayPal", balance: 40000 },
-  ];
+  // compute balances per account from transactions
+  const accountsWithBalance = useMemo(() => {
+    let tx = [];
+    try {
+      const raw = localStorage.getItem("ft_transactions");
+      const parsed = raw ? JSON.parse(raw) : [];
+      tx = Array.isArray(parsed) ? parsed : [];
+    } catch { tx = []; }
+
+    return accounts.map((acc) => {
+      const sum = tx.reduce((s, t) => {
+        if (t && t.kontoId === acc.id && Number.isFinite(t.amount)) {
+          return s + t.amount; // incomes +, expenses -
+        }
+        return s;
+      }, 0);
+      return { ...acc, balance: (acc.openingBalance || 0) + sum };
+    });
+  }, [accounts]);
+
+  const totalBalance = useMemo(
+    () => accountsWithBalance.reduce((s, a) => s + (a.balance || 0), 0),
+    [accountsWithBalance]
+  );
+
   const filtered = query.trim()
-    ? accounts.filter((a) =>
+    ? accountsWithBalance.filter((a) =>
       a.name.toLowerCase().includes(query.trim().toLowerCase())
     )
-    : accounts;
+    : accountsWithBalance;
 
   // --- handlers ---
   const onAmountChange = (e) => {
@@ -84,29 +226,24 @@ export default function GuestTransactionStep1() {
     const cleaned = v.replace(/[^\d.,\s]/g, "");
     setAmountStr(cleaned);
   };
-
   const handleKeyDown = (e) => {
     if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
   };
-
   const handleBlur = () => {
     const cents = toCents(amountStr);
     if (cents <= 0) {
-      txDraft.setMany({
-        amount: 0,
-        amountCents: 0,
-      });
+      txDraft.setMany({ amount: 0, amountCents: 0 });
       setAmountStr("");
     } else {
-      const pretty = formatDe(cents);
-      txDraft.setMany({
-        amount: cents / 100,
-        amountCents: cents,
-      });
-      setAmountStr(pretty);
+      const euros = cents / 100;
+      txDraft.setMany({ amount: euros, amountCents: cents });
+      setAmountStr(
+        euros.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      );
     }
   };
 
+  // toggle kind and persist immediately (so Step2 can read it)
   const onKindChange = (nextKind) => {
     txDraft.set("kind", nextKind);
   };
@@ -123,17 +260,21 @@ export default function GuestTransactionStep1() {
     setTimeout(() => setSpinOnce(false), 600);
   };
 
+  // Next → always go to Step2 (datepicker). Step2 decides next page by `kind`.
   const onNext = () => {
     const cents = toCents(amountStr || amount);
-    const pretty = cents > 0 ? formatDe(cents) : "";
+    const nowISO = new Date().toISOString();
+
     txDraft.setMany({
+      kind,                     // ensure kind is persisted
       amount: cents / 100,
       amountCents: cents,
+      date: nowISO,             // default; user can change on Step2
     });
+
     navigate("/guestTransactionStep2");
   };
 
-  // --- derived ---
   const derivedCents = toCents(amountStr || amount);
   const canContinue = derivedCents > 0 && !!accountId;
 
@@ -168,17 +309,16 @@ export default function GuestTransactionStep1() {
           }
         />
 
-        {/* content */}
+        {/* Step title */}
         <section className="flex-1">
-          <h1 className="text-lg text-gray-600 mb-10">
-            Demo-Zugang ohne Speicherung
+          <h1 className="text-lg text-gray-600 mb-6">
+            Transaktion anlegen
           </h1>
 
+          {/* kind toggle */}
           <h2 className="text-center text-black text-base font-medium mb-1">
-            Transaction Typ
+            Transaktionstyp
           </h2>
-
-          {/* toggle */}
           <div className="flex w-full shadow-sm overflow-hidden">
             <button
               type="button"
@@ -280,37 +420,74 @@ export default function GuestTransactionStep1() {
               aria-label="Kontoliste"
             >
               <ul className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-200 bg-[#F6F0FF] p-2 shadow">
-                {accounts
-                  .filter((acc) =>
-                    (query || "").trim()
-                      ? acc.name.toLowerCase().includes(query.trim().toLowerCase())
-                      : true
-                  )
-                  .map((acc) => (
-                    <li key={acc.id}>
-                      <button
-                        type="button"
-                        onClick={() => onAccountPick(acc)}
-                        className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
-                          ${accountId === acc.id ? "bg-white shadow-sm" : "hover:bg-white/70"}`}
-                        role="option"
-                        aria-selected={accountId === acc.id}
-                      >
-                        <span className="flex items-center gap-2">
-                          <PencilIcon className="w-4 h-4" />
-                          <span>{acc.name}</span>
-                        </span>
-                        <span className="tabular-nums">{formatDe(acc.balance)}</span>
-                      </button>
-                    </li>
-                  ))}
+                {filtered.map((acc) => (
+                  <li key={acc.id}>
+                    <button
+                      type="button"
+                      onClick={() => onAccountPick(acc)}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
+                        ${accountId === acc.id ? "bg-white shadow-sm" : "hover:bg-white/70"}`}
+                      role="option"
+                      aria-selected={accountId === acc.id}
+                    >
+                      <span className="flex items-center gap-2">
+                        <PencilIcon className="w-4 h-4" />
+                        <span>{acc.name}</span>
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <span className="tabular-nums">{fmtEur(acc.balance || 0)}</span>
+
+                        {/* inline actions */}
+                        <button
+                          type="button"
+                          title="Umbenennen"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updatedList = renameAccountInteractive(
+                              acc.id,
+                              acc.name,
+                              (updatedAcc, list) => {
+                                setAccounts(list);
+                                if (accountId === updatedAcc.id) {
+                                  txDraft.set("kontoName", updatedAcc.name);
+                                  setQuery(updatedAcc.name);
+                                }
+                              }
+                            );
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
+                        >
+                          Rename
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Anfangssaldo ändern"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updatedList = editOpeningBalanceInteractive(
+                              acc.id,
+                              acc.openingBalance ?? 0,
+                              (_, list) => setAccounts(list)
+                            );
+                          }}
+                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
+                        >
+                          Startsaldo
+                        </button>
+                      </div>
+                    </button>
+                  </li>
+                ))}
 
                 <li className="mt-1 border-t border-gray-200 pt-1">
                   <button
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      console.log("Create new account");
+                      const next = createNewAccountInteractive(onAccountPick);
+                      if (next) setAccounts(next);
                     }}
                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-white/70 transition"
                   >
@@ -322,14 +499,57 @@ export default function GuestTransactionStep1() {
             </div>
           )}
 
+          {/* Full accounts list toggle */}
           <button
             type="button"
-            onClick={() => console.log("Show all accounts")}
+            onClick={() => setShowAll((v) => !v)}
             className="mt-3 flex items-center gap-2 text-sm text-gray-700 hover:underline"
           >
             <DoubleDownArrow className="w-3 h-3" />
-            <span>Alle Konten anzeigen</span>
+            <span>{showAll ? "Alle Konten verbergen" : "Alle Konten anzeigen"}</span>
           </button>
+
+          {showAll && (
+            <div className="mt-3 rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <strong>Kontenübersicht</strong>
+                <span className="text-sm text-gray-600">Gesamt: {fmtEur(totalBalance)}</span>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {accountsWithBalance.map((acc) => (
+                  <li key={acc.id} className="py-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{acc.name}</span>
+                      {acc.archived && (
+                        <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs">Archiv</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="tabular-nums">{fmtEur(acc.balance || 0)}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const list = renameAccountInteractive(acc.id, acc.name, (_, l) => setAccounts(l));
+                        }}
+                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
+                      >
+                        Rename
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const list = editOpeningBalanceInteractive(acc.id, acc.openingBalance ?? 0, (_, l) => setAccounts(l));
+                        }}
+                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
+                      >
+                        Startsaldo
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="pt-10" />
 

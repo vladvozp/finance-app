@@ -7,17 +7,15 @@ import Plus from "../assets/Plus.svg?react";
 import Barchart2 from "../assets/Barchart2.svg?react";
 import Check from "../assets/Check.svg?react";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 
 export default function TestErgebniss() {
     const navigate = useNavigate();
-    const [params] = useSearchParams();
 
-    // settings gear spin
+    // tiny UX candy: gear spins once on click
     const [spinOnce, setSpinOnce] = useState(false);
     const onGearClick = () => {
         if (spinOnce) return;
@@ -25,79 +23,87 @@ export default function TestErgebniss() {
         setTimeout(() => setSpinOnce(false), 600);
     };
 
+    // Pull everything we need from the draft store
     const {
-        kind = "expense",        // "expense" | "income"
-        amount = "",             //  "12,34"
-        amountCents = 0,
-        accountId = "",
-        kontoName = "",
-        gruppeId = "",
-        anbieterId = "",
-        kategorieId = "",
-        remark = "",
-        date: dateRaw = null,
-        repeat = false,
+        kind,                 // "expense" | "income"
+        amount,               // string like "12,34" or number
+        amountCents = 0,      // integer cents if already normalized
+        accountId,
+        kontoName,
+        gruppeId,
+        anbieterId,
+        kategorieId,
+        remark,
+        date: dateRaw = null, // string | Date | null
+        repeat = false,       // boolean | "true"/"false"
     } = useTxDraft();
 
-
+    // Formatters (DE locale)
     const fmtEur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
     const fmtDate = (d) => (d ? new Intl.DateTimeFormat("de-DE").format(d) : "—");
 
+    // Determine transaction type strictly from store (no URL fallbacks)
+    const isExpense = kind === "expense";
+    const isIncome = kind === "income";
 
-    const paramOr = (key, fallback) => (params.get(key) ?? fallback);
-
-
-    const isExpense = (paramOr("type", kind) === "expense") || kind === "expense";
-
-
-    const centsFromQuery = params.get("amountCents");
+    // Normalize amount:
+    // - prefer amountCents when valid
+    // - otherwise parse "amount" (accept comma decimal)
+    // - negative for expense, positive for income
     const effectiveCents =
-        (centsFromQuery != null && /^\d+$/.test(centsFromQuery))
-            ? parseInt(centsFromQuery, 10)
-            : (Number.isFinite(amountCents) && amountCents > 0 ? amountCents : null);
+        Number.isFinite(amountCents) && amountCents > 0 ? amountCents : null;
 
     let amountNum;
     if (effectiveCents != null) {
         const euros = effectiveCents / 100;
         amountNum = isExpense ? -Math.abs(euros) : Math.abs(euros);
+    } else if (amount != null && amount !== "") {
+        const parsed = Number(String(amount).replace(",", "."));
+        amountNum = Number.isFinite(parsed)
+            ? (isExpense ? -Math.abs(parsed) : Math.abs(parsed))
+            : undefined;
     } else {
-        const parsed = Number(String(paramOr("amount", amount)).replace(",", "."));
-        amountNum = Number.isFinite(parsed) ? (isExpense ? -Math.abs(parsed) : Math.abs(parsed)) : NaN;
+        amountNum = undefined;
     }
-    const amountView = Number.isFinite(amountNum) ? fmtEur.format(amountNum) : "—";
+    const amountView = amountNum != null ? fmtEur.format(amountNum) : "—";
 
-
+    // Normalize date from string|Date|null → Date|null
     const dateObj = useMemo(() => {
-        const s = paramOr("date", dateRaw);
-        const d = s ? new Date(s) : null;
+        if (!dateRaw) return null;
+        const d = typeof dateRaw === "string" ? new Date(dateRaw) : dateRaw;
         return d && !isNaN(d.getTime()) ? d : null;
-    }, [dateRaw, params]);
+    }, [dateRaw]);
     const dateView = fmtDate(dateObj);
 
-
-    const gruppeName = paramOr("gruppeName", "") || gruppeId || "—";
-    const anbieterName = paramOr("anbieterName", "") || anbieterId || "—";
-    const kategorieName = paramOr("kategorieName", "") || kategorieId || "—";
+    // Labels (only show expense-specific fields if they actually exist)
     const kontoLabel = kontoName || accountId || "—";
+    const gruppeName = gruppeId || "";
+    const anbieterName = anbieterId || "";
+    const kategorieName = kategorieId || "";
 
-
+    // Validation:
+    // - For income: ignore missing Gruppe/Kategorie (button stays enabled)
+    // - For expense: require Gruppe and Kategorie if you want to enable save
     const errors = [];
-    if (!Number.isFinite(amountNum)) errors.push("Betrag ungültig");
-    if (!gruppeId) errors.push("Gruppe fehlt");
-    if (!kategorieId) errors.push("Kategorie fehlt");
+    if (amountNum == null) errors.push("Betrag ungültig");
+    if (isExpense) {
+        if (!gruppeId) errors.push("Gruppe fehlt");
+        if (!kategorieId) errors.push("Kategorie fehlt");
+    }
     const canSave = errors.length === 0;
 
+    // Persist to localStorage (MVP style) and mark last saved id in store
     function saveTransaction() {
         if (!canSave) return;
 
         const tx = {
             id: `txn_${Date.now()}`,
             kind: isExpense ? "expense" : "income",
-            amount: amountNum,
+            amount: amountNum ?? 0,
             kontoId: accountId || null,
-            gruppeId,
-            anbieterId: anbieterId || null,
-            kategorieId,
+            gruppeId: isExpense ? (gruppeId || null) : null,      // income → null
+            anbieterId: isExpense ? (anbieterId || null) : null,  // income → null
+            kategorieId: isExpense ? (kategorieId || null) : null,// income → null
             remark: remark || "",
             date: dateObj ? dateObj.toISOString() : null,
             repeat: !!(typeof repeat === "string" ? repeat === "true" : repeat),
@@ -108,66 +114,80 @@ export default function TestErgebniss() {
         list.push(tx);
         localStorage.setItem(KEY, JSON.stringify(list));
 
-
         txDraft.set("lastSavedId", tx.id);
         alert("Erfolgreich gespeichert ✅");
     }
 
-
-
-    return (<div className="bg-white">
-        <style>{`
+    return (
+        <div className="bg-white">
+            <style>{`
         @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
         .rotate-once { animation: spin-once 0.6s linear 1; }
       `}</style>
 
-        <main className="py-6 flex flex-col">
-            <PageHeader
-                left={
-                    <Link
-                        to="/guestTransactionStep3"
-                        className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
-                    >
-                        <Arrowleft className="w-5 h-5" />
-                        Zurück
-                    </Link>
-                }
-                center={null}
-                right={
-                    <button
-                        aria-label="Einstellungen"
-                        className="p-2 hover:bg-gray-100 transition"
-                        onClick={onGearClick}
-                        type="button"
-                    >
-                        <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
-                    </button>
-                }
-            />
+            <main className="py-6 flex flex-col">
+                <PageHeader
+                    left={
+                        <Link
+                            to="/guestTransactionStep3"
+                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                        >
+                            <Arrowleft className="w-5 h-5" />
+                            Zurück
+                        </Link>
+                    }
+                    center={null}
+                    right={
+                        <button
+                            aria-label="Einstellungen"
+                            className="p-2 hover:bg-gray-100 transition"
+                            onClick={onGearClick}
+                            type="button"
+                        >
+                            <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                        </button>
+                    }
+                />
 
-            <div className="border shadow-sm p-4 space-y-2">
-                <Row label="Gruppe" value={gruppeName} />
-                <Row label="Anbieter" value={anbieterName} />
-                <Row label="Kategorie" value={kategorieName} />
-                <Row label="Bemerkung" value={remark || "—"} />
-                <Row label="Konto" value={kontoLabel} />
-                <Row label="Betrag" value={amountView} />
-                <Row label="Datum" value={dateView} />
-                <Row label="Wiederholen" value={(typeof repeat === "string" ? repeat === "true" : repeat) ? "Ja" : "Nein"} />
-            </div>
+                <div className="border shadow-sm p-4 space-y-2">
+                    {/* Common fields for both types */}
+                    <Row label="Konto" value={kontoLabel} />
+                    <Row label="Betrag" value={amountView} />
+                    <Row label="Datum" value={dateView} />
+                    <Row
+                        label="Wiederholen"
+                        value={(typeof repeat === "string" ? repeat === "true" : repeat) ? "Ja" : "Nein"}
+                    />
 
-            {!canSave && (
-                <div className="text-sm text-red-600">
-                    Bitte prüfen: {errors.join(" · ")}
+                    {/* Expense-only details (render only if present) */}
+                    {isExpense && !!gruppeName && <Row label="Gruppe" value={gruppeName} />}
+                    {isExpense && !!anbieterName && <Row label="Anbieter" value={anbieterName} />}
+                    {isExpense && !!kategorieName && <Row label="Kategorie" value={kategorieName} />}
+
+                    {/* Remark is safe to show for both */}
+                    <Row label="Bemerkung" value={remark || "—"} />
                 </div>
-            )}
-            <div className="space-y-5 pt-15">
-                <Button variant="primary" icon={Check} disabled={!canSave} onClick={saveTransaction} >Speichern</Button>
-                <Button variant="secondary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
-                <Button variant="secondary" icon={Barchart2} onClick={() => navigate("/Dashboard")}   >Dashboard</Button>
-            </div>
-        </main>
-    </div>
+
+                {/* Show compact validation summary when blocked */}
+                {!canSave && (
+                    <div className="text-sm text-red-600 mt-2">
+                        Bitte prüfen: {errors.join(" · ")}
+                    </div>
+                )}
+
+                <div className="space-y-5 pt-6">
+                    <Button variant="primary" icon={Check} disabled={!canSave} onClick={saveTransaction}>
+                        Speichern
+                    </Button>
+                    <Button variant="secondary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")}>
+                        Transaktion
+                    </Button>
+                    <Button variant="secondary" icon={Barchart2} onClick={() => navigate("/Dashboard")}>
+                        Dashboard
+                    </Button>
+                </div>
+            </main>
+        </div>
     );
 }
 

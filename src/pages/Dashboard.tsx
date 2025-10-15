@@ -7,13 +7,13 @@ import Settings from "../assets/Settings.svg?react";
 type Tx = {
     id: string;
     kind: "expense" | "income";
-    amount: number;
+    amount: number;            // expected: negative for expense, positive for income
     gruppeId: string;
     kategorieId: string;
     anbieterId?: string | null;
     kontoId?: string | null;
     remark?: string;
-    date: string | null;
+    date: string | null;       // ISO string or null
     repeat?: boolean;
 };
 
@@ -24,14 +24,14 @@ export default function Dashboard() {
     const [parseError, setParseError] = useState<string | null>(null);
     const [spinOnce, setSpinOnce] = useState(false);
 
-    // Handle gear icon rotation
+    // spins the gear once (tiny UX detail)
     const onGearClick = () => {
         if (spinOnce) return;
         setSpinOnce(true);
         setTimeout(() => setSpinOnce(false), 600);
     };
 
-    // Load transactions from localStorage on mount
+    // load transactions from localStorage once on mount
     useEffect(() => {
         try {
             const raw = localStorage.getItem(KEY);
@@ -54,13 +54,7 @@ export default function Dashboard() {
         }
     }, []);
 
-    // Calculate total balance
-    const total = useMemo(
-        () => items.reduce((s, t) => s + (Number.isFinite(t.amount) ? t.amount : 0), 0),
-        [items]
-    );
-
-    // Format helpers
+    // currency/ date format helpers (DE locale)
     const fmtMoney = (n: number) =>
         new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
@@ -70,7 +64,28 @@ export default function Dashboard() {
         return isNaN(d.getTime()) ? "—" : new Intl.DateTimeFormat("de-DE").format(d);
     };
 
-    // --- State: parsing error ---
+    // derive totals (balance, income total, expense total)
+    const { total, incomeTotal, expenseTotal } = useMemo(() => {
+        let bal = 0, inc = 0, exp = 0;
+        for (const t of items) {
+            const a = Number.isFinite(t.amount) ? t.amount : 0;
+            bal += a;
+            if (t.kind === "income") inc += a;         // should be positive already
+            else if (t.kind === "expense") exp += a;   // should be negative already
+        }
+        return { total: bal, incomeTotal: inc, expenseTotal: exp };
+    }, [items]);
+
+    // badge + amount class helpers
+    const kindBadge = (kind: Tx["kind"]) =>
+        kind === "income"
+            ? "px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-200"
+            : "px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-200";
+
+    const amountClass = (kind: Tx["kind"]) =>
+        kind === "income" ? "text-green-700 font-semibold" : "text-red-700 font-semibold";
+
+    // --- parse error state ---
     if (parseError) {
         return (
             <section className="max-w-3xl mx-auto p-4 space-y-4">
@@ -107,7 +122,7 @@ export default function Dashboard() {
         );
     }
 
-    // --- Main layout ---
+    // --- main layout ---
     return (
         <div className="bg-white">
             <style>{`
@@ -139,36 +154,42 @@ export default function Dashboard() {
                     }
                 />
 
-                {/* --- State: no data --- */}
+                {/* empty state */}
                 {items.length === 0 ? (
                     <div className="card bg-base-200 p-6 mt-4">
                         <p className="opacity-80">Keine Daten vorhanden.</p>
                         <div className="mt-3 flex gap-2">
-                            <Link to="/" className="btn">
-                                Zur Startseite
-                            </Link>
-                            <Link to="/guestTransactionStep1" className="btn btn-primary">
-                                Neue Transaktion
-                            </Link>
+                            <Link to="/" className="btn">Zur Startseite</Link>
+                            <Link to="/guestTransactionStep1" className="btn btn-primary">Neue Transaktion</Link>
                         </div>
                     </div>
                 ) : (
-                    // --- State: normal data ---
                     <div className="mt-4 space-y-4">
-                        {/* Summary block */}
+                        {/* summary cards: balance + split */}
                         <div className="stats shadow w-full">
                             <div className="stat">
                                 <div className="stat-title">Gesamtbilanz</div>
                                 <div className="stat-value">{fmtMoney(total)}</div>
                                 <div className="stat-desc">{items.length} Einträge</div>
                             </div>
+                            <div className="stat">
+                                <div className="stat-title">Income</div>
+                                <div className="stat-value text-green-700">{fmtMoney(incomeTotal)}</div>
+                                <div className="stat-desc">Einnahmen</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-title">Expense</div>
+                                <div className="stat-value text-red-700">{fmtMoney(expenseTotal)}</div>
+                                <div className="stat-desc">Ausgaben</div>
+                            </div>
                         </div>
 
-                        {/* Transaction table */}
+                        {/* transactions table with kind badge + colored amount */}
                         <div className="overflow-x-auto">
                             <table className="table">
                                 <thead>
                                     <tr>
+                                        <th>Typ</th>
                                         <th>Datum</th>
                                         <th>Kategorie</th>
                                         <th>Gruppe</th>
@@ -178,10 +199,24 @@ export default function Dashboard() {
                                 <tbody>
                                     {items.map((tx) => (
                                         <tr key={tx.id}>
+                                            {/* type badge */}
+                                            <td>
+                                                <span className={kindBadge(tx.kind)}>
+                                                    {tx.kind === "income" ? "Income" : "Expense"}
+                                                </span>
+                                            </td>
+
+                                            {/* date */}
                                             <td>{fmtDate(tx.date)}</td>
+
+                                            {/* category/ group (fallback to "—") */}
                                             <td>{tx.kategorieId || "—"}</td>
                                             <td>{tx.gruppeId || "—"}</td>
-                                            <td className="text-right">{fmtMoney(tx.amount || 0)}</td>
+
+                                            {/* amount with kind color; amount is already signed in storage */}
+                                            <td className={`text-right tabular-nums ${amountClass(tx.kind)}`}>
+                                                {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

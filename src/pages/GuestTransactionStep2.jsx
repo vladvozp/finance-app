@@ -15,7 +15,7 @@ export default function GuestTransactionStep2() {
     const navigate = useNavigate();
 
 
-    const { date: dateRaw } = useTxDraft();
+    const { date: dateRaw, kind } = useTxDraft();
 
     const date =
         dateRaw
@@ -23,8 +23,18 @@ export default function GuestTransactionStep2() {
             : null;
 
     function next() {
-        navigate("/guestTransactionStep3");
+        if (!kind) {
+            alert("Bitte zuerst Einkommen oder Ausgabe auswählen!");
+            return;
+        }
+
+        if (kind === "income") {
+            navigate("/TestErgebniss");
+        } else {
+            navigate("/guestTransactionStep3");
+        }
     }
+
 
     // --- state ---
     const [spinOnce, setSpinOnce] = useState(false);

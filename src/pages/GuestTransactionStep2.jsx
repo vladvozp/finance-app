@@ -27,10 +27,9 @@ export default function GuestTransactionStep2() {
             alert("Bitte zuerst Einkommen oder Ausgabe auswählen!");
             return;
         }
-
-        if (kind === "income") {
-            navigate("/TestErgebniss");
-        } else {
+        //  if (kind === "income") {
+        //       navigate("/TestErgebniss");
+        else {
             navigate("/guestTransactionStep3");
         }
     }

@@ -29,7 +29,6 @@ function Combobox({
     const [query, setQuery] = useState("");
     const ref = useRef(null);
 
-    // close on outside click
     useEffect(() => {
         function onDocClick(e) {
             if (!ref.current) return;
@@ -64,8 +63,8 @@ function Combobox({
                     onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
                     onFocus={() => setOpen(true)}
                     className={`h-12 w-full border shadow-sm border-gray-500/80 px-3 outline-none placeholder-gray-400
-                      focus:border-blue-400 focus:ring-1 focus:ring-blue-400
-                      ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
+            focus:border-blue-400 focus:ring-1 focus:ring-blue-400
+            ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
                     role="combobox"
                     aria-expanded={open}
                     aria-controls={`${label}-listbox`}
@@ -106,7 +105,6 @@ function Combobox({
 
                                     {allowEdit && (
                                         <div className="ml-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
-                                            {/* Bearbeiten */}
                                             <button
                                                 type="button"
                                                 className="p-1 text-blue-400 hover:bg-blue-50 rounded"
@@ -157,7 +155,6 @@ function Combobox({
 export default function GuestTransactionStep3() {
     const navigate = useNavigate();
 
-    // settings gear spin
     const [spinOnce, setSpinOnce] = useState(false);
     const onGearClick = () => {
         if (spinOnce) return;
@@ -166,18 +163,23 @@ export default function GuestTransactionStep3() {
     };
 
     // ======== DATA from Store ========
-
     const {
+        kind = null,
         date = null,
         gruppeId = "",
         anbieterId = "",
         kategorieId = "",
+        incomeType = "",
+        quelleId = "",
+        quelleName = "",
         remark = "",
     } = useTxDraft();
 
+    // ======== FLAGS/CONFIG ========
     const requireCategory = true;
 
     // ======== demo datasets  ========
+    // EXPENSE datasets
     const [gruppen, setGruppen] = useState([
         { id: "essen", name: "Essen & Trinken" },
         { id: "haushalt", name: "Haushalt" },
@@ -221,7 +223,25 @@ export default function GuestTransactionStep3() {
         ],
     });
 
-    // ======== SELECTION ========
+    // INCOME datasets
+    const incomeTypeOptions = [
+        { id: "GEHALT", name: "Gehalt" },
+        { id: "RENTE", name: "Rente" },
+        { id: "MIETE", name: "Mieteinnahme" },
+        { id: "VERKAUF", name: "Verkauf" },
+        { id: "GESCHENK", name: "Geschenk" },
+        { id: "SONSTIGES", name: "Sonstiges" },
+    ];
+
+    const [quellen, setQuellen] = useState([
+        { id: "arbeitgeber", name: "Arbeitgeber" },
+        { id: "rentenversicherung", name: "Rentenversicherung" },
+        { id: "mieter", name: "Mieter" },
+        { id: "ebay", name: "eBay" },
+        { id: "privat", name: "Privat" },
+    ]);
+
+    // ======== SELECTION (expense) ========
     const anbieterOptions = useMemo(() => {
         if (!gruppeId) return anbieter;
         return anbieter.filter(a => a.gruppen.includes(gruppeId));
@@ -231,13 +251,20 @@ export default function GuestTransactionStep3() {
         return gruppeId ? (kategorien[gruppeId] || []) : [];
     }, [kategorien, gruppeId]);
 
-    // reset dependent on group change
+    // reset dependent on group change (expense branch)
     useEffect(() => {
-        txDraft.setMany({ anbieterId: "", kategorieId: "" });
-    }, [gruppeId]);
+        if (kind === "expense") {
+            txDraft.setMany({ anbieterId: "", kategorieId: "" });
+        }
+    }, [gruppeId, kind]);
 
     // ======== VALIDATION ========
-    const canProceed = Boolean(gruppeId && (requireCategory ? kategorieId : true));
+    const canProceed =
+        kind === "income"
+            ? Boolean(incomeType && (quelleId || quelleName))
+            : kind === "expense"
+                ? Boolean(gruppeId && (requireCategory ? kategorieId : true))
+                : false;
 
     // ======== CRUD handlers ========
     // Gruppe
@@ -301,6 +328,22 @@ export default function GuestTransactionStep3() {
         if (kategorieId === id) txDraft.set("kategorieId", "");
     };
 
+    // Quelle (income)
+    const handleCreateQuelle = (name) => {
+        const id = name.toLowerCase().replace(/\s+/g, "-");
+        if (quellen.some(q => q.id === id)) return alert("Quelle existiert bereits.");
+        setQuellen([...quellen, { id, name }]);
+        txDraft.setMany({ quelleId: id, quelleName: name });
+    };
+    const handleEditQuelle = (id, newName) => {
+        setQuellen(quellen.map(q => q.id === id ? { ...q, name: newName } : q));
+        if (quelleId === id) txDraft.set("quelleName", newName);
+    };
+    const handleDeleteQuelle = (id) => {
+        setQuellen(quellen.filter(q => q.id !== id));
+        if (quelleId === id) txDraft.setMany({ quelleId: "", quelleName: "" });
+    };
+
     // navigate
     function next() {
         navigate("/TestErgebniss");
@@ -340,51 +383,83 @@ export default function GuestTransactionStep3() {
                 <section className="flex-1">
                     <h1 className="text-lg text-gray-600 mb-4">Demo-Zugang ohne Speicherung</h1>
 
-                    {/* GRUPPE (required) */}
-                    <Combobox
-                        label="Gruppe"
-                        required
-                        options={gruppen}
-                        value={gruppeId}
-                        onChange={(id) => txDraft.set("gruppeId", id)}
-                        placeholder="Gruppe wählen…"
-                        allowCreate
-                        onCreate={handleCreateGruppe}
-                        allowEdit
-                        onEdit={handleEditGruppe}
-                        onDelete={handleDeleteGruppe}
-                    />
+                    {/* ====== CONDITIONAL BLOCKS ====== */}
+                    {kind === "income" && (
+                        <>
+                            <Combobox
+                                label="Typ (Einnahme)"
+                                required
+                                options={incomeTypeOptions}
+                                value={incomeType}
+                                onChange={(id, opt) => txDraft.set("incomeType", id)}
+                                placeholder="Typ wählen…"
+                            />
 
-                    {/* ANBIETER (optional) */}
-                    <Combobox
-                        label="Anbieter"
-                        helperText={gruppeId ? "gefiltert nach Gruppe" : undefined}
-                        options={anbieterOptions}
-                        value={anbieterId}
-                        onChange={(id) => txDraft.set("anbieterId", id)}
-                        placeholder="z. B. Rewe"
-                        allowCreate
-                        onCreate={handleCreateAnbieter}
-                        allowEdit
-                        onEdit={handleEditAnbieter}
-                        onDelete={handleDeleteAnbieter}
-                    />
+                            <Combobox
+                                label="Quelle"
+                                required
+                                options={quellen}
+                                value={quelleId || ""}
+                                onChange={(id, opt) => txDraft.setMany({ quelleId: id, quelleName: opt?.name ?? "" })}
+                                placeholder="z. B. Arbeitgeber"
+                                allowCreate
+                                onCreate={handleCreateQuelle}
+                                allowEdit
+                                onEdit={handleEditQuelle}
+                                onDelete={handleDeleteQuelle}
+                            />
+                        </>
+                    )}
 
-                    {/* KATEGORIE (required if requireCategory=true) */}
-                    <Combobox
-                        label="Kategorie"
-                        required={requireCategory}
-                        options={kategorieOptions}
-                        value={kategorieId}
-                        onChange={(id) => txDraft.set("kategorieId", id)}
-                        placeholder={gruppeId ? "Kategorie wählen…" : "Erst Gruppe wählen"}
-                        disabled={!gruppeId}
-                        allowCreate
-                        onCreate={handleCreateKategorie}
-                        allowEdit
-                        onEdit={handleEditKategorie}
-                        onDelete={handleDeleteKategorie}
-                    />
+                    {kind === "expense" && (
+                        <>
+                            {/* GRUPPE (required) */}
+                            <Combobox
+                                label="Gruppe"
+                                required
+                                options={gruppen}
+                                value={gruppeId}
+                                onChange={(id) => txDraft.set("gruppeId", id)}
+                                placeholder="Gruppe wählen…"
+                                allowCreate
+                                onCreate={handleCreateGruppe}
+                                allowEdit
+                                onEdit={handleEditGruppe}
+                                onDelete={handleDeleteGruppe}
+                            />
+
+                            {/* ANBIETER (optional) */}
+                            <Combobox
+                                label="Anbieter"
+                                helperText={gruppeId ? "gefiltert nach Gruppe" : undefined}
+                                options={anbieterOptions}
+                                value={anbieterId}
+                                onChange={(id) => txDraft.set("anbieterId", id)}
+                                placeholder="z. B. Rewe"
+                                allowCreate
+                                onCreate={handleCreateAnbieter}
+                                allowEdit
+                                onEdit={handleEditAnbieter}
+                                onDelete={handleDeleteAnbieter}
+                            />
+
+                            {/* KATEGORIE (required if requireCategory=true) */}
+                            <Combobox
+                                label="Kategorie"
+                                required={requireCategory}
+                                options={kategorieOptions}
+                                value={kategorieId}
+                                onChange={(id) => txDraft.set("kategorieId", id)}
+                                placeholder={gruppeId ? "Kategorie wählen…" : "Erst Gruppe wählen"}
+                                disabled={!gruppeId}
+                                allowCreate
+                                onCreate={handleCreateKategorie}
+                                allowEdit
+                                onEdit={handleEditKategorie}
+                                onDelete={handleDeleteKategorie}
+                            />
+                        </>
+                    )}
 
                     {/* BEMERKUNG */}
                     <div className="mt-6">
@@ -400,15 +475,12 @@ export default function GuestTransactionStep3() {
                                     const v = e.target.value;
                                     if (v.length <= 100) txDraft.set("remark", v);
                                 }}
-
                                 placeholder="Optionale Notiz (z. B. 'Aktion', 'für Schule' …)"
                                 className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm
-                            focus:border-blue-400 focus:ring-1 focus:ring-blue-400
-                            resize-none outline-none placeholder-gray-400"
+                  focus:border-blue-400 focus:ring-1 focus:ring-blue-400
+                  resize-none outline-none placeholder-gray-400"
                                 maxLength={100}
                             />
-
-                            {/* Symbol Count */}
                             <span className="absolute bottom-1 right-3 text-xs text-gray-500">
                                 {remark.length}/100
                             </span>

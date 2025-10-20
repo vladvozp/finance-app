@@ -1,6 +1,8 @@
 // src/pages/TestErgebniss.jsx
 import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
+import Progress from "../components/Progress";
+
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
 import Plus from "../assets/Plus.svg?react";
@@ -251,7 +253,14 @@ export default function TestErgebniss() {
                             Zurück
                         </Link>
                     }
-                    center={null}
+
+                    center={<Progress
+                        step={4}
+                        total={4}
+                        className="hidden sm:flex w-[120px]"
+                        srLabel="Schrittfortschritt"
+                    />}
+
                     right={
                         <button
                             aria-label="Einstellungen"

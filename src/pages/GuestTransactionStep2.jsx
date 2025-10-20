@@ -2,6 +2,7 @@ import PageHeader from "../components/PageHeader.jsx";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Button from "../components/Button";
+import Progress from "../components/Progress";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
@@ -64,7 +65,14 @@ export default function GuestTransactionStep2() {
                             Zurück
                         </Link>
                     }
-                    center={null}
+
+                    center={<Progress
+                        step={2}
+                        total={4}
+                        className="hidden sm:flex w-[120px]"
+                        srLabel="Schrittfortschritt"
+                    />}
+
                     right={
                         <button
                             aria-label="Einstellungen"

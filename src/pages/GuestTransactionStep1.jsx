@@ -7,6 +7,7 @@ import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 
 import Button from "../components/Button";
+import Progress from "../components/Progress";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import Settings from "../assets/Settings.svg?react";
@@ -278,6 +279,7 @@ export default function GuestTransactionStep1() {
   const derivedCents = toCents(amountStr || amount);
   const canContinue = derivedCents > 0 && !!accountId;
 
+
   return (
     <div className="bg-white">
       <style>{`
@@ -296,7 +298,14 @@ export default function GuestTransactionStep1() {
               Zurück
             </Link>
           }
-          center={null}
+
+          center={<Progress
+            step={1}
+            total={4}
+            className="hidden sm:flex w-[120px]"
+            srLabel="Schrittfortschritt"
+          />}
+
           right={
             <button
               aria-label="Einstellungen"

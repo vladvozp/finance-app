@@ -10,17 +10,14 @@ type Tx = {
     kind: "expense" | "income";
     amount: number;        // expense: negative, income: positive
     date: string | null;   // YYYY-MM-DD or null
-
     // EXPENSE-only
     gruppeId?: string;
     kategorieId?: string;
     anbieterId?: string | null;
-
     // INCOME-only
     incomeType?: "GEHALT" | "RENTE" | "MIETE" | "VERKAUF" | "GESCHЕНК" | "SONSTIGES";
     quelleId?: string | null;
     quelleName?: string | null;
-
     // COMMON
     kontoId?: string | null;
     remark?: string | null;
@@ -30,7 +27,6 @@ type Tx = {
 const TX_KEY = "ft_transactions";
 const SETTINGS_KEY = "ft_dashboard_settings_v1"; // bump version if shape changes
 
-/** Storage helpers — isolate format behind small functions. */
 function readTxList(): Tx[] {
     try {
         const raw = localStorage.getItem(TX_KEY);
@@ -44,7 +40,6 @@ function writeTxList(list: Tx[]) {
     localStorage.setItem(TX_KEY, JSON.stringify(list));
 }
 
-/** CSV exporter for current view */
 function toCSV(rows: Tx[]): string {
     const esc = (v: any) => {
         const s = String(v ?? "");
@@ -72,7 +67,6 @@ function download(filename: string, content: string, mime = "text/csv;charset=ut
     URL.revokeObjectURL(url);
 }
 
-/** Small debounce to avoid spamming LS on every keystroke. */
 function debounce<T extends (...a: any) => void>(fn: T, ms = 250) {
     let t: number | undefined;
     // @ts-ignore
@@ -100,7 +94,6 @@ export default function Dashboard() {
 
     const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
 
-    /** Load persisted settings once. Backward compatible & safe parsing. */
     useEffect(() => {
         try {
             const raw = localStorage.getItem(SETTINGS_KEY);
@@ -114,7 +107,6 @@ export default function Dashboard() {
         } catch { /* ignore */ }
     }, []);
 
-    /** Persist settings on change (debounced). */
     const persistSettings = useRef(
         debounce((payload: any) => {
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload));
@@ -125,21 +117,16 @@ export default function Dashboard() {
         persistSettings({ kindFilter, from, to, cols, sort });
     }, [kindFilter, from, to, cols, sort, persistSettings]);
 
-    /** ------------------------------------------------ */
-
-    // Column toggles + sort helpers
     const toggleCol = (k: keyof typeof cols) => setCols((c) => ({ ...c, [k]: !c[k] }));
     const toggleSort = (key: string) =>
         setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
 
-    // One-off gear spin
     const onGearClick = () => {
         if (spinOnce) return;
         setSpinOnce(true);
         setTimeout(() => setSpinOnce(false), 600);
     };
 
-    // Load transactions
     useEffect(() => {
         try {
             const parsed = readTxList();
@@ -151,7 +138,6 @@ export default function Dashboard() {
         }
     }, []);
 
-    // Formatters
     const fmtMoney = (n: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
     const fmtDate = (iso: string | null) => {
         if (!iso) return "—";
@@ -164,7 +150,6 @@ export default function Dashboard() {
         return isNaN(d.getTime()) ? "—" : new Intl.DateTimeFormat("de-DE").format(d);
     };
 
-    // Filter → Sort → Totals
     const filtered = useMemo(() => {
         return items.filter((tx) => {
             if (kindFilter !== "all" && tx.kind !== kindFilter) return false;
@@ -214,7 +199,6 @@ export default function Dashboard() {
             : "px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-200";
     const amountClass = (k: Tx["kind"]) => (k === "income" ? "text-green-700 font-semibold" : "text-red-700 font-semibold");
 
-    /** Delete by id — pure state update + persist. */
     function deleteById(id: string) {
         if (!id) return;
         const ok = confirm("Diesen Eintrag wirklich löschen?");
@@ -226,7 +210,6 @@ export default function Dashboard() {
         });
     }
 
-    // Reset everything to defaults and clear persisted settings.
     function resetFiltersToDefault() {
         const defaults = {
             kindFilter: "all" as const,
@@ -267,84 +250,136 @@ export default function Dashboard() {
 
             <main className="py-6 flex flex-col">
                 <PageHeader
-                    left={<Link to="/guest" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"><Arrowleft className="w-5 h-5" /> Zurück</Link>}
+                    left={
+                        <Link
+                            to="/guest"
+                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                        >
+                            <Arrowleft className="w-5 h-5" />
+                            Zurück
+                        </Link>
+                    }
                     center={null}
                     right={
                         <div className="flex items-center gap-2">
-                            <button className="btn btn-sm" onClick={() => download(`transactions_${Date.now()}.csv`, toCSV(filtered))}>CSV Export</button>
-                            <button aria-label="Einstellungen" className="p-2 hover:bg-gray-100 transition rounded" onClick={() => {
-                                if (spinOnce) return; setSpinOnce(true); setTimeout(() => setSpinOnce(false), 600);
-                            }} type="button">
+                            <button className="btn btn-sm" onClick={() => download(`transactions_${Date.now()}.csv`, toCSV(filtered))}>
+                                CSV Export
+                            </button>
+                            <button
+                                aria-label="Einstellungen"
+                                className="p-2 hover:bg-gray-100 transition rounded"
+                                onClick={onGearClick}
+                                type="button"
+                            >
                                 <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
                             </button>
                         </div>
                     }
                 />
 
-                {/* FILTER BAR — persisted via SETTINGS_KEY */}
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-                    {/* Filter: type */}
+                {/* ======= FILTERS (Top) ======= */}
+                <section
+                    className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
+                    role="region"
+                    aria-labelledby="filters-heading"
+                >
+                    <h2 id="filters-heading" className="sr-only">Filter</h2>
+
+                    {/* Typ */}
                     <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Typ</label>
-                        <select className="select select-bordered h-10" value={kindFilter} onChange={(e) => setKindFilter(e.target.value as any)}>
+                        <label htmlFor="filter-typ" className="text-xs text-gray-500 mb-1">Typ</label>
+                        <select id="filter-typ" className="select select-bordered h-10" value={kindFilter} onChange={(e) => setKindFilter(e.target.value as any)}>
                             <option value="all">Alle</option>
                             <option value="income">Einnahmen</option>
                             <option value="expense">Ausgaben</option>
                         </select>
                     </div>
 
-                    {/* Filter: date range */}
+                    {/* Von */}
                     <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Von (Datum)</label>
-                        <input type="date" className="input input-bordered h-10" value={from} onChange={(e) => setFrom(e.target.value)} />
-                    </div>
-                    <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Bis (Datum)</label>
-                        <input type="date" className="input input-bordered h-10" value={to} onChange={(e) => setTo(e.target.value)} />
+                        <label htmlFor="filter-from" className="text-xs text-gray-500 mb-1">Von (Datum)</label>
+                        <input id="filter-from" type="date" className="input input-bordered h-10" value={from} onChange={(e) => setFrom(e.target.value)} />
                     </div>
 
-                    {/* Column toggles */}
+                    {/* Bis */}
                     <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 mb-1">Spalten</label>
-                        <div className="flex flex-wrap gap-2">
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.gruppe} onChange={() => toggleCol("gruppe")} /><span className="label-text text-xs">Gruppe</span></label>
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.kategorie} onChange={() => toggleCol("kategorie")} /><span className="label-text text-xs">Kategorie</span></label>
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.quelle} onChange={() => toggleCol("quelle")} /><span className="label-text text-xs">Quelle</span></label>
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.incomeType} onChange={() => toggleCol("incomeType")} /><span className="label-text text-xs">Typ (Einnahme)</span></label>
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.remark} onChange={() => toggleCol("remark")} /><span className="label-text text-xs">Bemerkung</span></label>
-                            <label className="label cursor-pointer gap-2"><input type="checkbox" className="checkbox checkbox-sm" checked={cols.actions} onChange={() => toggleCol("actions")} /><span className="label-text text-xs">Aktionen</span></label>
-                        </div>
+                        <label htmlFor="filter-to" className="text-xs text-gray-500 mb-1">Bis (Datum)</label>
+                        <input id="filter-to" type="date" className="input input-bordered h-10" value={to} onChange={(e) => setTo(e.target.value)} />
                     </div>
 
-                    {/* Reset button — clears LS and restores defaults */}
+                    {/* Reset */}
                     <div className="flex flex-col">
-                        {/* Invisible label keeps grid alignment */}
                         <label className="text-xs text-gray-500 mb-1 opacity-0">Reset</label>
                         <button type="button" className="btn btn-outline h-10 text-sm" onClick={resetFiltersToDefault}>
-                            {/* 🇩🇪 Native wording: */}
                             Filter&nbsp;zurücksetzen
                         </button>
                     </div>
-                </div>
+                </section>
 
-                {/* SUMMARY CARDS (computed from filtered) */}
-                <div className="stats shadow w-full mt-4">
+                {/* ======= SUMMARY (Result) ======= */}
+                <section className="stats border shadow w-full mt-4" role="region" aria-labelledby="summary-heading">
+                    <h2 id="summary-heading" className="sr-only">Zusammenfassung</h2>
                     <div className="stat">
-                        <div className="stat-title">Gesamtbilanz (gefiltert)</div>
-                        <div className="stat-value">{fmtMoney(total)}</div>
+                        <div className="stat-title font-semibold">Gesamtbilanz (gefiltert)</div>
+                        <div className="stat-value font-semibold">{fmtMoney(total)}</div>
                         <div className="stat-desc">{filtered.length} Einträge</div>
                     </div>
                     <div className="stat">
-                        <div className="stat-title">Einnahmen</div>
+                        <div className="stat-title font-semibold">Einnahmen</div>
                         <div className="stat-value text-green-700">{fmtMoney(incomeTotal)}</div>
                     </div>
                     <div className="stat">
-                        <div className="stat-title">Ausgaben</div>
+                        <div className="stat-title font-semibold">Ausgaben</div>
                         <div className="stat-value text-red-700">{fmtMoney(expenseTotal)}</div>
                     </div>
-                </div>
+                </section>
 
-                {/* TABLE (sticky header, sorting, delete) */}
+                {/* ======= SPALTEN (Accordion, under result) ======= */}
+                <section className="mt-4" role="region" aria-labelledby="columns-heading">
+                    <h2 id="columns-heading" className="sr-only">Spalten</h2>
+
+                    <details className="bg-base-100 border open:shadow-sm">
+                        <summary
+                            className="cursor-pointer list-none px-4 py-3 flex items-center justify-between"
+                            aria-controls="columns-panel"
+                            aria-expanded={undefined /* handled natively by <details> */}
+                        >
+                            <span className="font-medium text-sm">Spalten</span>
+                            <span aria-hidden>▾</span>
+                        </summary>
+
+                        <div id="columns-panel" className="px-4 pb-4">
+                            <div className="flex flex-wrap gap-3">
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.gruppe} onChange={() => toggleCol("gruppe")} />
+                                    <span className="label-text text-xs">Gruppe</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.kategorie} onChange={() => toggleCol("kategorie")} />
+                                    <span className="label-text text-xs">Kategorie</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.quelle} onChange={() => toggleCol("quelle")} />
+                                    <span className="label-text text-xs">Quelle</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.incomeType} onChange={() => toggleCol("incomeType")} />
+                                    <span className="label-text text-xs">Typ (Einnahme)</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.remark} onChange={() => toggleCol("remark")} />
+                                    <span className="label-text text-xs">Bemerkung</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.actions} onChange={() => toggleCol("actions")} />
+                                    <span className="label-text text-xs">Aktionen</span>
+                                </label>
+                            </div>
+                        </div>
+                    </details>
+                </section>
+
+                {/* ======= TABLE ======= */}
                 {sorted.length === 0 ? (
                     <div className="card bg-base-200 p-6 mt-4">
                         <p className="opacity-80">Keine Daten für die aktuelle Auswahl.</p>
@@ -353,7 +388,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto mt-4 max-h-[65vh] border rounded-lg">
+                    <div className="overflow-x-auto mt-4 max-h-[65vh] border shadow-sm">
                         <table className="table">
                             <thead className="sticky">
                                 <tr>
@@ -400,7 +435,12 @@ export default function Dashboard() {
                                         <td className={`text-right tabular-nums ${amountClass(tx.kind)}`}>{fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}</td>
                                         {cols.actions && (
                                             <td className="text-right">
-                                                <button type="button" className="btn btn-ghost btn-xs text-red-600" aria-label="Transaktion löschen" onClick={() => deleteById(tx.id)}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-ghost btn-xs text-red-600"
+                                                    aria-label="Transaktion löschen"
+                                                    onClick={() => deleteById(tx.id)}
+                                                >
                                                     Löschen
                                                 </button>
                                             </td>

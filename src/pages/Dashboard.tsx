@@ -267,21 +267,19 @@ export default function Dashboard() {
                             Zurück
                         </Link>
                     }
-                    center={null}
+                    center={<button className="btn btn-sm" onClick={() => download(`transactions_${Date.now()}.csv`, toCSV(filtered))}>
+                        CSV Export
+                    </button>}
                     right={
-                        <div className="flex items-center gap-2">
-                            <button className="btn btn-sm" onClick={() => download(`transactions_${Date.now()}.csv`, toCSV(filtered))}>
-                                CSV Export
-                            </button>
-                            <button
-                                aria-label="Einstellungen"
-                                className="p-2 hover:bg-gray-100 transition rounded"
-                                onClick={onGearClick}
-                                type="button"
-                            >
-                                <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
-                            </button>
-                        </div>
+                        <Link
+                            to="/SettingsPage"
+                            aria-label="Einstellungen"
+                            className="p-2 hover:bg-gray-100 transition"
+                            onClick={onGearClick}
+                            type="button"
+                        >
+                            <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                        </Link>
                     }
                 />
 

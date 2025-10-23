@@ -232,7 +232,15 @@ export default function Dashboard() {
                 <PageHeader
                     left={<Link to="/guest" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"><Arrowleft className="w-5 h-5" /> Zurück</Link>}
                     center={null}
-                    right={<button aria-label="Einstellungen" className="p-2 rounded-md hover:bg-gray-100 transition" onClick={() => setSpinOnce(true)} type="button"><Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} /></button>}
+                    right={<Link
+                        to="/SettingsPage"
+                        aria-label="Einstellungen"
+                        className="p-2 hover:bg-gray-100 transition"
+                        onClick={onGearClick}
+                        type="button"
+                    >
+                        <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                    </Link>}
                 />
                 <div className="alert alert-error"><span>Fehlerhafte Daten: {parseError}</span></div>
                 <p className="text-sm opacity-80">Lösche den Schlüssel <code>{TX_KEY}</code> im Local Storage und speichere die Transaktion erneut.</p>

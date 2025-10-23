@@ -379,14 +379,15 @@ export default function GuestTransactionStep3() {
 
 
                     right={
-                        <button
+                        <Link
+                            to="/SettingsPage"
                             aria-label="Einstellungen"
                             className="p-2 hover:bg-gray-100 transition"
                             onClick={onGearClick}
                             type="button"
                         >
                             <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
-                        </button>
+                        </Link>
                     }
                 />
 

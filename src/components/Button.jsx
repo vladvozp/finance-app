@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 
 /**
  * Reusable Button component

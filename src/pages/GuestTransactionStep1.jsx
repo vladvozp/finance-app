@@ -276,7 +276,15 @@ export default function GuestTransactionStep1() {
     navigate("/guestTransactionStep2");
   };
 
+
+
   const derivedCents = toCents(amountStr || amount);
+  const hasAccount = useMemo(
+    () => accounts.some(a => a.id === accountId),
+    [accounts, accountId]
+  );
+
+
   const canContinue = derivedCents > 0 && !!accountId;
 
 
@@ -307,14 +315,15 @@ export default function GuestTransactionStep1() {
           />}
 
           right={
-            <button
+            <Link
+              to="/SettingsPage"
               aria-label="Einstellungen"
-              className="p-2 rounded-md hover:bg-gray-100 transition"
+              className="p-2 hover:bg-gray-100 transition"
               onClick={onGearClick}
               type="button"
             >
               <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
-            </button>
+            </Link>
           }
         />
 

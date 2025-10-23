@@ -8,9 +8,10 @@ import GuestTransactionStep2 from "../pages/GuestTransactionStep2.jsx";
 import GuestTransactionStep3 from "../pages/GuestTransactionStep3.jsx";
 import TestErgebniss from "../pages/TestErgebniss.jsx";
 import Dashboard from "../pages/Dashboard.tsx";
-
+import SettingsPage from "../pages/SettingsPage.tsx";
 
 import ProtectedRoute from "../app/ProtectedRoute.jsx"
+
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "/guestTransactionStep3", element: <GuestTransactionStep3 /> },
       { path: "/TestErgebniss", element: <TestErgebniss /> },
       { path: "/Dashboard", element: <Dashboard /> },
+      { path: "/SettingsPage", element: <SettingsPage /> },
     ],
   },
 ]);

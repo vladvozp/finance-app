@@ -9,11 +9,11 @@ import Button from "../components/Button";
 
 export default function Home() {
   return (
-    <div className=" bg-white">
+    <div className="bg-white">
       <main className="py-6 flex flex-col">
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
-            <Arrowleft className="w-5 h-5 inline-block mr-2"/>
+            <Arrowleft className="w-5 h-5 inline-block mr-2" />
             <Link to="/login" className="text-sm text-gray-600 underline hover:text-gray-800">
               Zur Startseite
             </Link>

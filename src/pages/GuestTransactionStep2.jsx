@@ -39,21 +39,9 @@ export default function GuestTransactionStep2() {
     // --- state ---
     const [spinOnce, setSpinOnce] = useState(false);
 
-    // --- handlers ---
-    const onGearClick = () => {
-        if (spinOnce) return;
-        setSpinOnce(true);
-        setTimeout(() => setSpinOnce(false), 600);
-    };
 
     return (
         <div className="bg-white">
-            {/* one-time spin animation */}
-            <style>{`
-        @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
-        .rotate-once { animation: spin-once 0.6s linear 1; }
-      `}</style>
-
             <main className="py-6 flex flex-col">
                 <PageHeader
                     left={
@@ -77,11 +65,10 @@ export default function GuestTransactionStep2() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="p-2 hover:bg-gray-100 transition"
-                            onClick={onGearClick}
+                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />

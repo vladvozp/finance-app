@@ -59,13 +59,6 @@ function draftHash(d) {
 export default function TestErgebniss() {
     const navigate = useNavigate();
 
-    const [spinOnce, setSpinOnce] = useState(false);
-    const onGearClick = () => {
-        if (spinOnce) return;
-        setSpinOnce(true);
-        setTimeout(() => setSpinOnce(false), 600);
-    };
-
     // Pull full draft (includes both expense and income fields)
     const {
         kind,                 // "expense" | "income"
@@ -237,11 +230,6 @@ export default function TestErgebniss() {
 
     return (
         <div className="bg-white">
-            <style>{`
-        @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
-        .rotate-once { animation: spin-once 0.6s linear 1; }
-      `}</style>
-
             <main className="py-6 flex flex-col">
                 <PageHeader
                     left={
@@ -265,11 +253,10 @@ export default function TestErgebniss() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="p-2 hover:bg-gray-100 transition"
-                            onClick={onGearClick}
+                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />

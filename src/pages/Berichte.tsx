@@ -100,12 +100,12 @@ export default function Berichte() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="p-2 hover:bg-gray-100 transition"
-                            onClick={onGearClick}
+                            className="group p-2 hover:bg-gray-100 transition rounded-lg"
                             type="button"
                         >
-                            <Settings className={`h-6 w-6 ${spinOnce ? "rotate-once" : ""}`} />
+                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
+
                     }
                 />
 

@@ -18,6 +18,7 @@ import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 import Cross from "../assets/Cross.svg?react";
 
 const ACC_KEY = "ft_accounts";
+const TX_KEY = "ft_transactions";
 
 // ---------- Helpers ----------
 const fmtEur = (n) =>
@@ -53,21 +54,18 @@ export function ensureAccounts() {
     if (!raw) {
       const seed = [createDefaultAccount("Bargeld")];
       localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-      console.log("[ft_accounts] initialized:", seed);
       return seed;
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
       const seed = [createDefaultAccount("Bargeld")];
       localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-      console.warn("[ft_accounts] invalid/empty → reset to default");
       return seed;
     }
     return parsed;
   } catch {
     const seed = [createDefaultAccount("Bargeld")];
     localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-    console.warn("[ft_accounts] parse error → reset to default");
     return seed;
   }
 }
@@ -132,6 +130,37 @@ function editOpeningBalanceInteractive(accId, currentOpening, onDone) {
   return list;
 }
 
+// --- NEW: persisted delete helper ---
+// Reason: deleting only in state may resurrect the account from localStorage later.
+function deleteAccountInteractive(accId, onDone) {
+  const accRaw = localStorage.getItem(ACC_KEY);
+  const accounts = accRaw ? JSON.parse(accRaw) : [];
+  const txRaw = localStorage.getItem(TX_KEY);
+  const tx = txRaw ? JSON.parse(txRaw) : [];
+
+  const acc = accounts.find(a => a.id === accId);
+  if (!acc) return null;
+
+  // compute live balance to be extra safe
+  const sum = tx.reduce((s, t) => {
+    if (t && t.kontoId === accId && Number.isFinite(t.amount)) return s + t.amount;
+    return s;
+  }, 0);
+  const balance = (acc.openingBalance || 0) + sum;
+
+  if (balance !== 0) {
+    alert(`Konto "${acc.name}" kann nur gelöscht werden, wenn der Kontostand 0,00 € ist.`);
+    return null;
+  }
+
+  if (!window.confirm(`Konto "${acc.name}" wirklich löschen?`)) return null;
+
+  const next = accounts.filter(a => a.id !== accId);
+  localStorage.setItem(ACC_KEY, JSON.stringify(next));
+  if (typeof onDone === "function") onDone(next);
+  return next;
+}
+
 // ---------- Page ----------
 export default function GuestTransactionStep1() {
   const navigate = useNavigate();
@@ -139,27 +168,31 @@ export default function GuestTransactionStep1() {
   // global draft (store)
   const {
     amount = "",
-    amountCents = 0,
     accountId = "",
     kind = "expense", // "expense" | "income"
   } = useTxDraft();
 
   // UI state
-  const [spinOnce, setSpinOnce] = useState(false);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [showAll, setShowAll] = useState(false); // full accounts list
+  const [showAll, setShowAll] = useState(false);
   const comboboxRef = useRef(null);
 
   // accounts state (loaded from localStorage)
   const [accounts, setAccounts] = useState([]);
 
-  // derive amount string from store on mount/changes
+  // --- Single source of truth for amount is the input field (amountStr) ---
+  // Reason: we want Continue enabled only when form input holds a valid amount (>0)
   const [amountStr, setAmountStr] = useState(
     typeof amount === "number" && amount > 0
-      ? (amount).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      ? amount.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
       : ""
   );
+
+  // --- NEW: local selection bound to the combobox input ---
+  // Reason: account is "truthy" only if selected via the dropdown
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [selectedAccountName, setSelectedAccountName] = useState("");
 
   // Ensure accounts
   useEffect(() => {
@@ -167,16 +200,16 @@ export default function GuestTransactionStep1() {
     setAccounts(accs);
   }, []);
 
-  // sync external amount → local input
+  // OPTIONAL: prefill selection from store when returning to the step (only if account exists)
   useEffect(() => {
-    if (typeof amount === "number" && amount > 0) {
-      setAmountStr(
-        amount.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-      );
-    } else if (!amount) {
-      setAmountStr("");
+    if (!accountId || accounts.length === 0) return;
+    const acc = accounts.find(a => a.id === accountId);
+    if (acc) {
+      setSelectedAccountId(acc.id);
+      setSelectedAccountName(acc.name);
+      setQuery(acc.name);
     }
-  }, [amount]);
+  }, [accountId, accounts]);
 
   // close combobox on outside click
   useEffect(() => {
@@ -194,7 +227,7 @@ export default function GuestTransactionStep1() {
   const accountsWithBalance = useMemo(() => {
     let tx = [];
     try {
-      const raw = localStorage.getItem("ft_transactions");
+      const raw = localStorage.getItem(TX_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       tx = Array.isArray(parsed) ? parsed : [];
     } catch { tx = []; }
@@ -233,10 +266,12 @@ export default function GuestTransactionStep1() {
   const handleBlur = () => {
     const cents = toCents(amountStr);
     if (cents <= 0) {
+      // keep input clear; also persist 0 into draft for next steps if needed
       txDraft.setMany({ amount: 0, amountCents: 0 });
       setAmountStr("");
     } else {
       const euros = cents / 100;
+      // persist to draft so Step2/Step3 can read it
       txDraft.setMany({ amount: euros, amountCents: cents });
       setAmountStr(
         euros.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -249,21 +284,19 @@ export default function GuestTransactionStep1() {
     txDraft.set("kind", nextKind);
   };
 
+  // --- NEW: the only place that sets a valid account selection ---
   const onAccountPick = (acc) => {
-    txDraft.setMany({ accountId: acc.id, kontoName: acc.name });
-    setQuery(acc.name);
+    setSelectedAccountId(acc.id);
+    setSelectedAccountName(acc.name);
+    setQuery(acc.name);     // reflect the selection into the input
     setOpen(false);
+    // persist for later steps; UI truth remains local
+    txDraft.setMany({ accountId: acc.id, kontoName: acc.name });
   };
-
-  {/* const onGearClick = () => {
-    if (spinOnce) return;
-    setSpinOnce(true);
-    setTimeout(() => setSpinOnce(false), 600);
-  }; */}
 
   // Next → always go to Step2 (datepicker). Step2 decides next page by `kind`.
   const onNext = () => {
-    const cents = toCents(amountStr || amount);
+    const cents = toCents(amountStr); // single source of truth
     const nowISO = new Date().toISOString();
 
     txDraft.setMany({
@@ -271,26 +304,19 @@ export default function GuestTransactionStep1() {
       amount: cents / 100,
       amountCents: cents,
       date: nowISO,             // default; user can change on Step2
+      accountId: selectedAccountId || "",
+      kontoName: selectedAccountName || "",
     });
 
     navigate("/guestTransactionStep2");
   };
 
-
-
-  const derivedCents = toCents(amountStr || amount);
-  const hasAccount = useMemo(
-    () => accounts.some(a => a.id === accountId),
-    [accounts, accountId]
-  );
-
-
-  const canContinue = derivedCents > 0 && !!accountId;
-
+  // --- NEW: canContinue depends only on form truths ---
+  // amountStr (>0) and account selected via combobox (selectedAccountId)
+  const canContinue = toCents(amountStr) > 0 && !!selectedAccountId;
 
   return (
     <div className="bg-white">
-
       <main className="py-6 flex flex-col">
         <PageHeader
           left={
@@ -397,7 +423,10 @@ export default function GuestTransactionStep1() {
               placeholder="Sparkasse"
               value={query}
               onChange={(e) => {
+                // Any manual typing invalidates the previous selection
                 setQuery(e.target.value);
+                setSelectedAccountId("");
+                setSelectedAccountName("");
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
@@ -416,6 +445,8 @@ export default function GuestTransactionStep1() {
                 aria-label="Eingabe löschen"
                 onClick={() => {
                   setQuery("");
+                  setSelectedAccountId("");
+                  setSelectedAccountName("");
                   setOpen(true);
                 }}
                 className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
@@ -439,56 +470,16 @@ export default function GuestTransactionStep1() {
                       type="button"
                       onClick={() => onAccountPick(acc)}
                       className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition
-                        ${accountId === acc.id ? "bg-white shadow-sm" : "hover:bg-white/70"}`}
+                        ${selectedAccountId === acc.id ? "bg-white shadow-sm" : "cursor-pointer hover:bg-white/70"}`}
                       role="option"
-                      aria-selected={accountId === acc.id}
+                      aria-selected={selectedAccountId === acc.id}
                     >
-                      <span className="flex items-center gap-2">
-                        <PencilIcon className="w-4 h-4" />
-                        <span>{acc.name}</span>
+                      <span className="font-medium truncate" title={acc.name}>
+                        {acc.name}
                       </span>
 
                       <div className="flex items-center gap-2">
                         <span className="tabular-nums">{fmtEur(acc.balance || 0)}</span>
-
-                        {/* inline actions */}
-                        <button
-                          type="button"
-                          title="Umbenennen"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const updatedList = renameAccountInteractive(
-                              acc.id,
-                              acc.name,
-                              (updatedAcc, list) => {
-                                setAccounts(list);
-                                if (accountId === updatedAcc.id) {
-                                  txDraft.set("kontoName", updatedAcc.name);
-                                  setQuery(updatedAcc.name);
-                                }
-                              }
-                            );
-                          }}
-                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
-                        >
-                          Rename
-                        </button>
-
-                        <button
-                          type="button"
-                          title="Anfangssaldo ändern"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const updatedList = editOpeningBalanceInteractive(
-                              acc.id,
-                              acc.openingBalance ?? 0,
-                              (_, list) => setAccounts(list)
-                            );
-                          }}
-                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
-                        >
-                          Startsaldo
-                        </button>
                       </div>
                     </button>
                   </li>
@@ -502,7 +493,7 @@ export default function GuestTransactionStep1() {
                       const next = createNewAccountInteractive(onAccountPick);
                       if (next) setAccounts(next);
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-white/70 transition"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left cursor-pointer hover:bg-white/70 transition"
                   >
                     <Plus className="w-5 h-5" />
                     <span>Neues Konto erstellen</span>
@@ -516,46 +507,77 @@ export default function GuestTransactionStep1() {
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="mt-3 flex items-center gap-2 text-sm text-gray-700 hover:underline"
+            className="mt-3 flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:underline"
           >
             <DoubleDownArrow className="w-3 h-3" />
             <span>{showAll ? "Alle Konten verbergen" : "Alle Konten anzeigen"}</span>
           </button>
 
           {showAll && (
-            <div className="mt-3 rounded-lg border border-gray-200 p-3">
+            <div className="mt-3 shadow-sm border border-gray-200 p-3">
               <div className="flex items-center justify-between mb-2">
                 <strong>Kontenübersicht</strong>
                 <span className="text-sm text-gray-600">Gesamt: {fmtEur(totalBalance)}</span>
               </div>
               <ul className="divide-y divide-gray-200">
                 {accountsWithBalance.map((acc) => (
-                  <li key={acc.id} className="py-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{acc.name}</span>
+                  <li
+                    key={acc.id}
+                    className="py-2 flex items-center justify-between gap-3"
+                  >
+                    {/* Left part - edit icon + name (no selecting here) */}
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          renameAccountInteractive(acc.id, acc.name, (_, l) => setAccounts(l));
+                        }}
+                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer"
+                      >
+                        <PencilIcon className="w-4 h-4 text-gray-600" />
+                      </button>
+
+                      <span className="font-medium truncate" title={acc.name}>
+                        {acc.name}
+                      </span>
+
                       {acc.archived && (
                         <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs">Archiv</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
+
+                    {/* Right part - balance + actions */}
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="tabular-nums">{fmtEur(acc.balance || 0)}</span>
+
                       <button
                         type="button"
                         onClick={() => {
-                          const list = renameAccountInteractive(acc.id, acc.name, (_, l) => setAccounts(l));
+                          editOpeningBalanceInteractive(
+                            acc.id,
+                            acc.openingBalance ?? 0,
+                            (_, l) => setAccounts(l)
+                          );
                         }}
-                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
-                      >
-                        Rename
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const list = editOpeningBalanceInteractive(acc.id, acc.openingBalance ?? 0, (_, l) => setAccounts(l));
-                        }}
-                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-white"
+                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer"
                       >
                         Startsaldo
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = deleteAccountInteractive(acc.id, (updated) => setAccounts(updated));
+                          // If the deleted account was selected via the combobox, reset selection.
+                          if (selectedAccountId === acc.id) {
+                            setSelectedAccountId("");
+                            setSelectedAccountName("");
+                            setQuery(""); // clear input as well
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 cursor-pointer"
+                      >
+                        Löschen
                       </button>
                     </div>
                   </li>

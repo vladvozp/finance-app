@@ -8,14 +8,14 @@ import { txDraft } from "../store/transactionDraft";
 
 import Button from "../components/Button";
 import Progress from "../components/Progress";
+import { Edit3, Trash2, Pencil, Plus, Settings, Search, Delete } from "lucide-react";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
-import Settings from "../assets/Settings.svg?react";
-import Plus from "../assets/Plus.svg?react";
-import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
-import PencilIcon from "../assets/PencilIcon.svg?react";
+// import Settings from "../assets/Settings.svg?react";
+// import Plus from "../assets/Plus.svg?react";
+// import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
-import Cross from "../assets/Cross.svg?react";
+// import Cross from "../assets/Cross.svg?react";
 
 const ACC_KEY = "ft_accounts";
 const TX_KEY = "ft_transactions";
@@ -178,6 +178,9 @@ export default function GuestTransactionStep1() {
   const [showAll, setShowAll] = useState(false);
   const comboboxRef = useRef(null);
 
+  const [editingId, setEditingId] = useState(null);   // which account is currently being edited
+  const [tempBalance, setTempBalance] = useState(""); // temporary input value
+
   // accounts state (loaded from localStorage)
   const [accounts, setAccounts] = useState([]);
 
@@ -314,6 +317,32 @@ export default function GuestTransactionStep1() {
   // --- NEW: canContinue depends only on form truths ---
   // amountStr (>0) and account selected via combobox (selectedAccountId)
   const canContinue = toCents(amountStr) > 0 && !!selectedAccountId;
+  // Start inline editing mode for a specific account
+  const startEdit = (acc) => {
+    setEditingId(acc.id);
+    const current = acc.openingBalance ?? 0;
+    setTempBalance(String(current));
+  };
+
+  // Save the edited balance and exit editing mode
+  const saveEdit = (accId) => {
+    const valueNum = Number(String(tempBalance).replace(",", "."));
+    if (Number.isNaN(valueNum)) {
+      setEditingId(null);
+      return;
+    }
+    editOpeningBalanceInteractive(accId, valueNum, (_, l) => setAccounts(l));
+    setEditingId(null);
+  };
+
+  // Cancel editing without saving
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+
+
+
 
   return (
     <div className="bg-white">
@@ -415,7 +444,7 @@ export default function GuestTransactionStep1() {
 
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
-              <MagnifyingGlass className="w-5 h-5" />
+              <Search className="w-5 h-5" />
             </span>
 
             <input
@@ -451,7 +480,7 @@ export default function GuestTransactionStep1() {
                 }}
                 className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
               >
-                <Cross className="w-4 h-4" />
+                <Delete className="w-6 h-6" />
               </button>
             )}
           </div>
@@ -516,68 +545,94 @@ export default function GuestTransactionStep1() {
           {showAll && (
             <div className="mt-3 shadow-sm border border-gray-200 p-3">
               <div className="flex items-center justify-between mb-2">
-                <strong>Kontenübersicht</strong>
-                <span className="text-sm text-gray-600">Gesamt: {fmtEur(totalBalance)}</span>
+                <strong>Account Overview</strong>
+                <span className="text-sm text-gray-600">Total: {fmtEur(totalBalance)}</span>
               </div>
-              <ul className="divide-y divide-gray-200">
+
+              {/* Scrollable list for compact layout */}
+              <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto pr-1">
                 {accountsWithBalance.map((acc) => (
                   <li
                     key={acc.id}
                     className="py-2 flex items-center justify-between gap-3"
                   >
-                    {/* Left part - edit icon + name (no selecting here) */}
+                    {/* LEFT: rename button + account name */}
                     <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {/* Rename account */}
                       <button
                         type="button"
                         onClick={() => {
                           renameAccountInteractive(acc.id, acc.name, (_, l) => setAccounts(l));
                         }}
-                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer"
+                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer transition hover:scale-105"
+                        title="Rename account"
+                        aria-label="Rename account"
                       >
-                        <PencilIcon className="w-4 h-4 text-gray-600" />
+                        <Pencil className="w-4 h-4 text-gray-600" />
                       </button>
 
+                      {/* Account name */}
                       <span className="font-medium truncate" title={acc.name}>
                         {acc.name}
                       </span>
-
-                      {acc.archived && (
-                        <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs">Archiv</span>
-                      )}
                     </div>
 
-                    {/* Right part - balance + actions */}
+                    {/* RIGHT: balance + edit + delete icons */}
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="tabular-nums">{fmtEur(acc.balance || 0)}</span>
+                      {/* Inline editing for balance */}
+                      {editingId === acc.id ? (
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={tempBalance}
+                          onChange={(e) => setTempBalance(e.target.value)}
+                          onBlur={() => saveEdit(acc.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEdit(acc.id);
+                            if (e.key === "Escape") cancelEdit();
+                          }}
+                          className="w-24 border border-gray-300 rounded px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          autoFocus
+                          title="Edit starting balance"
+                          aria-label="Edit starting balance"
+                        />
+                      ) : (
+                        <span
+                          className="tabular-nums cursor-pointer hover:text-blue-600 transition hover:scale-[1.02]"
+                          title="Edit starting balance"
+                          onClick={() => startEdit(acc)}
+                        >
+                          {fmtEur(acc.balance ?? 0)}
+                        </span>
+                      )}
 
+                      {/* Edit icon (alternative way to open edit mode) */}
                       <button
                         type="button"
-                        onClick={() => {
-                          editOpeningBalanceInteractive(
-                            acc.id,
-                            acc.openingBalance ?? 0,
-                            (_, l) => setAccounts(l)
-                          );
-                        }}
-                        className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer"
+                        title="Edit starting balance"
+                        aria-label="Edit starting balance"
+                        onClick={() => startEdit(acc)}
+                        className="p-1 text-gray-600 hover:text-blue-600 transition hover:scale-110"
                       >
-                        Startsaldo
+                        <Edit3 className="w-4 h-4" />
                       </button>
 
+                      {/* Delete account */}
                       <button
                         type="button"
+                        title="Delete account"
+                        aria-label="Delete account"
                         onClick={() => {
                           const next = deleteAccountInteractive(acc.id, (updated) => setAccounts(updated));
-                          // If the deleted account was selected via the combobox, reset selection.
                           if (selectedAccountId === acc.id) {
                             setSelectedAccountId("");
                             setSelectedAccountName("");
-                            setQuery(""); // clear input as well
+                            setQuery("");
                           }
                         }}
-                        className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 cursor-pointer"
+                        className="p-1 text-gray-500 hover:text-red-600 transition hover:scale-110"
                       >
-                        Löschen
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </li>
@@ -585,6 +640,8 @@ export default function GuestTransactionStep1() {
               </ul>
             </div>
           )}
+
+
 
           <div className="pt-10" />
 

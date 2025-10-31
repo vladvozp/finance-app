@@ -8,12 +8,13 @@ import { txDraft } from "../store/transactionDraft";
 
 import Button from "../components/Button";
 import Progress from "../components/Progress";
-import { Edit3, Trash2, Pencil, Plus, Settings, Search, Delete } from "lucide-react";
+import { Edit3, Trash2, PlusCircle, MinusCircle, Plus, Settings, Search, Delete } from "lucide-react";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
 // import Settings from "../assets/Settings.svg?react";
 // import Plus from "../assets/Plus.svg?react";
 // import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
+
 import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 // import Cross from "../assets/Cross.svg?react";
 
@@ -24,10 +25,14 @@ const TX_KEY = "ft_transactions";
 const fmtEur = (n) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
 
-// Parse "12,34" → 1234 cents
+// Parse "1.000,00" → 100000 cents, "1000" → 100000 cents, "12,3" → 1230 cents
 const toCents = (s) => {
   if (!s) return 0;
-  const n = Number(String(s).replace(/\s/g, "").replace(",", "."));
+  const cleaned = String(s)
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  const n = Number(cleaned);
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
 };
 
@@ -72,21 +77,44 @@ export function ensureAccounts() {
 
 // Quick create (replace with modal later)
 function createNewAccountInteractive(onPicked) {
-  const name = (window.prompt("Kontoname eingeben:", "Neues Konto") || "").trim();
-  if (!name) return null;
+  // Ask user for the new account name
+  const rawName = window.prompt("Enter account name:", "New account");
+  if (!rawName) return null;
 
-  const newAcc = createDefaultAccount(name);
+  // 🧹 Clean input: remove leading/trailing spaces
+  const name = rawName.trim();
+  if (!name) return null; // user entered only spaces
+
+  // Load existing accounts from localStorage
   let list = [];
   try {
     list = JSON.parse(localStorage.getItem(ACC_KEY) || "[]");
     if (!Array.isArray(list)) list = [];
   } catch { list = []; }
 
+  // Soft duplicate check (case-insensitive, trimmed)
+  const exists = list.some(
+    (a) => a.name.trim().toLowerCase() === name.toLowerCase()
+  );
+
+  if (exists) {
+    // Friendly warning, not blocking
+    const proceed = window.confirm(
+      `An account named "${name}" already exists.\nCreate another one anyway?`
+    );
+    if (!proceed) return null; // user canceled creation
+  }
+
+  // ✅ Create and save new account
+  const newAcc = createDefaultAccount(name);
   const next = [...list, newAcc];
   localStorage.setItem(ACC_KEY, JSON.stringify(next));
+
+  // Callback: immediately pass the new account to picker
   if (typeof onPicked === "function") onPicked(newAcc);
   return next;
 }
+
 
 // Rename account inline
 function renameAccountInteractive(accId, currentName, onDone) {
@@ -135,11 +163,20 @@ function editOpeningBalanceInteractive(accId, currentOpening, onDone) {
 function deleteAccountInteractive(accId, onDone) {
   const accRaw = localStorage.getItem(ACC_KEY);
   const accounts = accRaw ? JSON.parse(accRaw) : [];
+
   const txRaw = localStorage.getItem(TX_KEY);
   const tx = txRaw ? JSON.parse(txRaw) : [];
 
   const acc = accounts.find(a => a.id === accId);
   if (!acc) return null;
+
+  // if any transactions on account
+  const txCount = tx.filter(t => t && t.kontoId === accId).length;
+  if (txCount > 0) {
+    alert(`Konto "${acc.name}" hat ${txCount} Buchung(en). Es kann nicht gelöscht werden.`);
+    return null;
+  }
+
 
   // compute live balance to be extra safe
   const sum = tx.reduce((s, t) => {
@@ -157,6 +194,7 @@ function deleteAccountInteractive(accId, onDone) {
 
   const next = accounts.filter(a => a.id !== accId);
   localStorage.setItem(ACC_KEY, JSON.stringify(next));
+
   if (typeof onDone === "function") onDone(next);
   return next;
 }
@@ -261,8 +299,12 @@ export default function GuestTransactionStep1() {
   const onAmountChange = (e) => {
     const v = e.target.value;
     const cleaned = v.replace(/[^\d.,\s]/g, "");
-    setAmountStr(cleaned);
+    const normalized = cleaned.replace(/\./g, ",");
+    setAmountStr(normalized);
   };
+
+
+
   const handleKeyDown = (e) => {
     if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
   };
@@ -369,10 +411,10 @@ export default function GuestTransactionStep1() {
             <Link
               to="/SettingsPage"
               aria-label="Einstellungen"
-              className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
+              className="group p-2 text-gray-600 transition inline-flex items-center justify-center"
               type="button"
             >
-              <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+              <Settings className="w-5 h-5 transition-transform duration-500 group-hover:animate-spin" />
             </Link>
           }
         />
@@ -392,24 +434,34 @@ export default function GuestTransactionStep1() {
               type="button"
               aria-pressed={kind === "expense"}
               onClick={() => onKindChange("expense")}
-              className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${kind === "expense"
+              className={`flex items-center justify-center gap-2 w-1/2 h-12 text-center font-medium transition border border-gray-400
+      ${kind === "expense"
                   ? "bg-blue-400 text-white"
-                  : "bg-white text-blue-500 hover:bg-blue-50"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
                 }`}
+
             >
+              <MinusCircle
+                className={`w-5 h-5 transition ${kind === "expense" ? "text-red-300" : "text-red-500"
+                  }`}
+              />
               Ausgabe
             </button>
+
             <button
               type="button"
               aria-pressed={kind === "income"}
               onClick={() => onKindChange("income")}
-              className={`w-1/2 h-12 text-center font-medium transition border border-gray-400
-                ${kind === "income"
+              className={`flex items-center justify-center gap-2 w-1/2 h-12 text-center font-medium transition border border-gray-400 border-l-0
+      ${kind === "income"
                   ? "bg-blue-400 text-white"
-                  : "bg-white text-blue-500 hover:bg-blue-50"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
                 }`}
             >
+              <PlusCircle
+                className={`w-5 h-5 transition ${kind === "income" ? "text-green-300" : "text-green-500"
+                  }`}
+              />
               Einnahme
             </button>
           </div>
@@ -443,7 +495,7 @@ export default function GuestTransactionStep1() {
           </h2>
 
           <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+            <span className="pointer-events-none text-gray-600 absolute inset-y-0 left-3 flex items-center">
               <Search className="w-5 h-5" />
             </span>
 
@@ -478,9 +530,9 @@ export default function GuestTransactionStep1() {
                   setSelectedAccountName("");
                   setOpen(true);
                 }}
-                className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
+                className="absolute inset-y-0 right-2 flex items-center rounded p-1 "
               >
-                <Delete className="w-6 h-6" />
+                <Delete className="h-5 w-5 text-gray-600 hover:text-red-500 cursor-pointer transition-colors duration-200 hover:scale-110" />
               </button>
             )}
           </div>
@@ -536,7 +588,7 @@ export default function GuestTransactionStep1() {
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="mt-3 flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:underline"
+            className="mt-3 flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:underline"
           >
             <DoubleDownArrow className="w-3 h-3" />
             <span>{showAll ? "Alle Konten verbergen" : "Alle Konten anzeigen"}</span>
@@ -545,8 +597,8 @@ export default function GuestTransactionStep1() {
           {showAll && (
             <div className="mt-3 shadow-sm border border-gray-200 p-3">
               <div className="flex items-center justify-between mb-2">
-                <strong>Account Overview</strong>
-                <span className="text-sm text-gray-600">Total: {fmtEur(totalBalance)}</span>
+                <strong>Kontenübersicht</strong>
+                <span className="text-sm text-gray-600">Gesamt: {fmtEur(totalBalance)}</span>
               </div>
 
               {/* Scrollable list for compact layout */}
@@ -564,11 +616,11 @@ export default function GuestTransactionStep1() {
                         onClick={() => {
                           renameAccountInteractive(acc.id, acc.name, (_, l) => setAccounts(l));
                         }}
-                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 cursor-pointer transition hover:scale-105"
-                        title="Rename account"
-                        aria-label="Rename account"
+                        className="p-1 cursor-pointer transition hover:scale-105"
+                        title="Konto umbenennen"
+                        aria-label="Konto umbenennen"
                       >
-                        <Pencil className="w-4 h-4 text-gray-600" />
+                        <Edit3 className="w-4 h-4 text-gray-600" />
                       </button>
 
                       {/* Account name */}
@@ -593,13 +645,13 @@ export default function GuestTransactionStep1() {
                           }}
                           className="w-24 border border-gray-300 rounded px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           autoFocus
-                          title="Edit starting balance"
-                          aria-label="Edit starting balance"
+                          title="Anfangssaldo bearbeiten"
+                          aria-label="Anfangssaldo bearbeiten"
                         />
                       ) : (
                         <span
                           className="tabular-nums cursor-pointer hover:text-blue-600 transition hover:scale-[1.02]"
-                          title="Edit starting balance"
+                          title="Anfangssaldo bearbeiten"
                           onClick={() => startEdit(acc)}
                         >
                           {fmtEur(acc.balance ?? 0)}
@@ -607,21 +659,21 @@ export default function GuestTransactionStep1() {
                       )}
 
                       {/* Edit icon (alternative way to open edit mode) */}
-                      <button
+                      {/*   <button
                         type="button"
                         title="Edit starting balance"
                         aria-label="Edit starting balance"
                         onClick={() => startEdit(acc)}
-                        className="p-1 text-gray-600 hover:text-blue-600 transition hover:scale-110"
+                        className="p-1 text-gray-600 hover:text-blue-600 transition cursor-pointer hover:scale-110"
                       >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                        <Pencil className="w-4 h-4" />
+                      </button>*/}
 
                       {/* Delete account */}
                       <button
                         type="button"
-                        title="Delete account"
-                        aria-label="Delete account"
+                        title="Konto löschen"
+                        aria-label="Konto löschen"
                         onClick={() => {
                           const next = deleteAccountInteractive(acc.id, (updated) => setAccounts(updated));
                           if (selectedAccountId === acc.id) {
@@ -630,7 +682,7 @@ export default function GuestTransactionStep1() {
                             setQuery("");
                           }
                         }}
-                        className="p-1 text-gray-500 hover:text-red-600 transition hover:scale-110"
+                        className="p-1 text-gray-600 hover:text-red-600 transition cursor-pointer hover:scale-110"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -650,7 +702,7 @@ export default function GuestTransactionStep1() {
             disabled={!canContinue}
             onClick={onNext}
             className={`${!canContinue
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              ? "bg-gray-200 text-gray-600 cursor-not-allowed"
               : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
               }`}
           >

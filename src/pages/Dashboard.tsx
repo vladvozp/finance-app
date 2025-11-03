@@ -2,70 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import Arrowleft from "../assets/Arrowleft.svg?react";
-import Settings from "../assets/Settings.svg?react";
+// import Settings from "../assets/Settings.svg?react";
+import { Edit3, Trash2, PlusCircle, MinusCircle, Plus, Settings, Search, Delete } from "lucide-react";
 
-/** Domain model for a transaction kept in LocalStorage. */
-type Tx = {
-    id: string;
-    kind: "expense" | "income";
-    amount: number;        // expense: negative, income: positive
-    date: string | null;   // YYYY-MM-DD or null
-    // EXPENSE-only
-    gruppeId?: string;
-    kategorieId?: string;
-    anbieterId?: string | null;
-    // INCOME-only
-    incomeType?: "GEHALT" | "RENTE" | "MIETE" | "VERKAUF" | "GESCHЕНК" | "SONSTIGES";
-    quelleId?: string | null;
-    quelleName?: string | null;
-    // COMMON
-    kontoId?: string | null;
-    remark?: string | null;
-    repeat?: boolean;
-};
+import type { Tx } from "../types/tx";
+import { readTxList } from "../utils/storage";
+import { writeTxList } from "../utils/storage";
 
 const TX_KEY = "ft_transactions";
 const SETTINGS_KEY = "ft_dashboard_settings_v1"; // bump version if shape changes
 
-function readTxList(): Tx[] {
-    try {
-        const raw = localStorage.getItem(TX_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-    } catch {
-        return [];
-    }
-}
-function writeTxList(list: Tx[]) {
-    localStorage.setItem(TX_KEY, JSON.stringify(list));
-}
 
-function toCSV(rows: Tx[]): string {
-    const esc = (v: any) => {
-        const s = String(v ?? "");
-        const need = /[",;\n]/.test(s);
-        const q = s.replace(/"/g, '""');
-        return need ? `"${q}"` : q;
-    };
-    const header = ["id", "kind", "date", "amount", "gruppeId", "kategorieId", "anbieterId", "incomeType", "quelleName", "quelleId", "remark", "kontoId", "repeat"];
-    const lines = [header.join(";")];
-    for (const r of rows) {
-        lines.push([
-            esc(r.id), esc(r.kind), esc(r.date), esc(r.amount),
-            esc(r.gruppeId), esc(r.kategorieId), esc(r.anbieterId),
-            esc(r.incomeType), esc(r.quelleName), esc(r.quelleId),
-            esc(r.remark), esc(r.kontoId), esc(r.repeat),
-        ].join(";"));
-    }
-    return lines.join("\n");
-}
-function download(filename: string, content: string, mime = "text/csv;charset=utf-8") {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-}
 
 function debounce<T extends (...a: any) => void>(fn: T, ms = 250) {
     let t: number | undefined;
@@ -254,9 +201,7 @@ export default function Dashboard() {
                             Zurück
                         </Link>
                     }
-                    center={<button className="btn btn-sm" onClick={() => download(`transactions_${Date.now()}.csv`, toCSV(filtered))}>
-                        CSV Export
-                    </button>}
+                    center={null}
                     right={
                         <Link
                             to="/SettingsPage"
@@ -264,7 +209,7 @@ export default function Dashboard() {
                             className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className="block transform h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+                            <Settings className="block transform h-5 w-5 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />

@@ -5,19 +5,19 @@ import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 
+import { toCSV, download } from "../utils/exportCsv";
+import { readTxList } from "../utils/storage";
+// import type { Tx } from "../types/tx";
+
+
 // Icons
 import Arrowleft from "../assets/Arrowleft.svg?react";
-import Settings from "../assets/Settings.svg?react";
-
+// import Settings from "../assets/Settings.svg?react";
+import { Settings } from "lucide-react";
 // ---------- Page ----------
 export default function Berichte() {
+    const rows = readTxList();
     const navigate = useNavigate();
-    const [spinOnce, setSpinOnce] = useState(false);
-    const onGearClick = () => {
-        if (spinOnce) return;
-        setSpinOnce(true);
-        setTimeout(() => setSpinOnce(false), 600);
-    };
 
     // ids
     const dataId = useId();
@@ -78,11 +78,6 @@ export default function Berichte() {
 
     return (
         <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-            <style>{`
-        @keyframes spin-once { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
-        .rotate-once { animation: spin-once 0.6s linear 1; }
-      `}</style>
-
             <main className="py-6 flex flex-col">
                 <PageHeader
                     left={
@@ -100,10 +95,10 @@ export default function Berichte() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="group p-2 hover:bg-gray-100 transition rounded-lg"
+                            className="group p-2 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+                            <Settings className="block transform h-5 w-5 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
 
                     }
@@ -116,6 +111,18 @@ export default function Berichte() {
                         <Button variant="secondary" onClick={exportAll}>
                             Alles exportieren (JSON)
                         </Button>
+
+                        {/* Data: CSV Export */}
+                        <Button
+                            variant="secondary"
+                            onClick={() =>
+                                download(`transactions_${Date.now()}.csv`, "\uFEFF" + toCSV(rows))
+                            }
+                        >
+                            CSV Export
+                        </Button>
+
+
                         <Button variant="secondary" onClick={() => fileRef.current?.click()}>
                             Aus Datei importieren
                         </Button>

@@ -146,6 +146,8 @@ export default function Berichte() {
                             <li>
                                 Export erstellt eine JSON-Sicherungsdatei mit <i>allen</i> localStorage-Einträgen.
                             </li>
+                            <li> CSV-Export lädt nur die Transaktionen als Tabellen-Datei herunter
+                                (praktisch für Excel oder Google Sheets).</li>
                             <li>Import liest eine JSON-Datei und schreibt die Schlüssel zurück (überschreibt vorhandene).</li>
                             <li>Bereinigung entfernt alle localStorage-Daten. Vorher Export empfehlen.</li>
                         </ul>

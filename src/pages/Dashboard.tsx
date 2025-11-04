@@ -119,11 +119,14 @@ export default function Dashboard() {
         const arr = [...filtered];
         arr.sort((t1, t2) => {
             switch (sort.key) {
+                case "kind": return cmp(t1.kind, t2.kind, sort.dir);
                 case "amount": return cmp(t1.amount, t2.amount, sort.dir);
                 case "date": return cmp(t1.date ?? "", t2.date ?? "", sort.dir);
                 case "gruppe": return cmp(t1.gruppeId ?? "", t2.gruppeId ?? "", sort.dir);
                 case "kat": return cmp(t1.kategorieId ?? "", t2.kategorieId ?? "", sort.dir);
                 case "quelle": return cmp((t1.quelleName ?? t1.quelleId ?? ""), (t2.quelleName ?? t2.quelleId ?? ""), sort.dir);
+                case "incomeType": return cmp(t1.incomeType ?? "", t2.incomeType ?? "", sort.dir);
+                case "konto": return cmp(getKontoName(t1.kontoId ?? ""), getKontoName(t2.kontoId ?? ""), sort.dir);
                 default: return 0;
             }
         });
@@ -143,8 +146,8 @@ export default function Dashboard() {
 
     const kindBadge = (k: Tx["kind"]) =>
         k === "income"
-            ? "px-2 py-0.5 text-green-700 "
-            : "px-2 py-0.5 text-red-700  ";
+            ? "px-2 py-0.5 text-green-700"
+            : "px-2 py-0.5 text-red-700";
     const amountClass = (k: Tx["kind"]) => (k === "income" ? "text-green-700 font-semibold" : "text-red-700 font-semibold");
 
     function deleteById(id: string) {
@@ -280,7 +283,7 @@ export default function Dashboard() {
 
                 {/* ======= SPALTEN (Accordion, under result) ======= */}
                 <section className="mt-4" role="region" aria-labelledby="columns-heading">
-                    <h2 id="columns-heading" className="sr-only">Spalten</h2>
+                    <h2 id="columns-heading" className="sr-only">Anzeigeoptionen</h2>
 
                     <details className="bg-base-100 border open:shadow-sm">
                         <summary
@@ -288,7 +291,7 @@ export default function Dashboard() {
                             aria-controls="columns-panel"
                             aria-expanded={undefined /* handled natively by <details> */}
                         >
-                            <span className="font-medium text-sm">Spalten</span>
+                            <span className="font-medium text-sm">Anzeigeoptionen</span>
                             <span aria-hidden>▾</span>
                         </summary>
 
@@ -340,7 +343,12 @@ export default function Dashboard() {
                         <table className="table">
                             <thead className="sticky">
                                 <tr>
-                                    <th>Typ</th>
+                                    <th
+                                        className="cursor-pointer select-none"
+                                        onClick={() => toggleSort("kind")}
+                                    >
+                                        Typ {sort.key === "kind" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                    </th>
                                     <th className="cursor-pointer select-none" onClick={() => toggleSort("date")}>
                                         Datum {sort.key === "date" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
@@ -360,7 +368,11 @@ export default function Dashboard() {
                                         </th>
                                     )}
 
-                                    {cols.incomeType && <th>Typ (Einnahme)</th>}
+                                    {cols.incomeType && (
+                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("incomeType")}>
+                                            Typ (Einnahme) {sort.key === "quelle" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        </th>)}
+
                                     {cols.quelle && (
                                         <th className="cursor-pointer select-none" onClick={() => toggleSort("quelle")}>
                                             Quelle {sort.key === "quelle" ? (sort.dir === "asc" ? "▲" : "▼") : ""}

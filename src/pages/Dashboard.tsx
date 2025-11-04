@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 // import Settings from "../assets/Settings.svg?react";
-import { Edit3, Trash2, PlusCircle, MinusCircle, Plus, Settings, Search, Delete } from "lucide-react";
+import { Edit3, Trash2, SquarePlus, SquareMinus, Plus, Settings, ArchiveRestore, Search, Delete } from "lucide-react";
 
 import type { Tx } from "../types/tx";
 import { readKontoMap } from "../utils/lookups";
@@ -143,8 +143,8 @@ export default function Dashboard() {
 
     const kindBadge = (k: Tx["kind"]) =>
         k === "income"
-            ? "px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 ring-1 ring-inset ring-green-200"
-            : "px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 ring-1 ring-inset ring-red-200";
+            ? "px-2 py-0.5 text-green-700 "
+            : "px-2 py-0.5 text-red-700  ";
     const amountClass = (k: Tx["kind"]) => (k === "income" ? "text-green-700 font-semibold" : "text-red-700 font-semibold");
 
     function deleteById(id: string) {
@@ -220,6 +220,23 @@ export default function Dashboard() {
                         </Link>
                     }
                 />
+                {/* ======= SUMMARY (Result) ======= */}
+                <section className="stats border shadow w-full mt-4" role="region" aria-labelledby="summary-heading">
+                    <h2 id="summary-heading" className="sr-only">Zusammenfassung</h2>
+                    <div className="stat">
+                        <div className="stat-title font-semibold">Gesamtbilanz (gefiltert)</div>
+                        <div className="stat-value font-semibold">{fmtMoney(total)}</div>
+                        <div className="stat-desc">{filtered.length} Einträge</div>
+                    </div>
+                    <div className="stat">
+                        <div className="stat-title font-semibold">Einnahmen</div>
+                        <div className="stat-value text-green-700">{fmtMoney(incomeTotal)}</div>
+                    </div>
+                    <div className="stat">
+                        <div className="stat-title font-semibold">Ausgaben</div>
+                        <div className="stat-value text-red-700">{fmtMoney(expenseTotal)}</div>
+                    </div>
+                </section>
 
                 {/* ======= FILTERS (Top) ======= */}
                 <section
@@ -254,29 +271,12 @@ export default function Dashboard() {
                     {/* Reset */}
                     <div className="flex flex-col">
                         <label className="text-xs text-gray-500 mb-1 opacity-0">Reset</label>
-                        <button type="button" className="btn btn-outline h-10 text-sm" onClick={resetFiltersToDefault}>
-                            Filter&nbsp;zurücksetzen
+                        <button type="button" className="h-10 text-sm" onClick={resetFiltersToDefault}>
+                            zurücksetzen <ArchiveRestore className="w-5 h-5" />
                         </button>
                     </div>
                 </section>
 
-                {/* ======= SUMMARY (Result) ======= */}
-                <section className="stats border shadow w-full mt-4" role="region" aria-labelledby="summary-heading">
-                    <h2 id="summary-heading" className="sr-only">Zusammenfassung</h2>
-                    <div className="stat">
-                        <div className="stat-title font-semibold">Gesamtbilanz (gefiltert)</div>
-                        <div className="stat-value font-semibold">{fmtMoney(total)}</div>
-                        <div className="stat-desc">{filtered.length} Einträge</div>
-                    </div>
-                    <div className="stat">
-                        <div className="stat-title font-semibold">Einnahmen</div>
-                        <div className="stat-value text-green-700">{fmtMoney(incomeTotal)}</div>
-                    </div>
-                    <div className="stat">
-                        <div className="stat-title font-semibold">Ausgaben</div>
-                        <div className="stat-value text-red-700">{fmtMoney(expenseTotal)}</div>
-                    </div>
-                </section>
 
                 {/* ======= SPALTEN (Accordion, under result) ======= */}
                 <section className="mt-4" role="region" aria-labelledby="columns-heading">
@@ -377,7 +377,21 @@ export default function Dashboard() {
                             <tbody>
                                 {sorted.map((tx) => (
                                     <tr key={tx.id}>
-                                        <td><span className={kindBadge(tx.kind)}>{tx.kind === "income" ? "Income" : "Expense"}</span></td>
+                                        <td>
+                                            <span className={kindBadge(tx.kind)}>
+                                                {tx.kind === "income" ? (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <SquarePlus className="w-3.5 h-3.5" />
+
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <SquareMinus className="w-3.5 h-3.5" />
+
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </td>
                                         <td>{fmtDate(tx.date)}</td>
                                         {cols.konto && (<td>{getKontoName(tx.kontoId ?? undefined)}</td>)}
                                         {cols.kategorie && (<td>{tx.kind === "expense" ? (tx.kategorieId || "—") : "—"}</td>)}
@@ -390,11 +404,11 @@ export default function Dashboard() {
                                             <td className="text-right">
                                                 <button
                                                     type="button"
-                                                    className="btn btn-ghost btn-xs text-red-600"
                                                     aria-label="Transaktion löschen"
                                                     onClick={() => deleteById(tx.id)}
+                                                    className="p-1 text-gray-600 hover:text-red-600 transition cursor-pointer hover:scale-110"
                                                 >
-                                                    Löschen
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </td>
                                         )}

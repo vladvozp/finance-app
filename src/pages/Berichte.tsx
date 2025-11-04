@@ -1,5 +1,5 @@
 // src/pages/Berichte.tsx
-import React, { useId, useRef, useState } from "react";
+import React, { useId, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader.jsx";

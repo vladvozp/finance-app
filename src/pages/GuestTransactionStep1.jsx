@@ -8,7 +8,7 @@ import { txDraft } from "../store/transactionDraft";
 
 import Button from "../components/Button";
 import Progress from "../components/Progress";
-import { Edit3, Trash2, PlusCircle, MinusCircle, Plus, Settings, Search, Delete } from "lucide-react";
+import { Edit3, Trash2, SquarePlus, SquareMinus, Plus, Settings, Search, Delete } from "lucide-react";
 
 import Arrowleft from "../assets/Arrowleft.svg?react";
 // import Settings from "../assets/Settings.svg?react";
@@ -441,7 +441,7 @@ export default function GuestTransactionStep1() {
                 }`}
 
             >
-              <MinusCircle
+              <SquareMinus
                 className={`w-5 h-5 transition ${kind === "expense" ? "text-red-300" : "text-red-500"
                   }`}
               />
@@ -458,7 +458,7 @@ export default function GuestTransactionStep1() {
                   : "bg-white text-blue-600 hover:bg-blue-50"
                 }`}
             >
-              <PlusCircle
+              <SquarePlus
                 className={`w-5 h-5 transition ${kind === "income" ? "text-green-300" : "text-green-500"
                   }`}
               />

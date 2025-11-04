@@ -6,8 +6,11 @@ import Arrowleft from "../assets/Arrowleft.svg?react";
 import { Edit3, Trash2, PlusCircle, MinusCircle, Plus, Settings, Search, Delete } from "lucide-react";
 
 import type { Tx } from "../types/tx";
+import { readKontoMap } from "../utils/lookups";
 import { readTxList } from "../utils/storage";
 import { writeTxList } from "../utils/storage";
+
+
 
 const TX_KEY = "ft_transactions";
 const SETTINGS_KEY = "ft_dashboard_settings_v1"; // bump version if shape changes
@@ -23,7 +26,6 @@ function debounce<T extends (...a: any) => void>(fn: T, ms = 250) {
 export default function Dashboard() {
     const [items, setItems] = useState<Tx[]>([]);
     const [parseError, setParseError] = useState<string | null>(null);
-    const [spinOnce, setSpinOnce] = useState(false);
 
     /** ---------- SETTINGS STATE (persisted) ---------- */
     const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
@@ -37,6 +39,7 @@ export default function Dashboard() {
         incomeType: true,
         remark: false,
         actions: true,
+        konto: true,
     });
 
     const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
@@ -100,6 +103,10 @@ export default function Dashboard() {
         });
     }, [items, kindFilter, from, to]);
 
+    const kontoMap = useMemo(() => readKontoMap(), []);
+    const getKontoName = (id?: string) => (id ? (kontoMap.get(id) ?? id) : "—");
+
+
     function cmp(a: any, b: any, dir: "asc" | "desc") {
         if (a == null && b == null) return 0;
         if (a == null) return dir === "asc" ? -1 : 1;
@@ -156,7 +163,7 @@ export default function Dashboard() {
             kindFilter: "all" as const,
             from: "",
             to: "",
-            cols: { gruppe: true, kategorie: true, quelle: true, incomeType: true, remark: false, actions: true },
+            cols: { gruppe: true, kategorie: true, quelle: true, incomeType: true, remark: false, konto: true, actions: true },
             sort: { key: "date", dir: "desc" as const },
         };
         setKindFilter(defaults.kindFilter);
@@ -176,7 +183,7 @@ export default function Dashboard() {
                     right={<Link
                         to="/SettingsPage"
                         aria-label="Einstellungen"
-                        className="group p-2 hover:bg-gray-100 transition rounded-lg"
+                        className="group p-2 transition rounded-lg"
                         type="button"
                     >
                         <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
@@ -206,7 +213,7 @@ export default function Dashboard() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
+                            className="group p-2 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
                             <Settings className="block transform h-5 w-5 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
@@ -288,6 +295,10 @@ export default function Dashboard() {
                         <div id="columns-panel" className="px-4 pb-4">
                             <div className="flex flex-wrap gap-3">
                                 <label className="label cursor-pointer gap-2">
+                                    <input type="checkbox" className="checkbox checkbox-sm" checked={cols.konto} onChange={() => toggleCol("konto")} />
+                                    <span className="label-text text-xs">Konto</span>
+                                </label>
+                                <label className="label cursor-pointer gap-2">
                                     <input type="checkbox" className="checkbox checkbox-sm" checked={cols.gruppe} onChange={() => toggleCol("gruppe")} />
                                     <span className="label-text text-xs">Gruppe</span>
                                 </label>
@@ -333,7 +344,11 @@ export default function Dashboard() {
                                     <th className="cursor-pointer select-none" onClick={() => toggleSort("date")}>
                                         Datum {sort.key === "date" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
-
+                                    {cols.konto && (
+                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("konto")}>
+                                            Konto {sort.key === "konto" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        </th>
+                                    )}
                                     {cols.kategorie && (
                                         <th className="cursor-pointer select-none" onClick={() => toggleSort("kat")}>
                                             Kategorie {sort.key === "kat" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
@@ -364,6 +379,7 @@ export default function Dashboard() {
                                     <tr key={tx.id}>
                                         <td><span className={kindBadge(tx.kind)}>{tx.kind === "income" ? "Income" : "Expense"}</span></td>
                                         <td>{fmtDate(tx.date)}</td>
+                                        {cols.konto && (<td>{getKontoName(tx.kontoId ?? undefined)}</td>)}
                                         {cols.kategorie && (<td>{tx.kind === "expense" ? (tx.kategorieId || "—") : "—"}</td>)}
                                         {cols.gruppe && (<td>{tx.kind === "expense" ? (tx.gruppeId || "—") : "—"}</td>)}
                                         {cols.incomeType && (<td>{tx.kind === "income" ? (tx.incomeType || "—") : "—"}</td>)}

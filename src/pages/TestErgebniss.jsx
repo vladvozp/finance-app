@@ -3,11 +3,15 @@ import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 import Progress from "../components/Progress";
 
-import Arrowleft from "../assets/Arrowleft.svg?react";
-import Settings from "../assets/Settings.svg?react";
-import Plus from "../assets/Plus.svg?react";
-import Barchart2 from "../assets/Barchart2.svg?react";
-import Check from "../assets/Check.svg?react";
+// import Arrowleft from "../assets/Arrowleft.svg?react";
+// import Settings from "../assets/Settings.svg?react";
+// import Plus from "../assets/Plus.svg?react";
+// import Barchart2 from "../assets/Barchart2.svg?react";
+// import Check from "../assets/Check.svg?react";
+
+
+import { ChartNoAxesColumn, Plus, MoveLeft, Save, Settings, Trash2 } from "lucide-react";
+
 
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -237,7 +241,7 @@ export default function TestErgebniss() {
                             to="/guestTransactionStep3"
                             className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
                         >
-                            <Arrowleft className="w-5 h-5" />
+                            <MoveLeft className="w-5 h-5" />
                             Zurück
                         </Link>
                     }
@@ -253,10 +257,10 @@ export default function TestErgebniss() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
+                            className="group p-2 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+                            <Settings className="block transform h-5 w-5 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />
@@ -300,7 +304,7 @@ export default function TestErgebniss() {
                 <div className="space-y-3 pt-6">
                     <Button
                         variant="primary"
-                        icon={Check}
+                        icon={Save}
                         disabled={!canSave || saving}
                         onClick={saveTransaction}
                     >
@@ -310,6 +314,7 @@ export default function TestErgebniss() {
                     {/* Delete last saved (optional control) */}
                     <Button
                         variant="secondary"
+                        icon={Trash2}
                         disabled={!canDelete}
                         onClick={() => {
                             if (!lastSavedId) return;
@@ -318,13 +323,13 @@ export default function TestErgebniss() {
                             }
                         }}
                     >
-                        Letzten gespeicherten Eintrag löschen
+                        Letzten Eintrag löschen
                     </Button>
 
                     <Button variant="secondary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")}>
                         Transaktion
                     </Button>
-                    <Button variant="secondary" icon={Barchart2} onClick={() => navigate("/Dashboard")}>
+                    <Button variant="secondary" icon={ChartNoAxesColumn} onClick={() => navigate("/Dashboard")}>
                         Dashboard
                     </Button>
                 </div>

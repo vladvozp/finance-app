@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 // import Settings from "../assets/Settings.svg?react";
-import { Edit3, Trash2, SquarePlus, SquareMinus, Plus, Settings, ArchiveRestore, Search, Delete } from "lucide-react";
+import { Trash2, SquarePlus, SquareMinus, Settings, ArchiveRestore } from "lucide-react";
 
 import type { Tx } from "../types/tx";
 import { readKontoMap } from "../utils/lookups";
@@ -224,7 +224,7 @@ export default function Dashboard() {
                     }
                 />
                 {/* ======= SUMMARY (Result) ======= */}
-                <section className="stats border shadow w-full mt-4" role="region" aria-labelledby="summary-heading">
+                <section className="stats border shadow-sm border-gray-500 w-full mt-4" role="region" aria-labelledby="summary-heading">
                     <h2 id="summary-heading" className="sr-only">Zusammenfassung</h2>
                     <div className="stat">
                         <div className="stat-title font-semibold">Gesamtbilanz (gefiltert)</div>
@@ -285,7 +285,7 @@ export default function Dashboard() {
                 <section className="mt-4" role="region" aria-labelledby="columns-heading">
                     <h2 id="columns-heading" className="sr-only">Anzeigeoptionen</h2>
 
-                    <details className="bg-base-100 border open:shadow-sm">
+                    <details className="bg-base-100 border shadow-sm border-gray-500 open:shadow-sm">
                         <summary
                             className="cursor-pointer list-none px-4 py-3 flex items-center justify-between"
                             aria-controls="columns-panel"
@@ -339,7 +339,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto mt-4 max-h-[65vh] border shadow-sm">
+                    <div className="overflow-x-auto mt-4 max-h-[65vh] border shadow-sm border-gray-500">
                         <table className="table">
                             <thead className="sticky">
                                 <tr>

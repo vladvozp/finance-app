@@ -3,7 +3,9 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format as fmt, parse } from "date-fns";
 import { de } from "date-fns/locale";
-import Kalender from "../assets/Kalender.svg?react";
+import { CalendarPlus2 } from 'lucide-react';
+// import Kalender from "../assets/Kalender.svg?react";
+
 import { txDraft } from "../store/transactionDraft";
 
 
@@ -83,11 +85,11 @@ export default function DatePickerInput({
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600"
           aria-label="Kalender öffnen"
         >
           {/* Icon calend */}
-          <Kalender className="w-5 h-5" />
+          <CalendarPlus2 className="w-5 h-5" />
         </button>
 
         {open && (

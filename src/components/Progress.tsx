@@ -22,7 +22,7 @@ export default function Progress({
             aria-valuemax={total}
             aria-valuenow={step}
         >
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-600">
                 Schritt {step} von {total}
             </span>
 

@@ -5,7 +5,7 @@ import Login from "../pages/Login.jsx";
 import Guest from "../pages/Guest.jsx";
 import GuestTransactionStep1 from "../pages/GuestTransactionStep1.jsx";
 import GuestTransactionStep2 from "../pages/GuestTransactionStep2.jsx";
-import GuestTransactionStep3 from "../pages/GuestTransactionStep3.jsx";
+import GuestTransactionStep3 from "../pages/GuestTransactionStep3.tsx";
 import TestErgebniss from "../pages/TestErgebniss.jsx";
 import Dashboard from "../pages/Dashboard.tsx";
 import SettingsPage from "../pages/SettingsPage.tsx";

@@ -1,11 +1,12 @@
 import PageHeader from "../components/PageHeader.jsx";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import Button from "../components/Button";
 import Progress from "../components/Progress";
 
-import Arrowleft from "../assets/Arrowleft.svg?react";
-import Settings from "../assets/Settings.svg?react";
+import { MoveLeft, Settings } from "lucide-react";
+
+// import Arrowleft from "../assets/Arrowleft.svg?react";
+// import Settings from "../assets/Settings.svg?react";
 
 import DatePickerInput from "../components/DatePickerInput";
 
@@ -28,17 +29,10 @@ export default function GuestTransactionStep2() {
             alert("Bitte zuerst Einkommen oder Ausgabe auswählen!");
             return;
         }
-        //  if (kind === "income") {
-        //       navigate("/TestErgebniss");
         else {
             navigate("/guestTransactionStep3");
         }
     }
-
-
-    // --- state ---
-    const [spinOnce, setSpinOnce] = useState(false);
-
 
     return (
         <div className="bg-white">
@@ -47,9 +41,9 @@ export default function GuestTransactionStep2() {
                     left={
                         <Link
                             to="/guestTransactionStep1"
-                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                            className="flex items-center gap-1 text-sm text-gray-600 underline hover:text-gray-800"
                         >
-                            <Arrowleft className="w-5 h-5" />
+                            <MoveLeft className="w-5 h-5" />
                             Zurück
                         </Link>
                     }
@@ -65,10 +59,10 @@ export default function GuestTransactionStep2() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
+                            className="group p-2 text-gray-600 transition inline-flex items-center justify-center"
                             type="button"
                         >
-                            <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+                            <Settings className="w-5 h-5 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />

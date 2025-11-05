@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
-import Settings from "../assets/Settings.svg?react";
-import Plus from "../assets/Plus.svg?react";
-import Barchart2 from "../assets/Barchart2.svg?react";
-import Filetext from "../assets/Filetext.svg?react";
-import Arrowleft from "../assets/Arrowleft.svg?react";
+// import Settings from "../assets/Settings.svg?react";
+import { MoveLeft, Plus, ChartNoAxesColumn, Sheet, Settings } from "lucide-react";
+
+// import Plus from "../assets/Plus.svg?react";
+// import Barchart2 from "../assets/Barchart2.svg?react";
+// import Filetext from "../assets/Filetext.svg?react";
+// import Arrowleft from "../assets/Arrowleft.svg?react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -20,10 +22,10 @@ export default function Guest() {
           left={
             <Link
               to="/login"
-              className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+              className="flex items-center gap-1 text-sm text-gray-600 underline hover:text-gray-800"
             >
-              <Arrowleft className="w-5 h-5" />
-              Zur Startseite
+              <MoveLeft className="w-5 h-5" />
+              Zur Anmeldung
             </Link>
           }
           center={null}
@@ -41,8 +43,8 @@ export default function Guest() {
           </h2>
           <div className="space-y-5 pt-15">
             <Button variant="primary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
-            <Button variant="secondary" icon={Barchart2} onClick={() => navigate("/Dashboard")} >Dashboard</Button>
-            <Button variant="secondary" icon={Filetext} onClick={() => navigate("/Berichte")} >Berichte</Button>
+            <Button variant="secondary" icon={ChartNoAxesColumn} onClick={() => navigate("/Dashboard")} >Dashboard</Button>
+            <Button variant="secondary" icon={Sheet} onClick={() => navigate("/Berichte")} >Berichte</Button>
             <Button variant="secondary" icon={Settings} onClick={() => navigate("/SettingsPage")}  >Einstellungen</Button>
           </div>
         </section>

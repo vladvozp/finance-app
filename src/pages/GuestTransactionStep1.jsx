@@ -8,14 +8,14 @@ import { txDraft } from "../store/transactionDraft";
 
 import Button from "../components/Button";
 import Progress from "../components/Progress";
-import { Edit3, Trash2, SquarePlus, SquareMinus, Plus, Settings, Search, Delete } from "lucide-react";
+import { ChevronsDown, MoveLeft, Edit3, Trash2, SquarePlus, SquareMinus, Plus, Settings, Search, Delete } from "lucide-react";
 
-import Arrowleft from "../assets/Arrowleft.svg?react";
+// import Arrowleft from "../assets/Arrowleft.svg?react";
 // import Settings from "../assets/Settings.svg?react";
 // import Plus from "../assets/Plus.svg?react";
 // import MagnifyingGlass from "../assets/MagnifyingGlass.svg?react";
 
-import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
+// import DoubleDownArrow from "../assets/DoubleDownArrow.svg?react";
 // import Cross from "../assets/Cross.svg?react";
 
 const ACC_KEY = "ft_accounts";
@@ -393,9 +393,9 @@ export default function GuestTransactionStep1() {
           left={
             <Link
               to="/guest"
-              className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+              className="flex items-center gap-1 text-sm text-gray-600 underline hover:text-gray-800"
             >
-              <Arrowleft className="w-5 h-5" />
+              <MoveLeft className="w-5 h-5" />
               Zurück
             </Link>
           }
@@ -588,9 +588,9 @@ export default function GuestTransactionStep1() {
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="mt-3 flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:underline"
+            className="mt-3 flex items-center gap-1 text-sm text-gray-600 cursor-pointer underline hover:text-gray-800"
           >
-            <DoubleDownArrow className="w-3 h-3" />
+            <ChevronsDown className="w-5 h-5" />
             <span>{showAll ? "Alle Konten verbergen" : "Alle Konten anzeigen"}</span>
           </button>
 

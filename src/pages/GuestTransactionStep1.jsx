@@ -382,10 +382,6 @@ export default function GuestTransactionStep1() {
     setEditingId(null);
   };
 
-
-
-
-
   return (
     <div className="bg-white">
       <main className="py-6 flex flex-col">

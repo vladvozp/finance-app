@@ -21,4 +21,5 @@ export type Tx = {
     // konto?: string; // лучше НЕ хранить; подставлять из словаря при выводе
     remark?: string | null;
     repeat?: boolean;
+
 };

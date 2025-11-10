@@ -1,69 +1,27 @@
 // GuestTransactionStep3.tsx
-// Thin page: dictionaries come from stores (useDicts + useIncomeDicts) with persist.
-// The page only reads/writes via store actions. All comments in English (best practices).
-import * as Lucide from "lucide-react";
+// Smart UI, dumb data. Provider → Category → Group (auto) with manual override.
+// Comments are in English (best practices).
+
+import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 
 import PageHeader from "../components/PageHeader.jsx";
-import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useRef, useEffect, useState } from "react";
 import Button from "../components/Button";
 import Progress from "../components/Progress";
 
-import { Edit3, MoveLeft, Settings as SettingsIcon, CircleHelp } from "lucide-react";
+import { Edit3, MoveLeft, Settings } from "lucide-react";
 
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
+import { IconRenderer, type IconSpec } from "../components/IconRenderer";
 
-// ---------- Icon types & renderer ----------
-type IconSpec = { kind: "lucide" | "emoji"; value: string; color?: string };
 
-// If you use your own SVG catalog, replace this mapping with your own.
-function IconRenderer({
-    icon,
-    className = "w-4 h-4",
-    title,
-}: {
-    icon?: IconSpec;
-    className?: string;
-    title?: string;
-}) {
-    if (!icon) return null;
+// ---------- Generic Combobox (stateless UI; exposes inputRef for focus) ----------
+type ComboOption = { id: string; name: string; icon?: IconSpec };
 
-    if (icon.kind === "emoji") {
-        return (
-            <span className={className} aria-label={title ?? "icon"} title={title}>
-                {icon.value}
-            </span>
-        );
-    }
-
-    // Lucide dynamic resolve by name (fallback to CircleHelp)
-    const Name = (icon.value?.trim() || "CircleHelp") as keyof typeof import("lucide-react");
-    const Map = { CircleHelp };
-    const Comp =
-        (Lucide as any)[Name] ?? Lucide.CircleHelp;
-
-    return <Comp className={className} aria-label={title ?? "icon"} title={title} />;
-}
-
-// ---------- Generic Combobox (stateless, a11y-friendly) ----------
-function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
-    label,
-    placeholder = "Bitte wählen…",
-    options,
-    value,
-    onChange,
-    disabled = false,
-    required = false,
-    helperText,
-    allowCreate = false,
-    onCreate,
-    allowEdit = false,
-    onEdit,
-    onDelete,
-}: {
+type ComboboxProps<T extends ComboOption> = {
     label: string;
     placeholder?: string;
     options: T[];
@@ -77,22 +35,55 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
     allowEdit?: boolean;
     onEdit?: (id: string, newName: string) => void;
     onDelete?: (id: string) => void;
-}) {
-    // Lightweight controlled popover with outside-click close
+    inputRef?: React.Ref<HTMLInputElement>; // NEW: allow parent to focus input
+};
+
+const Combobox = forwardRef(function Combobox<T extends ComboOption>(
+    props: ComboboxProps<T>,
+    _ignored: React.Ref<HTMLDivElement>
+) {
+    const {
+        label,
+        placeholder = "Bitte wählen…",
+        options,
+        value,
+        onChange,
+        disabled = false,
+        required = false,
+        helperText,
+        allowCreate = false,
+        onCreate,
+        allowEdit = false,
+        onEdit,
+        onDelete,
+        inputRef,
+    } = props;
+
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
-    const ref = useRef<HTMLDivElement | null>(null);
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const innerInputRef = useRef<HTMLInputElement | null>(null);
 
+    // Expose input element to parent via inputRef
+    useEffect(() => {
+        if (!inputRef) return;
+        if (typeof inputRef === "function") inputRef(innerInputRef.current!);
+        else if ("current" in (inputRef as any)) (inputRef as any).current = innerInputRef.current;
+    }, [inputRef]);
+
+    // Close on outside click (single listener)
     useEffect(() => {
         function onDocClick(e: MouseEvent) {
-            if (!ref.current) return;
-            if (!ref.current.contains(e.target as Node)) setOpen(false);
+            if (!rootRef.current) return;
+            if (!rootRef.current.contains(e.target as Node)) setOpen(false);
         }
         document.addEventListener("mousedown", onDocClick);
         return () => document.removeEventListener("mousedown", onDocClick);
     }, []);
 
     const selected = (options || []).find((o) => o.id === value) || null;
+
+    // Pure + memoized filter to avoid render storms
     const list = useMemo(() => {
         const base = options || [];
         if (!query.trim()) return base;
@@ -101,7 +92,7 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
     }, [options, query]);
 
     return (
-        <div className="mb-6" ref={ref}>
+        <div className="mb-6" ref={rootRef}>
             <label className="block text-center text-black text-base font-medium mb-1">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
@@ -110,6 +101,7 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
 
             <div className="relative">
                 <input
+                    ref={innerInputRef}
                     type="text"
                     disabled={disabled}
                     placeholder={selected ? selected.name : placeholder}
@@ -152,6 +144,8 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
                                             onChange?.(o.id, o);
                                             setOpen(false);
                                             setQuery("");
+                                            // Return focus to input to keep flow fast
+                                            innerInputRef.current?.focus();
                                         }}
                                         className={`text-left w-full pr-10 transition rounded-md px-2 py-2 hover:bg-gray-50 ${value === o.id ? "ring-1 ring-blue-400 bg-blue-50" : ""
                                             }`}
@@ -200,6 +194,7 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
                                         if (name && name.trim()) onCreate?.(name.trim());
                                         setOpen(false);
                                         setQuery("");
+                                        innerInputRef.current?.focus();
                                     }}
                                     className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-50 transition"
                                 >
@@ -213,13 +208,53 @@ function Combobox<T extends { id: string; name: string; icon?: IconSpec }>({
             )}
         </div>
     );
+}) as <T extends ComboOption>(p: ComboboxProps<T>) => React.ReactElement;
+
+// ---------- Helpers (provider → category; category ↔ group) ----------
+function getCategoriesForSupplier(
+    supplierId: string,
+    anbieter: Array<{ id: string; name: string; gruppen: string[] }>,
+    kategorien: Record<string, Array<{ id: string; name: string }>>
+) {
+    if (!supplierId) return [] as Array<{ id: string; name: string; groupId?: string }>;
+    const supplier = anbieter.find((a) => a.id === supplierId);
+    if (!supplier) return [];
+    const groups = supplier.gruppen || [];
+    const flatten: Array<{ id: string; name: string; groupId?: string }> = [];
+    for (const gId of groups) {
+        const list = kategorien[gId] || [];
+        for (const c of list) flatten.push({ ...c, groupId: gId });
+    }
+    const seen = new Set<string>();
+    return flatten.filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
 }
 
-// ---------- Page (thin) ----------
+function findGroupIdByCategoryId(
+    categoryId: string,
+    kategorien: Record<string, Array<{ id: string; name: string }>>
+): string | "" {
+    if (!categoryId) return "";
+    for (const [gId, list] of Object.entries(kategorien)) {
+        if (list.some((c) => c.id === categoryId)) return gId;
+    }
+    return "";
+}
+
+function suggestCategoryIdForSupplier(
+    supplierId: string,
+    anbieter: Array<{ id: string; name: string; gruppen: string[] }>,
+    kategorien: Record<string, Array<{ id: string; name: string }>>
+): string {
+    const pool = getCategoriesForSupplier(supplierId, anbieter, kategorien);
+    if (pool.length === 1) return pool[0].id;
+    return "";
+}
+
+// ---------- Page ----------
 export default function GuestTransactionStep3() {
     const navigate = useNavigate();
 
-    // Transaction draft is a separate concern — we only set selected ids/names here.
+    // Draft slice (now includes gruppeMode persisted in store)
     const {
         kind = null,
         gruppeId = "",
@@ -229,13 +264,12 @@ export default function GuestTransactionStep3() {
         quelleId = "",
         quelleName = "",
         remark = "",
-    } = useTxDraft();
+        gruppeMode = "auto", // <-- persist this in your txDraft store defaults
+    } = useTxDraft() as any;
 
-    // Expense dictionaries (Zustand + persist)
+    // Dicts
     const {
         gruppen,
-        kategorien,
-        getAnbieterByGroup,
         createGroup,
         renameGroup,
         deleteGroup,
@@ -246,36 +280,115 @@ export default function GuestTransactionStep3() {
         renameCategory,
         deleteCategory,
     } = useDicts();
+    const { incomeTypes, sources, createType, renameType, deleteType, createSource, renameSource, deleteSource } =
+        useIncomeDicts();
 
-    // Income dictionaries (Zustand + persist)
-    const {
-        incomeTypes,
-        sources,
-        createType,
-        renameType,
-        deleteType,
-        createSource,
-        renameSource,
-        deleteSource,
-    } = useIncomeDicts();
+    const anbieter = useDicts((s) => s.anbieter);
+    const kategorien = useDicts((s) => s.kategorien);
 
-    // Derived lists (computed, no local copies)
-    const anbieterOptions = useMemo(() => getAnbieterByGroup(gruppeId), [getAnbieterByGroup, gruppeId]);
-    const kategorieOptions = useMemo(() => (gruppeId ? kategorien[gruppeId] || [] : []), [kategorien, gruppeId]);
+    // Derived group by category (auto mode)
+    const derivedGroupId = useMemo(() => findGroupIdByCategoryId(kategorieId, kategorien), [kategorieId, kategorien]);
 
-    // Reset dependent picks when group changes (avoid stale ids)
+    // Effective group id depends on mode
+    const effectiveGroupId = gruppeMode === "manual" ? gruppeId : derivedGroupId;
+
+    // Keep store.groupId in sync with effectiveGroupId (guarded)
     useEffect(() => {
-        if (kind === "expense") {
-            txDraft.setMany({ anbieterId: "", kategorieId: "" });
-        }
-    }, [gruppeId, kind]);
+        const target = effectiveGroupId || "";
+        if (target !== gruppeId) txDraft.set("gruppeId", target);
+    }, [effectiveGroupId, gruppeId]);
 
-    const requireCategory = true;
+    // Provider options
+    const providerOptions = anbieter;
+
+    // Category options:
+    // - manual mode: restrict strictly to the selected group
+    // - auto mode: union of supplier's groups
+    const categoryOptions = useMemo(() => {
+        if (gruppeMode === "manual") {
+            if (!effectiveGroupId) return [];
+            return (kategorien[effectiveGroupId] || []).map((c) => ({ ...c, groupId: effectiveGroupId }));
+        }
+        return getCategoriesForSupplier(anbieterId, anbieter, kategorien);
+    }, [gruppeMode, effectiveGroupId, anbieterId, anbieter, kategorien]);
+
+    // Smart suggestion (used for the hint under provider)
+    const suggestedCategoryId = useMemo(
+        () => (gruppeMode === "auto" ? suggestCategoryIdForSupplier(anbieterId, anbieter, kategorien) : ""),
+        [gruppeMode, anbieterId, anbieter, kategorien]
+    );
+
+    // Refs
+    const categoryInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Handlers
+    const onProviderChange = useCallback(
+        (id: string) => {
+            txDraft.setMany({ anbieterId: id });
+
+            if (gruppeMode === "manual") {
+                // Manual: keep group as is; ensure category fits selected group
+                if (kategorieId) {
+                    const ok = (kategorien[effectiveGroupId || ""] || []).some((c) => c.id === kategorieId);
+                    if (!ok) txDraft.set("kategorieId", "");
+                }
+            } else {
+                // Auto: union; clear incompatible category, apply suggestion if unambiguous
+                if (kategorieId) {
+                    const belongs = getCategoriesForSupplier(id, anbieter, kategorien).some((c) => c.id === kategorieId);
+                    if (!belongs) txDraft.set("kategorieId", "");
+                }
+                const suggestion = suggestCategoryIdForSupplier(id, anbieter, kategorien);
+                if (suggestion && suggestion !== kategorieId) txDraft.set("kategorieId", suggestion);
+            }
+        },
+        [gruppeMode, kategorieId, anbieter, kategorien, effectiveGroupId]
+    );
+
+    const onCategoryChange = useCallback(
+        (id: string) => {
+            txDraft.set("kategorieId", id);
+            if (gruppeMode === "auto") {
+                const g = findGroupIdByCategoryId(id, kategorien);
+                if (g && g !== gruppeId) txDraft.set("gruppeId", g);
+            }
+        },
+        [gruppeMode, kategorien, gruppeId]
+    );
+
+    const onGroupChangeManual = useCallback((id: string) => {
+        txDraft.setMany({ gruppeId: id, kategorieId: "" });
+    }, []);
+
+    const applySuggestedCategory = useCallback(() => {
+        if (!suggestedCategoryId) return;
+        txDraft.set("kategorieId", suggestedCategoryId);
+        // Focus category field after applying suggestion (quick correction flow)
+        categoryInputRef.current?.focus();
+    }, [suggestedCategoryId]);
+
+    const toggleGroupMode = useCallback(() => {
+        const next = gruppeMode === "auto" ? "manual" : "auto";
+        txDraft.set("gruppeMode", next); // persist in draft
+        if (next === "manual") {
+            // Entering manual: keep existing gruppeId; ensure category consistency
+            if (kategorieId) {
+                const ok = (kategorien[(gruppeId || "")] || []).some((c) => c.id === kategorieId);
+                if (!ok) txDraft.set("kategorieId", "");
+            }
+        } else {
+            // Back to auto: ensure gruppeId follows category
+            const g = findGroupIdByCategoryId(kategorieId, kategorien) || "";
+            txDraft.set("gruppeId", g);
+        }
+    }, [gruppeMode, kategorieId, gruppeId, kategorien]);
+
+    // Proceed rules
     const canProceed =
         kind === "income"
             ? Boolean(incomeType && (quelleId || quelleName))
             : kind === "expense"
-                ? Boolean(gruppeId && (requireCategory ? kategorieId : true))
+                ? Boolean(kategorieId)
                 : false;
 
     function next() {
@@ -287,7 +400,10 @@ export default function GuestTransactionStep3() {
             <main className="py-6 flex flex-col">
                 <PageHeader
                     left={
-                        <Link to="/guestTransactionStep2" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
+                        <Link
+                            to="/guestTransactionStep2"
+                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                        >
                             <MoveLeft className="w-5 h-5" />
                             Zurück
                         </Link>
@@ -297,10 +413,10 @@ export default function GuestTransactionStep3() {
                         <Link
                             to="/SettingsPage"
                             aria-label="Einstellungen"
-                            className="group p-2 hover:bg-gray-100 transition rounded-lg inline-flex items-center justify-center"
+                            className="group p-2 transition rounded-lg inline-flex items-center justify-center"
                             type="button"
                         >
-                            <SettingsIcon className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
+                            <Settings className="h-5 w-5 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />
@@ -356,39 +472,17 @@ export default function GuestTransactionStep3() {
                     {/* -------- Expense branch -------- */}
                     {kind === "expense" && (
                         <>
-                            {/* Group */}
-                            <Combobox
-                                label="Gruppe"
-                                required
-                                options={gruppen}
-                                value={gruppeId}
-                                onChange={(id) => txDraft.set("gruppeId", id)}
-                                placeholder="Gruppe wählen…"
-                                allowCreate
-                                onCreate={(name) => {
-                                    const id = createGroup(name);
-                                    txDraft.set("gruppeId", id);
-                                }}
-                                allowEdit
-                                onEdit={(id, newName) => renameGroup(id, newName)}
-                                onDelete={(id) => {
-                                    deleteGroup(id);
-                                    if (gruppeId === id) txDraft.setMany({ gruppeId: "", anbieterId: "", kategorieId: "" });
-                                }}
-                            />
-
-                            {/* Provider (filtered by selected group) */}
+                            {/* 1) Provider */}
                             <Combobox
                                 label="Anbieter"
-                                helperText={gruppeId ? "gefiltert nach Gruppe" : "zuerst Gruppe wählen"}
-                                options={anbieterOptions}
+                                helperText="erste Auswahl – Kategorien werden automatisch vorgeschlagen"
+                                options={anbieter}
                                 value={anbieterId}
-                                onChange={(id) => txDraft.set("anbieterId", id)}
+                                onChange={(id) => onProviderChange(id)}
                                 placeholder="z. B. Rewe"
                                 allowCreate
                                 onCreate={(name) => {
-                                    if (!gruppeId) return alert("Zuerst Gruppe wählen.");
-                                    const id = createProvider(name, gruppeId);
+                                    const id = createProvider(name, "");
                                     txDraft.set("anbieterId", id);
                                 }}
                                 allowEdit
@@ -399,32 +493,149 @@ export default function GuestTransactionStep3() {
                                 }}
                             />
 
-                            {/* Category (required) */}
+                            {/* Smart hint under provider */}
+                            {anbieterId && (suggestedCategoryId || kategorieId) && (
+                                <div className="mt-[-12px] mb-4 text-center">
+                                    <span className="text-xs text-gray-500">
+                                        {kategorieId
+                                            ? (() => {
+                                                const catName = getCategoriesForSupplier(anbieterId, anbieter, kategorien).find(
+                                                    (c) => c.id === kategorieId
+                                                )?.name ?? "Kategorie";
+                                                const grpName = gruppen.find((g) => g.id === effectiveGroupId)?.name ?? "Gruppe";
+                                                return `Aktuell kategorisiert als ${catName} / ${grpName}`;
+                                            })()
+                                            : (() => {
+                                                const catName =
+                                                    getCategoriesForSupplier(anbieterId, anbieter, kategorien).find(
+                                                        (c) => c.id === suggestedCategoryId
+                                                    )?.name ?? "Kategorie";
+                                                const grpId = findGroupIdByCategoryId(suggestedCategoryId, kategorien);
+                                                const grpName = gruppen.find((g) => g.id === grpId)?.name ?? "Gruppe";
+                                                return `Automatisch vorgeschlagen: ${catName} / ${grpName}`;
+                                            })()}
+                                    </span>
+
+                                    <div className="mt-1 flex gap-3 justify-center">
+                                        {!kategorieId && suggestedCategoryId && (
+                                            <button
+                                                type="button"
+                                                onClick={applySuggestedCategory}
+                                                className="text-xs text-blue-600 underline hover:text-blue-800"
+                                            >
+                                                übernehmen
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => categoryInputRef.current?.focus()}
+                                            className="text-xs text-gray-600 underline hover:text-gray-800"
+                                        >
+                                            ändern
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={toggleGroupMode}
+                                            className="text-xs text-gray-600 underline hover:text-gray-800"
+                                        >
+                                            {gruppeMode === "auto" ? "Gruppe manuell wählen" : "Gruppe automatisch"}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 2) Category */}
                             <Combobox
                                 label="Kategorie"
-                                required={true}
-                                options={kategorieOptions}
+                                required
+                                options={categoryOptions}
                                 value={kategorieId}
-                                onChange={(id) => txDraft.set("kategorieId", id)}
-                                placeholder={gruppeId ? "Kategorie wählen…" : "Erst Gruppe wählen"}
-                                disabled={!gruppeId}
+                                onChange={(id) => onCategoryChange(id)}
+                                placeholder={
+                                    anbieterId
+                                        ? categoryOptions.length
+                                            ? "Kategorie wählen…"
+                                            : gruppeMode === "manual"
+                                                ? "Keine Kategorien in dieser Gruppe"
+                                                : "Keine Kategorien für diesen Anbieter"
+                                        : "Zuerst Anbieter wählen"
+                                }
+                                disabled={!anbieterId}
+                                inputRef={categoryInputRef}
                                 allowCreate
                                 onCreate={(name) => {
-                                    if (!gruppeId) return alert("Zuerst Gruppe wählen.");
-                                    const id = createCategory(gruppeId, name);
-                                    txDraft.set("kategorieId", id);
+                                    if (gruppeMode === "manual") {
+                                        if (!effectiveGroupId) return alert("Bitte zuerst Gruppe wählen.");
+                                        const id = createCategory(effectiveGroupId, name);
+                                        txDraft.set("kategorieId", id);
+                                        return;
+                                    }
+                                    const supplier = anbieter.find((a) => a.id === anbieterId);
+                                    const groups = supplier?.gruppen || [];
+                                    if (groups.length === 1) {
+                                        const gid = groups[0];
+                                        const id = createCategory(gid, name);
+                                        txDraft.set("kategorieId", id);
+                                    } else {
+                                        alert("Bitte Kategorie in den Einstellungen anlegen (Gruppenzuordnung erforderlich).");
+                                    }
                                 }}
                                 allowEdit
                                 onEdit={(id, newName) => {
-                                    if (!gruppeId) return;
-                                    renameCategory(gruppeId, id, newName);
+                                    const gid =
+                                        gruppeMode === "manual" && effectiveGroupId
+                                            ? effectiveGroupId
+                                            : findGroupIdByCategoryId(id, kategorien);
+                                    if (!gid) return;
+                                    renameCategory(gid, id, newName);
                                 }}
                                 onDelete={(id) => {
-                                    if (!gruppeId) return;
-                                    deleteCategory(gruppeId, id);
+                                    const gid =
+                                        gruppeMode === "manual" && effectiveGroupId
+                                            ? effectiveGroupId
+                                            : findGroupIdByCategoryId(id, kategorien);
+                                    if (!gid) return;
+                                    deleteCategory(gid, id);
                                     if (kategorieId === id) txDraft.set("kategorieId", "");
                                 }}
                             />
+
+                            {/* 3) Group (auto or manual) */}
+                            <div className="mb-2 flex items-center justify-between">
+                                <div className="text-base font-medium">Gruppe</div>
+                                <button
+                                    type="button"
+                                    className="text-xs text-gray-600 underline hover:text-gray-800"
+                                    onClick={toggleGroupMode}
+                                >
+                                    {gruppeMode === "auto" ? "manuell wählen" : "automatisch"}
+                                </button>
+                            </div>
+
+                            {gruppeMode === "auto" ? (
+                                <div className="mb-6">
+                                    <input
+                                        type="text"
+                                        value={(() => {
+                                            const g = gruppen.find((g) => g.id === effectiveGroupId);
+                                            return g ? g.name : "";
+                                        })()}
+                                        placeholder="automatisch aus Kategorie"
+                                        disabled
+                                        className="h-12 w-full border shadow-sm border-gray-300 px-3 bg-gray-100 text-gray-600"
+                                        aria-readonly
+                                    />
+                                    <div className="mt-1 text-xs text-gray-500 text-center">automatisch aus Kategorie</div>
+                                </div>
+                            ) : (
+                                <Combobox
+                                    label=""
+                                    options={gruppen}
+                                    value={gruppeId}
+                                    onChange={(id) => onGroupChangeManual(id)}
+                                    placeholder="Gruppe wählen…"
+                                />
+                            )}
                         </>
                     )}
 
@@ -458,7 +669,8 @@ export default function GuestTransactionStep3() {
                         </Button>
                     </div>
                 </section>
-                {/* Developer Panel */}
+
+                {/* Developer Panel (unchanged) */}
                 <div className="mt-10 border-t border-gray-300 pt-3 text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
                     <div className="flex gap-2 flex-wrap">
                         <button
@@ -495,9 +707,6 @@ export default function GuestTransactionStep3() {
                         <p>Sources: {useIncomeDicts.getState().sources.length}</p>
                     </div>
                 </div>
-
-
-
             </main>
         </div>
     );

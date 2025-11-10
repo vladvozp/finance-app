@@ -18,6 +18,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 
+import { useDicts } from "../store/dicts";
+
+
 const KEY = "ft_transactions";
 
 /** Utility: stable YYYY-MM-DD from Date */
@@ -62,6 +65,9 @@ function draftHash(d) {
 
 export default function TestErgebniss() {
     const navigate = useNavigate();
+    const dicts = useDicts?.() || {};
+    const { gruppen, anbieter, kategorien } = dicts;
+
 
     // Pull full draft (includes both expense and income fields)
     const {
@@ -130,10 +136,49 @@ export default function TestErgebniss() {
 
     // Labels for UI
     const kontoLabel = kontoName || accountId || "—";
-    const gruppeName = gruppeId || "";
-    const anbieterName = anbieterId || "";
-    const kategorieName = kategorieId || "";
+    // const gruppeName = gruppeId || "";
+    //   const anbieterName = anbieterId || "";
+    //  const kategorieName = kategorieId || "";
+    function lookupNameById(id, collection) {
+        if (!id || !collection) return null;
+        // Если это массив объектов
+        if (Array.isArray(collection)) {
+            const item = collection.find(
+                (x) => x?.id === id || x?.value === id || x?.key === id
+            );
+            return item?.name ?? item?.label ?? item?.title ?? null;
+        }
+        // Если это словарь-объект
+        if (typeof collection === "object") {
+            const item = collection[id] ?? null;
+            if (!item) return null;
+            if (typeof item === "string") return item;
+            return item?.name ?? item?.label ?? item?.title ?? null;
+        }
+        return null;
+    }
 
+    // Gruppe
+    const gruppeName =
+        lookupNameById(gruppeId, gruppen) ??
+        null ??
+        gruppeId ?? "";
+
+    // Anbieter (просто по id)
+    const anbieterName =
+        lookupNameById(anbieterId, anbieter) ?? anbieterId ?? "";
+
+    const kategorieCollection =
+        (kategorien && (kategorien[gruppeId] || kategorien[gruppeId ?? ""])) || null;
+    const kategorieName =
+        lookupNameById(kategorieId, kategorieCollection) ??
+        lookupNameById(kategorieId, kategorien) ??
+        kategorieId ?? "";
+    {
+        isExpense && !!gruppeName && <Row label="Gruppe" value={gruppeName} />
+    }
+    { isExpense && !!anbieterName && <Row label="Anbieter" value={anbieterName} /> }
+    { isExpense && !!kategorieName && <Row label="Kategorie" value={kategorieName} /> }
     // ==== Validation (strict, but minimal) ====
     const errors = [];
     if (amountNum == null) errors.push("Betrag ungültig");
@@ -268,7 +313,7 @@ export default function TestErgebniss() {
                 {/* Review card (what exactly will be persisted) */}
                 <div className="border shadow-sm p-4 space-y-2">
                     {/* Common fields */}
-                    <Row label="Konto" value={kontoLabel} />
+                    <Row label="Konto" value={kontoName} />
                     <Row label="Betrag" value={amountView} />
                     <Row label="Datum" value={dateView} />
                     <Row

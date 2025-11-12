@@ -15,11 +15,20 @@ import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
-import { IconRenderer, type IconSpec } from "../components/IconRenderer";
+
+import { Combobox, type ComboOption } from "../components/ui/combobox";
+
+type Provider = ComboOption & {};
+type Category = ComboOption & {};
+type Group = ComboOption & {};
+type Type = ComboOption & {};
+type Source = ComboOption & {};
+
+// import { IconRenderer, type IconSpec } from "../components/IconRenderer";
 
 
 // ---------- Generic Combobox (stateless UI; exposes inputRef for focus) ----------
-type ComboOption = { id: string; name: string; icon?: IconSpec };
+{/* type ComboOption = { id: string; name: string; icon?: IconSpec };
 
 type ComboboxProps<T extends ComboOption> = {
     label: string;
@@ -91,7 +100,7 @@ const Combobox = forwardRef(function Combobox<T extends ComboOption>(
         return base.filter((o) => o.name.toLowerCase().includes(q));
     }, [options, query]);
 
-    return (
+   {/* return (
         <div className="mb-6" ref={rootRef}>
             <label className="block text-center text-black text-base font-medium mb-1">
                 {label} {required && <span className="text-red-500">*</span>}
@@ -143,7 +152,7 @@ const Combobox = forwardRef(function Combobox<T extends ComboOption>(
                                     <button
                                         type="button"
                                         onMouseDown={(e) => e.preventDefault()}
-
+                                        onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
                                         onClick={() => {
                                             onChange?.(o.id, o);
                                             setOpen(false);
@@ -212,7 +221,7 @@ const Combobox = forwardRef(function Combobox<T extends ComboOption>(
             )}
         </div>
     );
-}) as <T extends ComboOption>(p: ComboboxProps<T>) => React.ReactElement;
+}) as <T extends ComboOption>(p: ComboboxProps<T>) => React.ReactElement; */}
 
 // ---------- Helpers (provider → category; category ↔ group) ----------
 function getCategoriesForSupplier(
@@ -431,7 +440,7 @@ export default function GuestTransactionStep3() {
                     {/* -------- Income branch -------- */}
                     {kind === "income" && (
                         <>
-                            <Combobox
+                            <Combobox<Type>
                                 label="Typ (Einnahme)"
                                 required
                                 options={incomeTypes}
@@ -451,7 +460,7 @@ export default function GuestTransactionStep3() {
                                 }}
                             />
 
-                            <Combobox
+                            <Combobox<Source>
                                 label="Quelle"
                                 required
                                 options={sources}
@@ -477,7 +486,7 @@ export default function GuestTransactionStep3() {
                     {kind === "expense" && (
                         <>
                             {/* 1) Provider */}
-                            <Combobox
+                            <Combobox<Provider>
                                 label="Anbieter"
                                 helperText="erste Auswahl – Kategorien werden automatisch vorgeschlagen"
                                 options={anbieter}
@@ -549,7 +558,7 @@ export default function GuestTransactionStep3() {
                             )}
 
                             {/* 2) Category */}
-                            <Combobox
+                            <Combobox<Category>
                                 label="Kategorie"
                                 required
                                 options={categoryOptions}
@@ -632,7 +641,7 @@ export default function GuestTransactionStep3() {
                                     <div className="mt-1 text-xs text-gray-500 text-center">automatisch aus Kategorie</div>
                                 </div>
                             ) : (
-                                <Combobox
+                                <Combobox<Group>
                                     label=""
                                     options={gruppen}
                                     value={gruppeId}

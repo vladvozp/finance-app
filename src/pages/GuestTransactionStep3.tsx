@@ -110,6 +110,8 @@ const Combobox = forwardRef(function Combobox<T extends ComboOption>(
                         setQuery(e.target.value);
                         setOpen(true);
                     }}
+
+
                     onFocus={() => setOpen(true)}
                     className={`h-12 w-full border shadow-sm border-gray-500/80 px-3 outline-none placeholder-gray-400
             focus:border-blue-400 focus:ring-1 focus:ring-blue-400
@@ -140,6 +142,8 @@ const Combobox = forwardRef(function Combobox<T extends ComboOption>(
                                 <div className="flex w-full items-center justify-between rounded-md px-2 py-1">
                                     <button
                                         type="button"
+                                        onMouseDown={(e) => e.preventDefault()}
+
                                         onClick={() => {
                                             onChange?.(o.id, o);
                                             setOpen(false);

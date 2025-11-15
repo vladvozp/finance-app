@@ -1,6 +1,6 @@
 // src/pages/Dashboard.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import Arrowleft from "../assets/Arrowleft.svg?react";
 import { Trash2, SquarePlus, SquareMinus, Settings, ArchiveRestore } from "lucide-react";
@@ -9,8 +9,10 @@ import type { Tx } from "../types/tx";
 import { readKontoMap } from "../utils/lookups";
 import { readTxList, writeTxList } from "../utils/storage";
 import { useDicts } from "../store/dicts";
+import { computeAccountBalance } from "../utils/accountBalance";
 
 const TX_KEY = "ft_transactions";
+const ACC_KEY = "ft_accounts";
 const SETTINGS_KEY = "ft_dashboard_settings_v4"; // bump when shape changes
 
 /** Simple debounce helper to avoid excessive LocalStorage writes */
@@ -40,38 +42,42 @@ function lookupNameById(id?: string | null, collection?: any): string | null {
 }
 
 export default function Dashboard() {
+    const location = useLocation();
+
     const [items, setItems] = useState<Tx[]>([]);
     const [parseError, setParseError] = useState<string | null>(null);
 
     /** ---------- PERSISTED VIEW/QUERY STATE ---------- */
     const [kindFilter, setKindFilter] = useState<"all" | "income" | "expense">("all");
     const [from, setFrom] = useState<string>(""); // YYYY-MM-DD
-    const [to, setTo] = useState<string>("");     // YYYY-MM-DD
+    const [to, setTo] = useState<string>(""); // YYYY-MM-DD
 
-    // NEW: supplier (anbieter) filter (flat dictionary only)
+    // Supplier (Anbieter) filter (flat dictionary only)
     const [anbieterFilter, setAnbieterFilter] = useState<string>("");
 
     const [cols, setCols] = useState({
         konto: true,
         gruppe: true,
         kategorie: true,
-        anbieter: true,      // NEW: show "Anbieter" column
+        anbieter: true,
         incomeType: true,
         quelle: true,
         remark: false,
         actions: true,
     });
 
-    const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "date", dir: "desc" });
+    const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({
+        key: "date",
+        dir: "desc",
+    });
 
     /** ---------- DICTS (flat only) ---------- */
-    // We assume useDicts()?.anbieter returns a flat dictionary or array of suppliers.
-    // No "by group" logic here per your request.
     const { gruppen, kategorien, anbieter } = useDicts?.() || {};
 
     /** Format helpers */
     const fmtMoney = (n: number) =>
         new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(n);
+
     const fmtDate = (iso: string | null) => {
         if (!iso) return "—";
         if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
@@ -86,7 +92,7 @@ export default function Dashboard() {
     /** Name lookups (best-effort; fallbacks to IDs) */
     const getKontoName = (() => {
         const kontoMap = readKontoMap(); // read once
-        return (id?: string) => (id ? (kontoMap.get(id) ?? id) : "—");
+        return (id?: string) => (id ? kontoMap.get(id) ?? id : "—");
     })();
 
     const getGruppeName = (gid?: string | null) =>
@@ -94,7 +100,8 @@ export default function Dashboard() {
 
     const getKategorieName = (gid?: string | null, kid?: string | null) => {
         if (!kid) return "—";
-        const col = (kategorien && (kategorien[gid ?? ""] || kategorien[gid as any])) || null;
+        const col =
+            (kategorien && (kategorien[gid ?? ""] || kategorien[gid as any])) || null;
         return lookupNameById(kid, col) ?? lookupNameById(kid, kategorien) ?? kid;
     };
 
@@ -129,7 +136,7 @@ export default function Dashboard() {
         persistSettings({ kindFilter, from, to, cols, sort, anbieterFilter });
     }, [kindFilter, from, to, cols, sort, anbieterFilter, persistSettings]);
 
-    /** ---------- Load data ---------- */
+    /** ---------- Load transactions ---------- */
     useEffect(() => {
         try {
             const parsed = readTxList();
@@ -148,8 +155,8 @@ export default function Dashboard() {
             if (from && (tx.date ?? "") < from) return false;
             if (to && (tx.date ?? "9999-12-31") > to) return false;
 
-            // Supplier filter applies only to expenses (data model has anbieterId there)
-            if (anbieterFilter && tx.kind === "expense" && tx.anbieterId !== anbieterFilter) return false;
+            if (anbieterFilter && tx.kind === "expense" && tx.anbieterId !== anbieterFilter)
+                return false;
 
             return true;
         });
@@ -169,32 +176,94 @@ export default function Dashboard() {
         const arr = [...filtered];
         arr.sort((t1, t2) => {
             switch (sort.key) {
-                case "kind": return cmp(t1.kind, t2.kind, sort.dir);
-                case "amount": return cmp(t1.amount, t2.amount, sort.dir);
-                case "date": return cmp(t1.date ?? "", t2.date ?? "", sort.dir);
-                case "konto": return cmp(getKontoName(t1.kontoId ?? ""), getKontoName(t2.kontoId ?? ""), sort.dir);
-                case "gruppe": return cmp(getGruppeName(t1.gruppeId ?? ""), getGruppeName(t2.gruppeId ?? ""), sort.dir);
-                case "kat": return cmp(getKategorieName(t1.gruppeId ?? "", t1.kategorieId ?? ""), getKategorieName(t2.gruppeId ?? "", t2.kategorieId ?? ""), sort.dir);
-                case "anbieter": return cmp(getAnbieterName(t1.anbieterId ?? ""), getAnbieterName(t2.anbieterId ?? ""), sort.dir);
-                case "incomeType": return cmp(t1.incomeType ?? "", t2.incomeType ?? "", sort.dir);
-                case "quelle": return cmp((t1.quelleName ?? t1.quelleId ?? ""), (t2.quelleName ?? t2.quelleId ?? ""), sort.dir);
-                default: return 0;
+                case "kind":
+                    return cmp(t1.kind, t2.kind, sort.dir);
+                case "amount":
+                    return cmp(t1.amount, t2.amount, sort.dir);
+                case "date":
+                    return cmp(t1.date ?? "", t2.date ?? "", sort.dir);
+                case "konto":
+                    return cmp(
+                        getKontoName(t1.kontoId ?? ""),
+                        getKontoName(t2.kontoId ?? ""),
+                        sort.dir
+                    );
+                case "gruppe":
+                    return cmp(
+                        getGruppeName(t1.gruppeId ?? ""),
+                        getGruppeName(t2.gruppeId ?? ""),
+                        sort.dir
+                    );
+                case "kat":
+                    return cmp(
+                        getKategorieName(t1.gruppeId ?? "", t1.kategorieId ?? ""),
+                        getKategorieName(t2.gruppeId ?? "", t2.kategorieId ?? ""),
+                        sort.dir
+                    );
+                case "anbieter":
+                    return cmp(
+                        getAnbieterName(t1.anbieterId ?? ""),
+                        getAnbieterName(t2.anbieterId ?? ""),
+                        sort.dir
+                    );
+                case "incomeType":
+                    return cmp(t1.incomeType ?? "", t2.incomeType ?? "", sort.dir);
+                case "quelle":
+                    return cmp(
+                        t1.quelleName ?? t1.quelleId ?? "",
+                        t2.quelleName ?? t2.quelleId ?? "",
+                        sort.dir
+                    );
+                default:
+                    return 0;
             }
         });
         return arr;
     }, [filtered, sort]);
 
+    /** ---------- Accounts with balances (always fresh from localStorage) ---------- */
+    const accountsWithBalance = useMemo(() => {
+        let accs: any[] = [];
+        try {
+            const raw = localStorage.getItem(ACC_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) accs = parsed;
+            }
+        } catch {
+            accs = [];
+        }
+
+        return accs.map((acc) => ({
+            ...acc,
+            balance: computeAccountBalance(acc, items),
+        }));
+    }, [items, location.key]);
+
     /** ---------- Aggregates ---------- */
-    const { total, incomeTotal, expenseTotal } = useMemo(() => {
-        let bal = 0, inc = 0, exp = 0;
+    const {
+        total,
+        incomeTotal,
+        expenseTotal,
+        filteredTotal,
+    } = useMemo(() => {
+        const total = accountsWithBalance.reduce(
+            (s, acc) => s + (acc.balance ?? 0),
+            0
+        );
+
+        let inc = 0;
+        let exp = 0;
         for (const t of filtered) {
             const a = Number.isFinite(t.amount) ? t.amount : 0;
-            bal += a;
             if (t.kind === "income") inc += a;
-            else exp += a; // expenses are negative
+            else exp += a;
         }
-        return { total: bal, incomeTotal: inc, expenseTotal: exp };
-    }, [filtered]);
+
+        const filteredTotal = inc + exp;
+
+        return { total, incomeTotal: inc, expenseTotal: exp, filteredTotal };
+    }, [accountsWithBalance, filtered]);
 
     /** ---------- UI helpers ---------- */
     const kindBadge = (k: Tx["kind"]) =>
@@ -203,7 +272,9 @@ export default function Dashboard() {
         k === "income" ? "text-green-700 font-semibold" : "text-red-700 font-semibold";
 
     function toggleSort(key: string) {
-        setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+        setSort((s) =>
+            s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }
+        );
     }
 
     function toggleCol(k: keyof typeof cols) {
@@ -228,7 +299,16 @@ export default function Dashboard() {
             kindFilter: "all" as const,
             from: "",
             to: "",
-            cols: { konto: true, gruppe: true, kategorie: true, anbieter: true, incomeType: true, quelle: true, remark: false, actions: true },
+            cols: {
+                konto: true,
+                gruppe: true,
+                kategorie: true,
+                anbieter: true,
+                incomeType: true,
+                quelle: true,
+                remark: false,
+                actions: true,
+            },
             sort: { key: "date", dir: "desc" as const },
             anbieterFilter: "",
         };
@@ -247,20 +327,31 @@ export default function Dashboard() {
             <section className="max-w-3xl mx-auto p-4 space-y-4">
                 <PageHeader
                     left={
-                        <Link to="/guest" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
+                        <Link
+                            to="/guest"
+                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                        >
                             <Arrowleft className="w-5 h-5" /> Zurück
                         </Link>
                     }
                     center={null}
                     right={
-                        <Link to="/SettingsPage" aria-label="Einstellungen" className="group p-2 transition rounded-lg" type="button">
+                        <Link
+                            to="/SettingsPage"
+                            aria-label="Einstellungen"
+                            className="group p-2 transition rounded-lg"
+                            type="button"
+                        >
                             <Settings className="h-6 w-6 text-gray-600 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />
-                <div className="alert alert-error"><span>Fehlerhafte Daten: {parseError}</span></div>
+                <div className="alert alert-error">
+                    <span>Fehlerhafte Daten: {parseError}</span>
+                </div>
                 <p className="text-sm opacity-80">
-                    Lösche den Schlüssel <code>{TX_KEY}</code> im Local Storage und speichere die Transaktion erneut.
+                    Lösche den Schlüssel <code>{TX_KEY}</code> im Local Storage und speichere die
+                    Transaktion erneut.
                 </p>
             </section>
         );
@@ -272,7 +363,10 @@ export default function Dashboard() {
             <main className="py-6 flex flex-col">
                 <PageHeader
                     left={
-                        <Link to="/guest" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
+                        <Link
+                            to="/guest"
+                            className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800"
+                        >
                             <Arrowleft className="w-5 h-5" />
                             Zurück
                         </Link>
@@ -290,53 +384,92 @@ export default function Dashboard() {
                     }
                 />
 
-                {/* ======= SUMMARY (filtered) ======= */}
-                <section className="stats border shadow-sm border-gray-500 w-full mt-4" role="region" aria-labelledby="summary-heading">
-                    <h2 id="summary-heading" className="sr-only">Summary</h2>
+                {/* ======= SUMMARY ======= */}
+                <section
+                    className="stats border shadow-sm border-gray-500 w-full mt-4"
+                    role="region"
+                    aria-labelledby="summary-heading"
+                >
+                    <h2 id="summary-heading" className="sr-only">
+                        Summary
+                    </h2>
                     <div className="stat">
-                        <div className="stat-title font-semibold">Balance (filtered)</div>
+                        <div className="stat-title font-semibold">Gesamtbestand (alle Konten)</div>
                         <div className="stat-value font-semibold">{fmtMoney(total)}</div>
-                        <div className="stat-desc">{filtered.length} Einträge</div>
+                        <div className="stat-desc text-xs">
+                            {accountsWithBalance.length} Konten · {filtered.length} Buchungen (gefiltert)
+                        </div>
                     </div>
                     <div className="stat">
-                        <div className="stat-title font-semibold">Income</div>
-                        <div className="stat-value text-green-700">{fmtMoney(incomeTotal)}</div>
+                        <div className="stat-title font-semibold">Income (gefiltert)</div>
+                        <div className="stat-value text-green-700">
+                            {fmtMoney(incomeTotal)}
+                        </div>
                     </div>
                     <div className="stat">
-                        <div className="stat-title font-semibold">Expenses</div>
-                        <div className="stat-value text-red-700">{fmtMoney(expenseTotal)}</div>
+                        <div className="stat-title font-semibold">Expenses (gefiltert)</div>
+                        <div className="stat-value text-red-700">
+                            {fmtMoney(expenseTotal)}
+                        </div>
                     </div>
                 </section>
 
                 {/* ======= FILTER BAR ======= */}
-                <section className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-3 items-end" role="region" aria-labelledby="filters-heading">
-                    <h2 id="filters-heading" className="sr-only">Filters</h2>
+                <section
+                    className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-3 items-end"
+                    role="region"
+                    aria-labelledby="filters-heading"
+                >
+                    <h2 id="filters-heading" className="sr-only">
+                        Filters
+                    </h2>
 
-                    {/* Type filter */}
                     <div className="flex flex-col">
-                        <label htmlFor="filter-typ" className="text-xs text-gray-500 mb-1">Type</label>
-                        <select id="filter-typ" className="select select-bordered h-10" value={kindFilter} onChange={(e) => setKindFilter(e.target.value as any)}>
+                        <label htmlFor="filter-typ" className="text-xs text-gray-500 mb-1">
+                            Type
+                        </label>
+                        <select
+                            id="filter-typ"
+                            className="select select-bordered h-10"
+                            value={kindFilter}
+                            onChange={(e) => setKindFilter(e.target.value as any)}
+                        >
                             <option value="all">All</option>
                             <option value="income">Income</option>
                             <option value="expense">Expense</option>
                         </select>
                     </div>
 
-                    {/* Date range: from */}
                     <div className="flex flex-col">
-                        <label htmlFor="filter-from" className="text-xs text-gray-500 mb-1">From</label>
-                        <input id="filter-from" type="date" className="input input-bordered h-10" value={from} onChange={(e) => setFrom(e.target.value)} />
+                        <label htmlFor="filter-from" className="text-xs text-gray-500 mb-1">
+                            From
+                        </label>
+                        <input
+                            id="filter-from"
+                            type="date"
+                            className="input input-bordered h-10"
+                            value={from}
+                            onChange={(e) => setFrom(e.target.value)}
+                        />
                     </div>
 
-                    {/* Date range: to */}
                     <div className="flex flex-col">
-                        <label htmlFor="filter-to" className="text-xs text-gray-500 mb-1">To</label>
-                        <input id="filter-to" type="date" className="input input-bordered h-10" value={to} onChange={(e) => setTo(e.target.value)} />
+                        <label htmlFor="filter-to" className="text-xs text-gray-500 mb-1">
+                            To
+                        </label>
+                        <input
+                            id="filter-to"
+                            type="date"
+                            className="input input-bordered h-10"
+                            value={to}
+                            onChange={(e) => setTo(e.target.value)}
+                        />
                     </div>
 
-                    {/* Supplier (Anbieter) filter */}
                     <div className="flex flex-col">
-                        <label htmlFor="filter-anbieter" className="text-xs text-gray-500 mb-1">Supplier</label>
+                        <label htmlFor="filter-anbieter" className="text-xs text-gray-500 mb-1">
+                            Supplier
+                        </label>
                         <select
                             id="filter-anbieter"
                             className="select select-bordered h-10"
@@ -353,14 +486,15 @@ export default function Dashboard() {
                                 : anbieter
                                     ? Object.entries(anbieter).map(([id, val]: any) => (
                                         <option key={id} value={id}>
-                                            {typeof val === "string" ? val : (val?.name ?? val?.label ?? val?.title ?? id)}
+                                            {typeof val === "string"
+                                                ? val
+                                                : val?.name ?? val?.label ?? val?.title ?? id}
                                         </option>
                                     ))
                                     : null}
                         </select>
                     </div>
 
-                    {/* Reset button */}
                     <div className="flex flex-col">
                         <label className="text-xs text-gray-500 mb-1 opacity-0">Reset</label>
                         <button type="button" className="h-10 text-sm" onClick={resetFiltersToDefault}>
@@ -371,24 +505,28 @@ export default function Dashboard() {
 
                 {/* ======= COLUMN PREFERENCES ======= */}
                 <section className="mt-4" role="region" aria-labelledby="columns-heading">
-                    <h2 id="columns-heading" className="sr-only">Column visibility</h2>
+                    <h2 id="columns-heading" className="sr-only">
+                        Column visibility
+                    </h2>
                     <details className="bg-base-100 border shadow-sm border-gray-500 open:shadow-sm">
                         <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between">
-                            <span className="font-medium text-sm">Display options</span>
+                            <span className="font-medium text-sm">Anzeigeoptionen</span>
                             <span aria-hidden>▾</span>
                         </summary>
                         <div id="columns-panel" className="px-4 pb-4">
                             <div className="flex flex-wrap gap-3">
-                                {([
-                                    ["konto", "Konto"],
-                                    ["gruppe", "Gruppe"],
-                                    ["kategorie", "Kategorie"],
-                                    ["anbieter", "Anbieter"],
-                                    ["incomeType", "Typ (Einnahme)"],
-                                    ["quelle", "Quelle"],
-                                    ["remark", "Bemerkung"],
-                                    ["actions", "Aktionen"],
-                                ] as const).map(([key, label]) => (
+                                {(
+                                    [
+                                        ["konto", "Konto"],
+                                        ["gruppe", "Gruppe"],
+                                        ["kategorie", "Kategorie"],
+                                        ["anbieter", "Anbieter"],
+                                        ["incomeType", "Typ (Einnahme)"],
+                                        ["quelle", "Quelle"],
+                                        ["remark", "Bemerkung"],
+                                        ["actions", "Aktionen"],
+                                    ] as const
+                                ).map(([key, label]) => (
                                     <label className="label cursor-pointer gap-2" key={key}>
                                         <input
                                             type="checkbox"
@@ -409,7 +547,9 @@ export default function Dashboard() {
                     <div className="card bg-base-200 p-6 mt-4">
                         <p className="opacity-80">Keine Daten für die aktuelle Auswahl.</p>
                         <div className="mt-3">
-                            <Link to="/guestTransactionStep1" className="btn btn-primary">Neue Transaktion</Link>
+                            <Link to="/guestTransactionStep1" className="btn btn-primary">
+                                Neue Transaktion
+                            </Link>
                         </div>
                     </div>
                 ) : (
@@ -417,45 +557,76 @@ export default function Dashboard() {
                         <table className="table">
                             <thead className="sticky">
                                 <tr>
-                                    <th className="cursor-pointer select-none" onClick={() => toggleSort("kind")}>
+                                    <th
+                                        className="cursor-pointer select-none"
+                                        onClick={() => toggleSort("kind")}
+                                    >
                                         Typ {sort.key === "kind" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
-                                    <th className="cursor-pointer select-none" onClick={() => toggleSort("date")}>
+                                    <th
+                                        className="cursor-pointer select-none"
+                                        onClick={() => toggleSort("date")}
+                                    >
                                         Datum {sort.key === "date" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
                                     {cols.konto && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("konto")}>
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("konto")}
+                                        >
                                             Konto {sort.key === "konto" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.kategorie && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("kat")}>
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("kat")}
+                                        >
                                             Kategorie {sort.key === "kat" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.gruppe && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("gruppe")}>
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("gruppe")}
+                                        >
                                             Gruppe {sort.key === "gruppe" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.anbieter && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("anbieter")}>
-                                            Anbieter {sort.key === "anbieter" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("anbieter")}
+                                        >
+                                            Anbieter{" "}
+                                            {sort.key === "anbieter" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.incomeType && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("incomeType")}>
-                                            Typ (Einnahme) {sort.key === "incomeType" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("incomeType")}
+                                        >
+                                            Typ (Einnahme){" "}
+                                            {sort.key === "incomeType" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.quelle && (
-                                        <th className="cursor-pointer select-none" onClick={() => toggleSort("quelle")}>
-                                            Quelle {sort.key === "quelle" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        <th
+                                            className="cursor-pointer select-none"
+                                            onClick={() => toggleSort("quelle")}
+                                        >
+                                            Quelle{" "}
+                                            {sort.key === "quelle" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.remark && <th>Bemerkung</th>}
-                                    <th className="text-right cursor-pointer select-none" onClick={() => toggleSort("amount")}>
-                                        Betrag {sort.key === "amount" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                    <th
+                                        className="text-right cursor-pointer select-none"
+                                        onClick={() => toggleSort("amount")}
+                                    >
+                                        Betrag{" "}
+                                        {sort.key === "amount" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
                                     {cols.actions && <th className="text-right">Aktionen</th>}
                                 </tr>
@@ -465,20 +636,56 @@ export default function Dashboard() {
                                     <tr key={tx.id}>
                                         <td>
                                             <span className={kindBadge(tx.kind)}>
-                                                {tx.kind === "income"
-                                                    ? <span className="inline-flex items-center gap-1"><SquarePlus className="w-3.5 h-3.5" /></span>
-                                                    : <span className="inline-flex items-center gap-1"><SquareMinus className="w-3.5 h-3.5" /></span>}
+                                                {tx.kind === "income" ? (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <SquarePlus className="w-3.5 h-3.5" />
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1">
+                                                        <SquareMinus className="w-3.5 h-3.5" />
+                                                    </span>
+                                                )}
                                             </span>
                                         </td>
                                         <td>{fmtDate(tx.date ?? null)}</td>
                                         {cols.konto && <td>{getKontoName(tx.kontoId ?? undefined)}</td>}
-                                        {cols.kategorie && <td>{tx.kind === "expense" ? getKategorieName(tx.gruppeId ?? null, tx.kategorieId ?? null) : "—"}</td>}
-                                        {cols.gruppe && <td>{tx.kind === "expense" ? getGruppeName(tx.gruppeId ?? null) : "—"}</td>}
-                                        {cols.anbieter && <td>{tx.kind === "expense" ? getAnbieterName(tx.anbieterId ?? null) : "—"}</td>}
-                                        {cols.incomeType && <td>{tx.kind === "income" ? (tx.incomeType || "—") : "—"}</td>}
-                                        {cols.quelle && <td>{tx.kind === "income" ? (tx.quelleName || tx.quelleId || "—") : "—"}</td>}
+                                        {cols.kategorie && (
+                                            <td>
+                                                {tx.kind === "expense"
+                                                    ? getKategorieName(tx.gruppeId ?? null, tx.kategorieId ?? null)
+                                                    : "—"}
+                                            </td>
+                                        )}
+                                        {cols.gruppe && (
+                                            <td>
+                                                {tx.kind === "expense"
+                                                    ? getGruppeName(tx.gruppeId ?? null)
+                                                    : "—"}
+                                            </td>
+                                        )}
+                                        {cols.anbieter && (
+                                            <td>
+                                                {tx.kind === "expense"
+                                                    ? getAnbieterName(tx.anbieterId ?? null)
+                                                    : "—"}
+                                            </td>
+                                        )}
+                                        {cols.incomeType && (
+                                            <td>{tx.kind === "income" ? tx.incomeType || "—" : "—"}</td>
+                                        )}
+                                        {cols.quelle && (
+                                            <td>
+                                                {tx.kind === "income"
+                                                    ? tx.quelleName || tx.quelleId || "—"
+                                                    : "—"}
+                                            </td>
+                                        )}
                                         {cols.remark && <td>{tx.remark || "—"}</td>}
-                                        <td className={`text-right tabular-nums ${amountClass(tx.kind)}`}>{fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}</td>
+                                        <td
+                                            className={`text-right tabular-nums ${amountClass(tx.kind)}`}
+                                        >
+                                            {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                        </td>
                                         {cols.actions && (
                                             <td className="text-right">
                                                 <button
@@ -511,7 +718,9 @@ export default function Dashboard() {
                                     >
                                         Summe (gefiltert):
                                     </td>
-                                    <td className="text-right font-bold">{fmtMoney(total)}</td>
+                                    <td className="text-right font-bold">
+                                        {fmtMoney(filteredTotal)}
+                                    </td>
                                     {cols.actions && <td />}
                                 </tr>
                             </tfoot>

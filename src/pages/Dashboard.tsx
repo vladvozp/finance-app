@@ -41,6 +41,80 @@ function lookupNameById(id?: string | null, collection?: any): string | null {
     return null;
 }
 
+/** Build flattened Kategorie options from different possible dict shapes */
+function buildKategorieOptions(kategorien: any): { id: string; label: string }[] {
+    const result: { id: string; label: string }[] = [];
+    const seen = new Set<string>();
+
+    if (!kategorien) return result;
+
+    const push = (id: string | undefined | null, label: string | undefined | null) => {
+        if (!id) return;
+        const cleanId = String(id);
+        if (seen.has(cleanId)) return;
+        seen.add(cleanId);
+        result.push({ id: cleanId, label: label || cleanId });
+    };
+
+    if (Array.isArray(kategorien)) {
+        for (const k of kategorien) {
+            const id = k?.id ?? k?.value ?? k?.key;
+            const label = k?.name ?? k?.label ?? k?.title ?? id;
+            push(id, label);
+        }
+        return result;
+    }
+
+    if (typeof kategorien === "object") {
+        for (const [outerKey, outerVal] of Object.entries(kategorien)) {
+            if (!outerVal) continue;
+
+            // Flat: { catId: "Lebensmittel" } or { catId: { name: ... } }
+            if (typeof outerVal === "string") {
+                push(outerKey, outerVal);
+                continue;
+            }
+
+            const hasDirectName =
+                typeof outerVal === "object" &&
+                ("name" in (outerVal as any) ||
+                    "label" in (outerVal as any) ||
+                    "title" in (outerVal as any));
+
+            if (hasDirectName) {
+                const ov: any = outerVal;
+                const id = ov.id ?? outerKey;
+                const label = ov.name ?? ov.label ?? ov.title ?? id;
+                push(id, label);
+                continue;
+            }
+
+            // Nested per group: { gruppeId: [ {id,name}, ... ] } or { gruppeId: { catId: {...} } }
+            if (Array.isArray(outerVal)) {
+                for (const k of outerVal as any[]) {
+                    const id = k?.id ?? k?.value ?? k?.key;
+                    const label = k?.name ?? k?.label ?? k?.title ?? id;
+                    push(id, label);
+                }
+            } else if (typeof outerVal === "object") {
+                for (const [innerKey, innerVal] of Object.entries(outerVal as any)) {
+                    if (!innerVal) continue;
+                    if (typeof innerVal === "string") {
+                        push(innerKey, innerVal);
+                    } else {
+                        const iv: any = innerVal;
+                        const id = iv.id ?? innerKey;
+                        const label = iv.name ?? iv.label ?? iv.title ?? id;
+                        push(id, label);
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 export default function Dashboard() {
     const location = useLocation();
 
@@ -54,6 +128,9 @@ export default function Dashboard() {
 
     // Supplier (Anbieter) filter (flat dictionary only)
     const [anbieterFilter, setAnbieterFilter] = useState<string>("");
+
+    // Kategorie filter (works across all expense categories)
+    const [kategorieFilter, setKategorieFilter] = useState<string>("");
 
     const [cols, setCols] = useState({
         konto: true,
@@ -73,6 +150,10 @@ export default function Dashboard() {
 
     /** ---------- DICTS (flat only) ---------- */
     const { gruppen, kategorien, anbieter } = useDicts?.() || {};
+    const kategorieOptions = useMemo(
+        () => buildKategorieOptions(kategorien),
+        [kategorien]
+    );
 
     /** Format helpers */
     const fmtMoney = (n: number) =>
@@ -120,6 +201,7 @@ export default function Dashboard() {
             if (s?.cols && typeof s.cols === "object") setCols((c) => ({ ...c, ...s.cols }));
             if (s?.sort && typeof s.sort === "object" && s.sort.key && s.sort.dir) setSort(s.sort);
             if (typeof s?.anbieterFilter === "string") setAnbieterFilter(s.anbieterFilter);
+            if (typeof s?.kategorieFilter === "string") setKategorieFilter(s.kategorieFilter);
         } catch {
             /* ignore malformed settings */
         }
@@ -133,8 +215,16 @@ export default function Dashboard() {
     ).current;
 
     useEffect(() => {
-        persistSettings({ kindFilter, from, to, cols, sort, anbieterFilter });
-    }, [kindFilter, from, to, cols, sort, anbieterFilter, persistSettings]);
+        persistSettings({
+            kindFilter,
+            from,
+            to,
+            cols,
+            sort,
+            anbieterFilter,
+            kategorieFilter,
+        });
+    }, [kindFilter, from, to, cols, sort, anbieterFilter, kategorieFilter, persistSettings]);
 
     /** ---------- Load transactions ---------- */
     useEffect(() => {
@@ -158,9 +248,12 @@ export default function Dashboard() {
             if (anbieterFilter && tx.kind === "expense" && tx.anbieterId !== anbieterFilter)
                 return false;
 
+            if (kategorieFilter && tx.kind === "expense" && tx.kategorieId !== kategorieFilter)
+                return false;
+
             return true;
         });
-    }, [items, kindFilter, from, to, anbieterFilter]);
+    }, [items, kindFilter, from, to, anbieterFilter, kategorieFilter]);
 
     /** ---------- Sorting ---------- */
     function cmp(a: any, b: any, dir: "asc" | "desc") {
@@ -311,6 +404,7 @@ export default function Dashboard() {
             },
             sort: { key: "date", dir: "desc" as const },
             anbieterFilter: "",
+            kategorieFilter: "",
         };
         setKindFilter(defaults.kindFilter);
         setFrom(defaults.from);
@@ -318,6 +412,7 @@ export default function Dashboard() {
         setCols(defaults.cols);
         setSort(defaults.sort);
         setAnbieterFilter(defaults.anbieterFilter);
+        setKategorieFilter(defaults.kategorieFilter);
         localStorage.removeItem(SETTINGS_KEY);
     }
 
@@ -416,7 +511,7 @@ export default function Dashboard() {
 
                 {/* ======= FILTER BAR ======= */}
                 <section
-                    className="mt-2 grid grid-cols-1 md:grid-cols-5 gap-3 items-end"
+                    className="mt-2 grid grid-cols-1 md:grid-cols-6 gap-3 items-end"
                     role="region"
                     aria-labelledby="filters-heading"
                 >
@@ -426,7 +521,7 @@ export default function Dashboard() {
 
                     <div className="flex flex-col">
                         <label htmlFor="filter-typ" className="text-xs text-gray-500 mb-1">
-                            Type
+                            Transaktion Typ
                         </label>
                         <select
                             id="filter-typ"
@@ -442,7 +537,7 @@ export default function Dashboard() {
 
                     <div className="flex flex-col">
                         <label htmlFor="filter-from" className="text-xs text-gray-500 mb-1">
-                            From
+                            Von
                         </label>
                         <input
                             id="filter-from"
@@ -455,7 +550,7 @@ export default function Dashboard() {
 
                     <div className="flex flex-col">
                         <label htmlFor="filter-to" className="text-xs text-gray-500 mb-1">
-                            To
+                            Bis
                         </label>
                         <input
                             id="filter-to"
@@ -468,7 +563,7 @@ export default function Dashboard() {
 
                     <div className="flex flex-col">
                         <label htmlFor="filter-anbieter" className="text-xs text-gray-500 mb-1">
-                            Supplier
+                            Anbieter
                         </label>
                         <select
                             id="filter-anbieter"
@@ -492,6 +587,25 @@ export default function Dashboard() {
                                         </option>
                                     ))
                                     : null}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col">
+                        <label htmlFor="filter-kategorie" className="text-xs text-gray-500 mb-1">
+                            Kategorie
+                        </label>
+                        <select
+                            id="filter-kategorie"
+                            className="select select-bordered h-10"
+                            value={kategorieFilter}
+                            onChange={(e) => setKategorieFilter(e.target.value)}
+                        >
+                            <option value="">All</option>
+                            {kategorieOptions.map((k) => (
+                                <option key={k.id} value={k.id}>
+                                    {k.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -567,14 +681,16 @@ export default function Dashboard() {
                                         className="cursor-pointer select-none"
                                         onClick={() => toggleSort("date")}
                                     >
-                                        Datum {sort.key === "date" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                        Datum{" "}
+                                        {sort.key === "date" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                     </th>
                                     {cols.konto && (
                                         <th
                                             className="cursor-pointer select-none"
                                             onClick={() => toggleSort("konto")}
                                         >
-                                            Konto {sort.key === "konto" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                            Konto{" "}
+                                            {sort.key === "konto" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.kategorie && (
@@ -582,7 +698,8 @@ export default function Dashboard() {
                                             className="cursor-pointer select-none"
                                             onClick={() => toggleSort("kat")}
                                         >
-                                            Kategorie {sort.key === "kat" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                            Kategorie{" "}
+                                            {sort.key === "kat" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.gruppe && (
@@ -590,7 +707,8 @@ export default function Dashboard() {
                                             className="cursor-pointer select-none"
                                             onClick={() => toggleSort("gruppe")}
                                         >
-                                            Gruppe {sort.key === "gruppe" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                            Gruppe{" "}
+                                            {sort.key === "gruppe" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
                                         </th>
                                     )}
                                     {cols.anbieter && (
@@ -608,7 +726,11 @@ export default function Dashboard() {
                                             onClick={() => toggleSort("incomeType")}
                                         >
                                             Typ (Einnahme){" "}
-                                            {sort.key === "incomeType" ? (sort.dir === "asc" ? "▲" : "▼") : ""}
+                                            {sort.key === "incomeType"
+                                                ? sort.dir === "asc"
+                                                    ? "▲"
+                                                    : "▼"
+                                                : ""}
                                         </th>
                                     )}
                                     {cols.quelle && (
@@ -652,7 +774,10 @@ export default function Dashboard() {
                                         {cols.kategorie && (
                                             <td>
                                                 {tx.kind === "expense"
-                                                    ? getKategorieName(tx.gruppeId ?? null, tx.kategorieId ?? null)
+                                                    ? getKategorieName(
+                                                        tx.gruppeId ?? null,
+                                                        tx.kategorieId ?? null
+                                                    )
                                                     : "—"}
                                             </td>
                                         )}

@@ -22,10 +22,12 @@ export default function Login() {
   function handleGoogleLogin() {
     console.log("Google login clicked");
     // TODO: trigger your OAuth flow here
+
   }
-function handleGuestLogin() {
-  navigate("/guest");
-}
+  function handleGuestLogin() {
+    navigate("/MonthPage");
+
+  }
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -47,7 +49,7 @@ function handleGuestLogin() {
         </h1>
 
         {/* Google button */}
-       <GoogleLoginButton onClick={handleGoogleLogin} />
+        <GoogleLoginButton onClick={handleGoogleLogin} />
 
         {/* Divider */}
         <div className="flex items-center gap-3 text-gray-500">
@@ -86,7 +88,7 @@ function handleGuestLogin() {
           </div>
           <div>
             {/* Guest login (demo) */}
-            <GuestLoginButton onClick={handleGuestLogin}/>
+            <GuestLoginButton onClick={handleGuestLogin} />
           </div>
         </nav>
       </section>

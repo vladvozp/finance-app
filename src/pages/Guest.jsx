@@ -42,7 +42,7 @@ export default function Guest() {
             Was möchtest du tun?
           </h2>
           <div className="space-y-5 pt-15">
-            <Button variant="primary" icon={Plus} onClick={() => navigate("/guestTransactionStep1")} >Transaktion</Button>
+            <Button variant="primary" icon={Plus} onClick={() => navigate("/GuestTransactionOne")} >Transaktion</Button>
             <Button variant="secondary" icon={ChartNoAxesColumn} onClick={() => navigate("/Dashboard")} >Dashboard</Button>
             <Button variant="secondary" icon={Sheet} onClick={() => navigate("/Berichte")} >Berichte</Button>
             <Button variant="secondary" icon={Settings} onClick={() => navigate("/SettingsPage")}  >Einstellungen</Button>

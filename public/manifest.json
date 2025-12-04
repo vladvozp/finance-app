@@ -1,6 +1,6 @@
 {
     "name": "Finance Tracker",
-    "short_name": "Finance",
+    "short_name": "FinApp",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

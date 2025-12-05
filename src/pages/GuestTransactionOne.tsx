@@ -312,6 +312,8 @@ const GuestTransactionOne: React.FC = () => {
     const [tempBalance, setTempBalance] = useState<string>("");
 
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [account, setAccount] = useState<Account | null>(null);
+
 
     const [amountStr, setAmountStr] = useState<string>(
         typeof amount === "number" && amount > 0
@@ -331,6 +333,25 @@ const GuestTransactionOne: React.FC = () => {
         const accs = ensureAccounts();
         setAccounts(accs);
     }, []);
+
+    // Set Main account
+    useEffect(() => {
+        if (!account && accounts.length > 0) {
+            const main =
+                accounts.find(a => a.isMain) ?? accounts[0];
+
+            setAccount(main);
+        }
+    }, [accounts, account]);
+
+    // Auto account selection 
+    useEffect(() => {
+        if (account) {
+            setQuery(account.name);
+            setSelectedAccountId(account.id);
+            setSelectedAccountName(account.name);
+        }
+    }, [account]);
 
     // Prefill selection from store if account still exists
     useEffect(() => {

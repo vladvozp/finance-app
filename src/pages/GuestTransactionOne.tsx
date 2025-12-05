@@ -47,6 +47,7 @@ export interface Account {
     archived: boolean;
     createdAt: string;
     updatedAt: string;
+    isMain?: boolean;
 }
 
 type AccountWithBalance = Account & { balance: number };
@@ -74,7 +75,7 @@ const toCents = (s: string | number): number => {
 };
 
 // Create a new account object with sane defaults
-function createDefaultAccount(name: string): Account {
+function createDefaultAccount(name: string, isMain = false): Account {
     const now = new Date().toISOString();
     const id = crypto?.randomUUID ? crypto.randomUUID() : `acc_${Date.now()}`;
     return {
@@ -86,6 +87,7 @@ function createDefaultAccount(name: string): Account {
         archived: false,
         createdAt: now,
         updatedAt: now,
+        isMain,
     };
 }
 
@@ -94,24 +96,49 @@ export function ensureAccounts(): Account[] {
     try {
         const raw = localStorage.getItem(ACC_KEY);
         if (!raw) {
-            const seed = [createDefaultAccount("Hauptkonto")];
+            const seed = [createDefaultAccount("Hauptkonto", true)];
             localStorage.setItem(ACC_KEY, JSON.stringify(seed));
             return seed;
         }
+
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed) || parsed.length === 0) {
-            const seed = [createDefaultAccount("Hauptkonto")];
+            const seed = [createDefaultAccount("Hauptkonto", true)];
             localStorage.setItem(ACC_KEY, JSON.stringify(seed));
             return seed;
         }
-        return parsed as Account[];
+
+        let list = parsed as Account[];
+
+        const hasMain = list.some((a) => a.isMain === true);
+
+        if (!hasMain) {
+            list = list.map((a, idx) => ({
+                ...a,
+                isMain: idx === 0,
+            }));
+        }
+
+        const mainIndices = list
+            .map((a, i) => (a.isMain ? i : -1))
+            .filter((i) => i >= 0);
+
+        if (mainIndices.length > 1) {
+            const keep = mainIndices[0];
+            list = list.map((a, idx) => ({
+                ...a,
+                isMain: idx === keep,
+            }));
+        }
+
+        localStorage.setItem(ACC_KEY, JSON.stringify(list));
+        return list;
     } catch {
-        const seed = [createDefaultAccount("Hauptkonto")];
+        const seed = [createDefaultAccount("Hauptkonto", true)];
         localStorage.setItem(ACC_KEY, JSON.stringify(seed));
         return seed;
     }
 }
-
 // Quick create (replace with modal later)
 function createNewAccountInteractive(
     onPicked?: (acc: Account) => void

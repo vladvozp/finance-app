@@ -1,4 +1,5 @@
 // src/pages/GuestTransactionOne.tsx
+import { saveDraftTransaction, type SaveDraftResult } from "../logic/saveDraftTransaction";
 import React, {
     useState,
     useEffect,
@@ -6,23 +7,22 @@ import React, {
     useRef,
     ChangeEvent,
     KeyboardEvent,
+    useCallback,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
-// import Progress from "../components/Progress";
 import {
     ChevronsDown,
     MoveLeft,
     Edit3,
     Trash2,
-    SquarePlus,
-    SquareMinus,
     Plus,
     Settings,
     Search,
     Delete,
+    Save,
 } from "lucide-react";
 
 import { useTxDraft } from "../hooks/useTxDraft";
@@ -32,6 +32,10 @@ import { computeAccountBalance } from "../utils/accountBalance";
 
 import DatePickerInput from "../components/DatePickerInput";
 
+// Provider / Group
+import { Combobox, type ComboOption } from "../components/ui/combobox";
+import { useDicts } from "../store/dicts";
+import { useIncomeDicts } from "../store/incomeDicts";
 
 const ACC_KEY = "ft_accounts";
 const TX_KEY = "ft_transactions";
@@ -52,9 +56,10 @@ export interface Account {
 
 type AccountWithBalance = Account & { balance: number };
 
-// Pick date const
-
-
+type Provider = ComboOption & {};
+type Group = ComboOption & {};
+type Type = ComboOption & {};
+type Source = ComboOption & {};
 
 // ---------- Helpers ----------
 const fmtEur = (n: number): string =>
@@ -139,6 +144,7 @@ export function ensureAccounts(): Account[] {
         return seed;
     }
 }
+
 // Quick create (replace with modal later)
 function createNewAccountInteractive(
     onPicked?: (acc: Account) => void
@@ -247,7 +253,7 @@ function editOpeningBalanceInteractive(
     return list;
 }
 
-// persisted delete helper
+// Persisted delete helper
 function deleteAccountInteractive(
     accId: string,
     onDone?: (next: Account[]) => void
@@ -287,20 +293,106 @@ function deleteAccountInteractive(
     return next;
 }
 
+// ---------- Provider stats (learning: Provider -> Group) ----------
+
+type ProviderStats = {
+    providerCounts: Record<string, number>;
+    providerGroupCounts: Record<string, Record<string, number>>;
+};
+
+const PROVIDER_STATS_KEY = "ft_provider_stats_v1";
+
+function loadProviderStats(): ProviderStats {
+    try {
+        const raw = localStorage.getItem(PROVIDER_STATS_KEY);
+        if (!raw) return { providerCounts: {}, providerGroupCounts: {} };
+        const parsed = JSON.parse(raw);
+        return {
+            providerCounts: parsed.providerCounts || {},
+            providerGroupCounts: parsed.providerGroupCounts || {},
+        };
+    } catch {
+        return { providerCounts: {}, providerGroupCounts: {} };
+    }
+}
+
+function saveProviderStats(stats: ProviderStats) {
+    try {
+        localStorage.setItem(PROVIDER_STATS_KEY, JSON.stringify(stats));
+    } catch {
+        // ignore
+    }
+}
+
+function bumpProviderStats(
+    stats: ProviderStats,
+    providerId: string,
+    groupId: string | ""
+): ProviderStats {
+    if (!providerId) return stats;
+
+    const next: ProviderStats = {
+        providerCounts: { ...stats.providerCounts },
+        providerGroupCounts: { ...stats.providerGroupCounts },
+    };
+
+    next.providerCounts[providerId] = (next.providerCounts[providerId] || 0) + 1;
+
+    if (groupId) {
+        const existingGroups = next.providerGroupCounts[providerId] || {};
+        next.providerGroupCounts[providerId] = {
+            ...existingGroups,
+            [groupId]: (existingGroups[groupId] || 0) + 1,
+        };
+    }
+
+    return next;
+}
+
+function getMostUsedGroupForProvider(
+    providerId: string,
+    stats: ProviderStats
+): string {
+    const groups = stats.providerGroupCounts[providerId];
+    if (!groups) return "";
+    let bestId = "";
+    let bestCount = 0;
+    for (const [gid, count] of Object.entries(groups)) {
+        if (count > bestCount) {
+            bestId = gid;
+            bestCount = count;
+        }
+    }
+    return bestId;
+}
+
 // ---------- Page ----------
+
 const GuestTransactionOne: React.FC = () => {
     const navigate = useNavigate();
 
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState<Date | null>(new Date());
 
+    // Pull draft (used mainly for amount/account prefill and remark/provider/group)
+    const draft = useTxDraft() as any;
     const {
         amount = "",
         accountId = "",
-        kind = "expense",
-    } = useTxDraft() as {
+        gruppeId = "",
+        anbieterId = "",
+        incomeType = "",
+        quelleId = "",
+        quelleName = "",
+        remark = "",
+    } = draft as {
         amount?: number;
         accountId?: string;
-        kind?: Kind;
+        gruppeId?: string;
+        anbieterId?: string;
+        incomeType?: string;
+        quelleId?: string;
+        quelleName?: string;
+        remark?: string;
     };
 
     const [query, setQuery] = useState<string>("");
@@ -314,7 +406,6 @@ const GuestTransactionOne: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [account, setAccount] = useState<Account | null>(null);
 
-
     const [amountStr, setAmountStr] = useState<string>(
         typeof amount === "number" && amount > 0
             ? amount.toLocaleString("de-DE", {
@@ -327,24 +418,23 @@ const GuestTransactionOne: React.FC = () => {
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [selectedAccountName, setSelectedAccountName] = useState<string>("");
 
+    const [saving, setSaving] = useState<boolean>(false);
 
-    // Ensure accounts
+    // Ensure accounts exist
     useEffect(() => {
         const accs = ensureAccounts();
         setAccounts(accs);
     }, []);
 
-    // Set Main account
+    // Auto-select main account
     useEffect(() => {
         if (!account && accounts.length > 0) {
-            const main =
-                accounts.find(a => a.isMain) ?? accounts[0];
-
+            const main = accounts.find((a) => a.isMain) ?? accounts[0];
             setAccount(main);
         }
     }, [accounts, account]);
 
-    // Auto account selection 
+    // Reflect selected account into query field
     useEffect(() => {
         if (account) {
             setQuery(account.name);
@@ -364,7 +454,7 @@ const GuestTransactionOne: React.FC = () => {
         }
     }, [accountId, accounts]);
 
-    // close combobox on outside click
+    // Close combobox on outside click
     useEffect(() => {
         const onDoc = (e: MouseEvent) => {
             if (!open) return;
@@ -380,7 +470,7 @@ const GuestTransactionOne: React.FC = () => {
         return () => document.removeEventListener("mousedown", onDoc);
     }, [open]);
 
-    // compute balances per account from transactions
+    // Compute balances per account from transactions
     const accountsWithBalance: AccountWithBalance[] = useMemo(() => {
         let tx: Tx[] = [];
         try {
@@ -410,7 +500,7 @@ const GuestTransactionOne: React.FC = () => {
         );
     }, [query, accountsWithBalance]);
 
-    // --- handlers ---
+    // Amount handlers
     const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;
         const cleaned = v.replace(/[^\d.,\s]/g, "");
@@ -439,10 +529,7 @@ const GuestTransactionOne: React.FC = () => {
         }
     };
 
-    const onKindChange = (nextKind: Kind) => {
-        txDraft.set("kind", nextKind);
-    };
-
+    // Account pick
     const onAccountPick = (acc: { id: string; name: string }) => {
         setSelectedAccountId(acc.id);
         setSelectedAccountName(acc.name);
@@ -451,23 +538,60 @@ const GuestTransactionOne: React.FC = () => {
         txDraft.setMany({ accountId: acc.id, kontoName: acc.name });
     };
 
-    const onNext = () => {
-        const cents = toCents(amountStr);
-        const nowISO = new Date().toISOString();
+    // Dicts
+    const {
+        gruppen,
+        createGroup,
+        renameGroup,
+        deleteGroup,
+        createProvider,
+        renameProvider,
+        deleteProvider,
+    } = useDicts();
+    const { incomeTypes, sources, createType, renameType, deleteType, createSource, renameSource, deleteSource } =
+        useIncomeDicts(); // currently unused here but kept for future income branch
 
-        txDraft.setMany({
-            kind,
-            amount: cents / 100,
-            amountCents: cents,
-            date: nowISO,
-            accountId: selectedAccountId || "",
-            kontoName: selectedAccountName || "",
+    const anbieter = useDicts((s) => s.anbieter);
+
+    // Provider stats (Provider → Group)
+    const [providerStats, setProviderStats] = useState<ProviderStats>(() =>
+        loadProviderStats()
+    );
+
+    // Provider options sorted by usage count
+    const providerOptions: Provider[] = useMemo(() => {
+        const list = [...anbieter];
+        list.sort((a, b) => {
+            const sa = providerStats.providerCounts[a.id] || 0;
+            const sb = providerStats.providerCounts[b.id] || 0;
+            if (sa !== sb) return sb - sa;
+            return a.name.localeCompare(b.name);
         });
+        return list;
+    }, [anbieter, providerStats]);
 
-        navigate("/guestTransactionStep2");
-    };
+    const onProviderChange = useCallback(
+        (id: string) => {
+            txDraft.set("anbieterId", id);
 
-    const canContinue = toCents(amountStr) > 0 && !!selectedAccountId;
+            if (!id) return;
+
+            // Autofill most used group for this provider (optional hint)
+            const bestGroupId = getMostUsedGroupForProvider(id, providerStats);
+            if (bestGroupId) {
+                txDraft.set("gruppeId", bestGroupId);
+            }
+        },
+        [providerStats]
+    );
+
+    const onGroupChange = useCallback((id: string) => {
+        txDraft.set("gruppeId", id);
+    }, []);
+
+    // Simple button-level validation: amount > 0, account selected, date present
+    const canSave =
+        toCents(amountStr) > 0 && !!selectedAccountId && date !== null;
 
     const startEdit = (acc: AccountWithBalance) => {
         setEditingId(acc.id);
@@ -489,6 +613,54 @@ const GuestTransactionOne: React.FC = () => {
         setEditingId(null);
     };
 
+    // Main save handler: write draft fields, update provider stats, persist transaction
+    const handleSave = () => {
+        if (!canSave || saving) return;
+
+        setSaving(true);
+
+        const cents = toCents(amountStr);
+        const effectiveDate = date ?? new Date();
+        const nowISO = effectiveDate.toISOString();
+
+        // This page creates expense transactions
+        txDraft.setMany({
+            kind: "expense" as Kind,
+            amount: cents / 100,
+            amountCents: cents,
+            date: nowISO,
+            accountId: selectedAccountId || "",
+            kontoName: selectedAccountName || "",
+        });
+
+        // Learning signal for Provider → Group
+        if (anbieterId) {
+            const updated = bumpProviderStats(providerStats, anbieterId, gruppeId || "");
+            setProviderStats(updated);
+            saveProviderStats(updated);
+        }
+
+        const res: SaveDraftResult = saveDraftTransaction();
+        setSaving(false);
+
+        if (!res.ok) {
+            const message =
+                res.errors && res.errors.length > 0
+                    ? res.errors.join(" · ")
+                    : "Unknown error";
+            alert("Please check: " + message);
+            return;
+        }
+
+        if (res.duplicate) {
+            alert("Already saved ✅");
+        } else {
+            alert("Saved ✅");
+        }
+
+        navigate("/MonthPage");
+    };
+
     return (
         <div className="bg-white">
             <main className="py-6 flex flex-col">
@@ -502,9 +674,7 @@ const GuestTransactionOne: React.FC = () => {
                             Zurück
                         </Link>
                     }
-                    center={
-                        null
-                    }
+                    center={null}
                     right={
                         <Link
                             to="/SettingsPage"
@@ -520,48 +690,7 @@ const GuestTransactionOne: React.FC = () => {
                 <section className="flex-1">
                     <h1 className="text-lg text-gray-600 mb-6">Transaktion anlegen</h1>
 
-                    {/* kind toggle */}
-                    {/*
-                    <h2 className="text-center text-black text-base font-medium mb-1">
-                        Transaktionstyp
-                    </h2>
-                    <div className="flex w-full shadow-sm overflow-hidden">
-                        <button
-                            type="button"
-                            aria-pressed={kind === "expense"}
-                            onClick={() => onKindChange("expense")}
-                            className={`flex items-center justify-center gap-2 w-1/2 h-12 text-center font-medium transition border border-gray-400
-      ${kind === "expense"
-                                    ? "bg-blue-400 text-white"
-                                    : "bg-white text-blue-600 hover:bg-blue-50"
-                                }`}
-                        >
-                            <SquareMinus
-                                className={`w-5 h-5 transition ${kind === "expense" ? "text-red-300" : "text-red-500"
-                                    }`}
-                            />
-                            Ausgabe
-                        </button>
-
-                        <button
-                            type="button"
-                            aria-pressed={kind === "income"}
-                            onClick={() => onKindChange("income")}
-                            className={`flex items-center justify-center gap-2 w-1/2 h-12 text-center font-medium transition border border-gray-400 border-l-0
-      ${kind === "income"
-                                    ? "bg-blue-400 text-white"
-                                    : "bg-white text-blue-600 hover:bg-blue-50"
-                                }`}
-                        >
-                            <SquarePlus
-                                className={`w-5 h-5 transition ${kind === "income" ? "text-green-300" : "text-green-500"
-                                    }`}
-                            />
-                            Einnahme
-                        </button>
-                    </div> */}
-
-                    {/* amount */}
+                    {/* Amount */}
                     <div className="mt-6">
                         <h2 className="text-center text-black text-base font-medium mb-1">
                             Betrag
@@ -583,7 +712,7 @@ const GuestTransactionOne: React.FC = () => {
                     </div>
                 </section>
 
-                {/* account selection */}
+                {/* Account selection */}
                 <section className="mt-6" ref={comboboxRef}>
                     <h2 className="text-center text-black text-base font-medium mb-1">
                         Konto
@@ -726,7 +855,10 @@ const GuestTransactionOne: React.FC = () => {
                                                 <Edit3 className="w-4 h-4 text-gray-600" />
                                             </button>
 
-                                            <span className="font-medium truncate" title={acc.name}>
+                                            <span
+                                                className="font-medium truncate"
+                                                title={acc.name}
+                                            >
                                                 {acc.name}
                                             </span>
                                         </div>
@@ -737,7 +869,9 @@ const GuestTransactionOne: React.FC = () => {
                                                     type="number"
                                                     inputMode="decimal"
                                                     value={tempBalance}
-                                                    onChange={(e) => setTempBalance(e.target.value)}
+                                                    onChange={(e) =>
+                                                        setTempBalance(e.target.value)
+                                                    }
                                                     onBlur={() => saveEdit(acc.id)}
                                                     onKeyDown={(e) => {
                                                         if (e.key === "Enter") saveEdit(acc.id);
@@ -763,8 +897,9 @@ const GuestTransactionOne: React.FC = () => {
                                                 title="Konto löschen"
                                                 aria-label="Konto löschen"
                                                 onClick={() => {
-                                                    const next = deleteAccountInteractive(acc.id, (updated) =>
-                                                        setAccounts(updated)
+                                                    const next = deleteAccountInteractive(
+                                                        acc.id,
+                                                        (updated) => setAccounts(updated)
                                                     );
                                                     if (selectedAccountId === acc.id) {
                                                         setSelectedAccountId("");
@@ -783,10 +918,8 @@ const GuestTransactionOne: React.FC = () => {
                         </div>
                     )}
 
-
+                    {/* Date */}
                     <div className="flex gap-3 mt-6" />
-
-
                     <h2 className="text-center text-black text-base font-medium mb-1">
                         Datum
                     </h2>
@@ -800,23 +933,92 @@ const GuestTransactionOne: React.FC = () => {
                         placeholder="Tag/Monat/Jahr"
                         displayFormat="dd.MM.yyyy"
                     />
+
+                    {/* Provider & Group */}
                     <div className="flex gap-3 mt-6" />
 
-                    <Button
-                        variant="primary"
-                        disabled={!canContinue}
-                        onClick={onNext}
-                        className={`${!canContinue
-                            ? "bg-gray-200 text-gray-600 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
-                            }`}
-                    >
-                        Weiter
-                    </Button>
+                    <Combobox<Provider>
+                        label="Anbieter"
+                        helperText="Meistgenutzte Anbieter stehen oben, z. B. Rewe, Aldi, Aral …"
+                        options={providerOptions}
+                        value={anbieterId}
+                        onChange={onProviderChange}
+                        placeholder="z. B. Rewe, Aral, Amazon"
+                        allowCreate
+                        onCreate={(name) => {
+                            const id = createProvider(name, "");
+                            txDraft.set("anbieterId", id);
+                        }}
+                        allowEdit
+                        onEdit={(id, newName) => renameProvider(id, newName)}
+                        onDelete={(id) => {
+                            deleteProvider(id);
+                            if (anbieterId === id) txDraft.set("anbieterId", "");
+                        }}
+                    />
 
+                    <div className="mb-2 flex items-center justify-between mt-4">
+                        <div className="text-base font-medium">Gruppe</div>
+                        <span className="text-xs text-gray-500">
+                            optional, z. B. Essen, Mobilität …
+                        </span>
+                    </div>
 
+                    <Combobox<Group>
+                        label=""
+                        options={gruppen}
+                        value={gruppeId}
+                        onChange={onGroupChange}
+                        placeholder="Gruppe wählen… (z. B. Essen, Mobilität)"
+                        allowCreate
+                        onCreate={(name) => {
+                            const id = createGroup(name);
+                            txDraft.set("gruppeId", id);
+                        }}
+                        allowEdit
+                        onEdit={(id, newName) => renameGroup(id, newName)}
+                        onDelete={(id) => {
+                            deleteGroup(id);
+                            if (gruppeId === id) txDraft.set("gruppeId", "");
+                        }}
+                    />
 
+                    {/* Remark */}
+                    <div className="mt-6">
+                        <div className="flex justify-center items-center text-black text-base gap-2 font-medium mb-1">
+                            <span>Bemerkung</span>
+                            <Edit3 className="w-4 h-4" />
+                        </div>
 
+                        <div className="relative">
+                            <textarea
+                                value={remark}
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (v.length <= 100) txDraft.set("remark", v);
+                                }}
+                                placeholder="Optionale Notiz (z. B. 'Aktion', 'für Schule' …)"
+                                className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm
+                                   focus:border-blue-400 focus:ring-1 focus:ring-blue-400
+                                   resize-none outline-none placeholder-gray-400"
+                                maxLength={100}
+                            />
+                            <span className="absolute bottom-1 right-3 text-xs text-gray-500">
+                                {remark.length}/100
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-6">
+                        <Button
+                            variant="primary"
+                            icon={Save}
+                            disabled={!canSave || saving}
+                            onClick={handleSave}
+                        >
+                            {saving ? "Speichern…" : "Speichern"}
+                        </Button>
+                    </div>
                 </section>
             </main>
         </div>

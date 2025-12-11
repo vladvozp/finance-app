@@ -1,9 +1,9 @@
 // GuestTransactionStep3.tsx
-// Smart UI, dumb data. Provider → Category → Group (auto) with manual override.
-// Comments are in English (best practices).
+// Lernende UI: Anbieter → (meistgenutzte) Gruppe + Bemerkung.
+// Kategorien entfernt, Gruppe ist optional. Anbieter-Liste nach Häufigkeit sortiert.
 
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useMemo, useCallback, useState } from "react";
 
 import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
@@ -19,265 +19,90 @@ import { useIncomeDicts } from "../store/incomeDicts";
 import { Combobox, type ComboOption } from "../components/ui/combobox";
 
 type Provider = ComboOption & {};
-type Category = ComboOption & {};
 type Group = ComboOption & {};
 type Type = ComboOption & {};
 type Source = ComboOption & {};
 
-// import { IconRenderer, type IconSpec } from "../components/IconRenderer";
+// ---------- Lern-Statistik für Anbieter & Gruppe ----------
 
-
-// ---------- Generic Combobox (stateless UI; exposes inputRef for focus) ----------
-{/* type ComboOption = { id: string; name: string; icon?: IconSpec };
-
-type ComboboxProps<T extends ComboOption> = {
-    label: string;
-    placeholder?: string;
-    options: T[];
-    value: string;
-    onChange?: (id: string, option?: T) => void;
-    disabled?: boolean;
-    required?: boolean;
-    helperText?: string;
-    allowCreate?: boolean;
-    onCreate?: (name: string) => void;
-    allowEdit?: boolean;
-    onEdit?: (id: string, newName: string) => void;
-    onDelete?: (id: string) => void;
-    inputRef?: React.Ref<HTMLInputElement>; // NEW: allow parent to focus input
+type ProviderStats = {
+    providerCounts: Record<string, number>; // wie oft Anbieter benutzt wurde
+    providerGroupCounts: Record<string, Record<string, number>>; // providerId -> groupId -> count
 };
 
-const Combobox = forwardRef(function Combobox<T extends ComboOption>(
-    props: ComboboxProps<T>,
-    _ignored: React.Ref<HTMLDivElement>
-) {
-    const {
-        label,
-        placeholder = "Bitte wählen…",
-        options,
-        value,
-        onChange,
-        disabled = false,
-        required = false,
-        helperText,
-        allowCreate = false,
-        onCreate,
-        allowEdit = false,
-        onEdit,
-        onDelete,
-        inputRef,
-    } = props;
+const PROVIDER_STATS_KEY = "ft_provider_stats_v1";
 
-    const [open, setOpen] = useState(false);
-    const [query, setQuery] = useState("");
-    const rootRef = useRef<HTMLDivElement | null>(null);
-    const innerInputRef = useRef<HTMLInputElement | null>(null);
+function loadProviderStats(): ProviderStats {
+    try {
+        const raw = localStorage.getItem(PROVIDER_STATS_KEY);
+        if (!raw) return { providerCounts: {}, providerGroupCounts: {} };
+        const parsed = JSON.parse(raw);
+        return {
+            providerCounts: parsed.providerCounts || {},
+            providerGroupCounts: parsed.providerGroupCounts || {},
+        };
+    } catch {
+        return { providerCounts: {}, providerGroupCounts: {} };
+    }
+}
 
-    // Expose input element to parent via inputRef
-    useEffect(() => {
-        if (!inputRef) return;
-        if (typeof inputRef === "function") inputRef(innerInputRef.current!);
-        else if ("current" in (inputRef as any)) (inputRef as any).current = innerInputRef.current;
-    }, [inputRef]);
+function saveProviderStats(stats: ProviderStats) {
+    try {
+        localStorage.setItem(PROVIDER_STATS_KEY, JSON.stringify(stats));
+    } catch {
+        // ignore
+    }
+}
 
-    // Close on outside click (single listener)
-    useEffect(() => {
-        function onDocClick(e: MouseEvent) {
-            if (!rootRef.current) return;
-            if (!rootRef.current.contains(e.target as Node)) setOpen(false);
+function bumpProviderStats(stats: ProviderStats, providerId: string, groupId: string | ""): ProviderStats {
+    if (!providerId) return stats;
+
+    const next: ProviderStats = {
+        providerCounts: { ...stats.providerCounts },
+        providerGroupCounts: { ...stats.providerGroupCounts },
+    };
+
+    next.providerCounts[providerId] = (next.providerCounts[providerId] || 0) + 1;
+
+    if (groupId) {
+        const existingGroups = next.providerGroupCounts[providerId] || {};
+        next.providerGroupCounts[providerId] = {
+            ...existingGroups,
+            [groupId]: (existingGroups[groupId] || 0) + 1,
+        };
+    }
+
+    return next;
+}
+
+function getMostUsedGroupForProvider(providerId: string, stats: ProviderStats): string {
+    const groups = stats.providerGroupCounts[providerId];
+    if (!groups) return "";
+    let bestId = "";
+    let bestCount = 0;
+    for (const [gid, count] of Object.entries(groups)) {
+        if (count > bestCount) {
+            bestId = gid;
+            bestCount = count;
         }
-        document.addEventListener("mousedown", onDocClick);
-        return () => document.removeEventListener("mousedown", onDocClick);
-    }, []);
-
-    const selected = (options || []).find((o) => o.id === value) || null;
-
-    // Pure + memoized filter to avoid render storms
-    const list = useMemo(() => {
-        const base = options || [];
-        if (!query.trim()) return base;
-        const q = query.trim().toLowerCase();
-        return base.filter((o) => o.name.toLowerCase().includes(q));
-    }, [options, query]);
-
-   {/* return (
-        <div className="mb-6" ref={rootRef}>
-            <label className="block text-center text-black text-base font-medium mb-1">
-                {label} {required && <span className="text-red-500">*</span>}
-            </label>
-
-            {helperText && <span className="text-xs text-gray-500">{helperText}</span>}
-
-            <div className="relative">
-                <input
-                    ref={innerInputRef}
-                    type="text"
-                    disabled={disabled}
-                    placeholder={selected ? selected.name : placeholder}
-                    value={open ? query : selected ? selected.name : ""}
-                    onChange={(e) => {
-                        setQuery(e.target.value);
-                        setOpen(true);
-                    }}
-
-
-                    onFocus={() => setOpen(true)}
-                    className={`h-12 w-full border shadow-sm border-gray-500/80 px-3 outline-none placeholder-gray-400
-            focus:border-blue-400 focus:ring-1 focus:ring-blue-400
-            ${disabled ? "bg-gray-100 cursor-not-allowed" : ""}`}
-                    role="combobox"
-                    aria-expanded={open}
-                    aria-controls={`${label}-listbox`}
-                    aria-autocomplete="list"
-                />
-
-                {open && query && (
-                    <button
-                        type="button"
-                        aria-label="Eingabe löschen"
-                        onClick={() => setQuery("")}
-                        className="absolute inset-y-0 right-2 flex items-center rounded p-1 text-gray-500 hover:bg-gray-100"
-                    >
-                        ✕
-                    </button>
-                )}
-            </div>
-
-            {open && !disabled && (
-                <div className="relative z-20" role="listbox" id={`${label}-listbox`} aria-label={`${label} Liste`}>
-                    <ul className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-200 bg-white p-2 shadow">
-                        {list.map((o) => (
-                            <li key={o.id} className="group">
-                                <div className="flex w-full items-center justify-between rounded-md px-2 py-1">
-                                    <button
-                                        type="button"
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
-                                        onClick={() => {
-                                            onChange?.(o.id, o);
-                                            setOpen(false);
-                                            setQuery("");
-                                            // Return focus to input to keep flow fast
-                                            innerInputRef.current?.focus();
-                                        }}
-                                        className={`text-left w-full pr-10 transition rounded-md px-2 py-2 hover:bg-gray-50 ${value === o.id ? "ring-1 ring-blue-400 bg-blue-50" : ""
-                                            }`}
-                                        role="option"
-                                        aria-selected={value === o.id}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            {"icon" in o && (o as any).icon ? <IconRenderer icon={(o as any).icon} /> : null}
-                                            <span>{o.name}</span>
-                                        </div>
-                                    </button>
-
-                                    {allowEdit && (
-                                        <div className="ml-2 opacity-0 group-hover:opacity-100 transition flex gap-2">
-                                            <button
-                                                type="button"
-                                                className="p-1 text-blue-500 hover:bg-blue-50 rounded"
-                                                onClick={() => {
-                                                    const newName = prompt("Neuer Name:", o.name);
-                                                    if (newName && newName.trim()) onEdit?.(o.id, newName.trim());
-                                                }}
-                                            >
-                                                <Edit3 className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="text-xs text-red-600 hover:underline"
-                                                onClick={() => {
-                                                    if (confirm(`„${o.name}“ wirklich löschen?`)) onDelete?.(o.id);
-                                                }}
-                                            >
-                                                Löschen
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-
-                        {allowCreate && (
-                            <li className="mt-1 border-t border-gray-200 pt-1">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        const name = prompt("Neuen Eintrag hinzufügen:");
-                                        if (name && name.trim()) onCreate?.(name.trim());
-                                        setOpen(false);
-                                        setQuery("");
-                                        innerInputRef.current?.focus();
-                                    }}
-                                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-50 transition"
-                                >
-                                    <span>＋</span>
-                                    <span>Neu hinzufügen</span>
-                                </button>
-                            </li>
-                        )}
-                    </ul>
-                </div>
-            )}
-        </div>
-    );
-}) as <T extends ComboOption>(p: ComboboxProps<T>) => React.ReactElement; */}
-
-// ---------- Helpers (provider → category; category ↔ group) ----------
-function getCategoriesForSupplier(
-    supplierId: string,
-    anbieter: Array<{ id: string; name: string; gruppen: string[] }>,
-    kategorien: Record<string, Array<{ id: string; name: string }>>
-) {
-    if (!supplierId) return [] as Array<{ id: string; name: string; groupId?: string }>;
-    const supplier = anbieter.find((a) => a.id === supplierId);
-    if (!supplier) return [];
-    const groups = supplier.gruppen || [];
-    const flatten: Array<{ id: string; name: string; groupId?: string }> = [];
-    for (const gId of groups) {
-        const list = kategorien[gId] || [];
-        for (const c of list) flatten.push({ ...c, groupId: gId });
     }
-    const seen = new Set<string>();
-    return flatten.filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
-}
-
-function findGroupIdByCategoryId(
-    categoryId: string,
-    kategorien: Record<string, Array<{ id: string; name: string }>>
-): string | "" {
-    if (!categoryId) return "";
-    for (const [gId, list] of Object.entries(kategorien)) {
-        if (list.some((c) => c.id === categoryId)) return gId;
-    }
-    return "";
-}
-
-function suggestCategoryIdForSupplier(
-    supplierId: string,
-    anbieter: Array<{ id: string; name: string; gruppen: string[] }>,
-    kategorien: Record<string, Array<{ id: string; name: string }>>
-): string {
-    const pool = getCategoriesForSupplier(supplierId, anbieter, kategorien);
-    if (pool.length === 1) return pool[0].id;
-    return "";
+    return bestId;
 }
 
 // ---------- Page ----------
+
 export default function GuestTransactionStep3() {
     const navigate = useNavigate();
 
-    // Draft slice (now includes gruppeMode persisted in store)
+    // Draft slice – Kategorie & gruppeMode entfernt
     const {
         kind = null,
         gruppeId = "",
         anbieterId = "",
-        kategorieId = "",
         incomeType = "",
         quelleId = "",
         quelleName = "",
         remark = "",
-        gruppeMode = "auto", // <-- persist this in your txDraft store defaults
     } = useTxDraft() as any;
 
     // Dicts
@@ -289,122 +114,67 @@ export default function GuestTransactionStep3() {
         createProvider,
         renameProvider,
         deleteProvider,
-        createCategory,
-        renameCategory,
-        deleteCategory,
     } = useDicts();
     const { incomeTypes, sources, createType, renameType, deleteType, createSource, renameSource, deleteSource } =
         useIncomeDicts();
 
     const anbieter = useDicts((s) => s.anbieter);
-    const kategorien = useDicts((s) => s.kategorien);
 
-    // Derived group by category (auto mode)
-    const derivedGroupId = useMemo(() => findGroupIdByCategoryId(kategorieId, kategorien), [kategorieId, kategorien]);
+    // Lern-Statistiken (Anbieter → Gruppe)
+    const [providerStats, setProviderStats] = useState<ProviderStats>(() => loadProviderStats());
 
-    // Effective group id depends on mode
-    const effectiveGroupId = gruppeMode === "manual" ? gruppeId : derivedGroupId;
+    // Anbieter nach Häufigkeit sortieren: meist benutzte oben
+    const providerOptions: Provider[] = useMemo(() => {
+        const list = [...anbieter];
+        list.sort((a, b) => {
+            const sa = providerStats.providerCounts[a.id] || 0;
+            const sb = providerStats.providerCounts[b.id] || 0;
+            if (sa !== sb) return sb - sa; // absteigend nach Nutzung
+            return a.name.localeCompare(b.name);
+        });
+        return list;
+    }, [anbieter, providerStats]);
 
-    // Keep store.groupId in sync with effectiveGroupId (guarded)
-    useEffect(() => {
-        const target = effectiveGroupId || "";
-        if (target !== gruppeId) txDraft.set("gruppeId", target);
-    }, [effectiveGroupId, gruppeId]);
+    // Handler
 
-    // Provider options
-    const providerOptions = anbieter;
-
-    // Category options:
-    // - manual mode: restrict strictly to the selected group
-    // - auto mode: union of supplier's groups
-    const categoryOptions = useMemo(() => {
-        if (gruppeMode === "manual") {
-            if (!effectiveGroupId) return [];
-            return (kategorien[effectiveGroupId] || []).map((c) => ({ ...c, groupId: effectiveGroupId }));
-        }
-        return getCategoriesForSupplier(anbieterId, anbieter, kategorien);
-    }, [gruppeMode, effectiveGroupId, anbieterId, anbieter, kategorien]);
-
-    // Smart suggestion (used for the hint under provider)
-    const suggestedCategoryId = useMemo(
-        () => (gruppeMode === "auto" ? suggestCategoryIdForSupplier(anbieterId, anbieter, kategorien) : ""),
-        [gruppeMode, anbieterId, anbieter, kategorien]
-    );
-
-    // Refs
-    const categoryInputRef = useRef<HTMLInputElement | null>(null);
-
-    // Handlers
     const onProviderChange = useCallback(
         (id: string) => {
-            txDraft.setMany({ anbieterId: id });
+            txDraft.set("anbieterId", id);
 
-            if (gruppeMode === "manual") {
-                // Manual: keep group as is; ensure category fits selected group
-                if (kategorieId) {
-                    const ok = (kategorien[effectiveGroupId || ""] || []).some((c) => c.id === kategorieId);
-                    if (!ok) txDraft.set("kategorieId", "");
-                }
-            } else {
-                // Auto: union; clear incompatible category, apply suggestion if unambiguous
-                if (kategorieId) {
-                    const belongs = getCategoriesForSupplier(id, anbieter, kategorien).some((c) => c.id === kategorieId);
-                    if (!belongs) txDraft.set("kategorieId", "");
-                }
-                const suggestion = suggestCategoryIdForSupplier(id, anbieter, kategorien);
-                if (suggestion && suggestion !== kategorieId) txDraft.set("kategorieId", suggestion);
+            if (!id) return;
+
+            // Wenn wir gelernt haben, dass dieser Anbieter meistens mit Gruppe X zusammenhängt,
+            // tragen wir diese Gruppe automatisch ein (aber optional, User kann ändern/entfernen).
+            const bestGroupId = getMostUsedGroupForProvider(id, providerStats);
+            if (bestGroupId) {
+                txDraft.set("gruppeId", bestGroupId);
             }
         },
-        [gruppeMode, kategorieId, anbieter, kategorien, effectiveGroupId]
+        [providerStats]
     );
 
-    const onCategoryChange = useCallback(
-        (id: string) => {
-            txDraft.set("kategorieId", id);
-            if (gruppeMode === "auto") {
-                const g = findGroupIdByCategoryId(id, kategorien);
-                if (g && g !== gruppeId) txDraft.set("gruppeId", g);
-            }
-        },
-        [gruppeMode, kategorien, gruppeId]
-    );
-
-    const onGroupChangeManual = useCallback((id: string) => {
-        txDraft.setMany({ gruppeId: id, kategorieId: "" });
+    const onGroupChange = useCallback((id: string) => {
+        txDraft.set("gruppeId", id);
     }, []);
 
-    const applySuggestedCategory = useCallback(() => {
-        if (!suggestedCategoryId) return;
-        txDraft.set("kategorieId", suggestedCategoryId);
-        // Focus category field after applying suggestion (quick correction flow)
-        categoryInputRef.current?.focus();
-    }, [suggestedCategoryId]);
-
-    const toggleGroupMode = useCallback(() => {
-        const next = gruppeMode === "auto" ? "manual" : "auto";
-        txDraft.set("gruppeMode", next); // persist in draft
-        if (next === "manual") {
-            // Entering manual: keep existing gruppeId; ensure category consistency
-            if (kategorieId) {
-                const ok = (kategorien[(gruppeId || "")] || []).some((c) => c.id === kategorieId);
-                if (!ok) txDraft.set("kategorieId", "");
-            }
-        } else {
-            // Back to auto: ensure gruppeId follows category
-            const g = findGroupIdByCategoryId(kategorieId, kategorien) || "";
-            txDraft.set("gruppeId", g);
-        }
-    }, [gruppeMode, kategorieId, gruppeId, kategorien]);
-
-    // Proceed rules
+    // Proceed rules:
+    // - Einnahmen: wie vorher (Typ & Quelle nötig)
+    // - Ausgaben: Klassifizierung (Anbieter/Gruppe) ist optional → immer true
     const canProceed =
         kind === "income"
             ? Boolean(incomeType && (quelleId || quelleName))
             : kind === "expense"
-                ? Boolean(kategorieId)
+                ? true
                 : false;
 
     function next() {
+        // Vor dem Weitergehen Lernsignal schreiben (nur bei Ausgaben)
+        if (kind === "expense" && anbieterId) {
+            const updated = bumpProviderStats(providerStats, anbieterId, gruppeId);
+            setProviderStats(updated);
+            saveProviderStats(updated);
+        }
+
         navigate("/TestErgebniss");
     }
 
@@ -435,9 +205,9 @@ export default function GuestTransactionStep3() {
                 />
 
                 <section className="flex-1">
-                    <h1 className="text-lg text-gray-600 mb-4">Demo-Zugang (Dictionaries via Store)</h1>
+                    <h1 className="text-lg text-gray-600 mb-4">Demo-Zugang (Lernende Anbieter/Gruppe-Zuordnung)</h1>
 
-                    {/* -------- Income branch -------- */}
+                    {/* -------- Income branch (wie vorher) -------- */}
                     {kind === "income" && (
                         <>
                             <Combobox<Type>
@@ -482,17 +252,17 @@ export default function GuestTransactionStep3() {
                         </>
                     )}
 
-                    {/* -------- Expense branch -------- */}
+                    {/* -------- Expense branch: nur Anbieter + Gruppe + Bemerkung -------- */}
                     {kind === "expense" && (
                         <>
-                            {/* 1) Provider */}
+                            {/* 1) Anbieter – lernend, meistgenutzte zuerst */}
                             <Combobox<Provider>
                                 label="Anbieter"
-                                helperText="erste Auswahl – Kategorien werden automatisch vorgeschlagen"
-                                options={anbieter}
+                                helperText="Meistgenutzte Anbieter stehen oben, z. B. Rewe, Aldi, Aral …"
+                                options={providerOptions}
                                 value={anbieterId}
-                                onChange={(id) => onProviderChange(id)}
-                                placeholder="z. B. Rewe"
+                                onChange={onProviderChange}
+                                placeholder="z. B. Rewe, Aral, Amazon"
                                 allowCreate
                                 onCreate={(name) => {
                                     const id = createProvider(name, "");
@@ -506,149 +276,30 @@ export default function GuestTransactionStep3() {
                                 }}
                             />
 
-                            {/* Smart hint under provider */}
-                            {anbieterId && (suggestedCategoryId || kategorieId) && (
-                                <div className="mt-[-12px] mb-4 text-center">
-                                    <span className="text-xs text-gray-500">
-                                        {kategorieId
-                                            ? (() => {
-                                                const catName = getCategoriesForSupplier(anbieterId, anbieter, kategorien).find(
-                                                    (c) => c.id === kategorieId
-                                                )?.name ?? "Kategorie";
-                                                const grpName = gruppen.find((g) => g.id === effectiveGroupId)?.name ?? "Gruppe";
-                                                return `Aktuell kategorisiert als ${catName} / ${grpName}`;
-                                            })()
-                                            : (() => {
-                                                const catName =
-                                                    getCategoriesForSupplier(anbieterId, anbieter, kategorien).find(
-                                                        (c) => c.id === suggestedCategoryId
-                                                    )?.name ?? "Kategorie";
-                                                const grpId = findGroupIdByCategoryId(suggestedCategoryId, kategorien);
-                                                const grpName = gruppen.find((g) => g.id === grpId)?.name ?? "Gruppe";
-                                                return `Automatisch vorgeschlagen: ${catName} / ${grpName}`;
-                                            })()}
-                                    </span>
-
-                                    <div className="mt-1 flex gap-3 justify-center">
-                                        {!kategorieId && suggestedCategoryId && (
-                                            <button
-                                                type="button"
-                                                onClick={applySuggestedCategory}
-                                                className="text-xs text-blue-600 underline hover:text-blue-800"
-                                            >
-                                                übernehmen
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => categoryInputRef.current?.focus()}
-                                            className="text-xs text-gray-600 underline hover:text-gray-800"
-                                        >
-                                            ändern
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={toggleGroupMode}
-                                            className="text-xs text-gray-600 underline hover:text-gray-800"
-                                        >
-                                            {gruppeMode === "auto" ? "Gruppe manuell wählen" : "Gruppe automatisch"}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 2) Category */}
-                            <Combobox<Category>
-                                label="Kategorie"
-                                required
-                                options={categoryOptions}
-                                value={kategorieId}
-                                onChange={(id) => onCategoryChange(id)}
-                                placeholder={
-                                    anbieterId
-                                        ? categoryOptions.length
-                                            ? "Kategorie wählen…"
-                                            : gruppeMode === "manual"
-                                                ? "Keine Kategorien in dieser Gruppe"
-                                                : "Keine Kategorien für diesen Anbieter"
-                                        : "Zuerst Anbieter wählen"
-                                }
-                                disabled={!anbieterId}
-                                inputRef={categoryInputRef}
-                                allowCreate
-                                onCreate={(name) => {
-                                    if (gruppeMode === "manual") {
-                                        if (!effectiveGroupId) return alert("Bitte zuerst Gruppe wählen.");
-                                        const id = createCategory(effectiveGroupId, name);
-                                        txDraft.set("kategorieId", id);
-                                        return;
-                                    }
-                                    const supplier = anbieter.find((a) => a.id === anbieterId);
-                                    const groups = supplier?.gruppen || [];
-                                    if (groups.length === 1) {
-                                        const gid = groups[0];
-                                        const id = createCategory(gid, name);
-                                        txDraft.set("kategorieId", id);
-                                    } else {
-                                        alert("Bitte Kategorie in den Einstellungen anlegen (Gruppenzuordnung erforderlich).");
-                                    }
-                                }}
-                                allowEdit
-                                onEdit={(id, newName) => {
-                                    const gid =
-                                        gruppeMode === "manual" && effectiveGroupId
-                                            ? effectiveGroupId
-                                            : findGroupIdByCategoryId(id, kategorien);
-                                    if (!gid) return;
-                                    renameCategory(gid, id, newName);
-                                }}
-                                onDelete={(id) => {
-                                    const gid =
-                                        gruppeMode === "manual" && effectiveGroupId
-                                            ? effectiveGroupId
-                                            : findGroupIdByCategoryId(id, kategorien);
-                                    if (!gid) return;
-                                    deleteCategory(gid, id);
-                                    if (kategorieId === id) txDraft.set("kategorieId", "");
-                                }}
-                            />
-
-                            {/* 3) Group (auto or manual) */}
-                            <div className="mb-2 flex items-center justify-between">
+                            {/* 2) Gruppe – optional, aber oft automatisch vorbelegt */}
+                            <div className="mb-2 flex items-center justify-between mt-4">
                                 <div className="text-base font-medium">Gruppe</div>
-                                <button
-                                    type="button"
-                                    className="text-xs text-gray-600 underline hover:text-gray-800"
-                                    onClick={toggleGroupMode}
-                                >
-                                    {gruppeMode === "auto" ? "manuell wählen" : "automatisch"}
-                                </button>
+                                <span className="text-xs text-gray-500">optional, z. B. Essen, Mobilität …</span>
                             </div>
 
-                            {gruppeMode === "auto" ? (
-                                <div className="mb-6">
-                                    <input
-                                        type="text"
-                                        value={(() => {
-                                            const g = gruppen.find((g) => g.id === effectiveGroupId);
-                                            return g ? g.name : "";
-                                        })()}
-                                        placeholder="automatisch aus Kategorie"
-                                        disabled
-                                        className="h-12 w-full border shadow-sm border-gray-300 px-3 bg-gray-100 text-gray-600"
-                                        aria-readonly
-                                    />
-                                    <div className="mt-1 text-xs text-gray-500 text-center">automatisch aus Kategorie</div>
-                                </div>
-                            ) : (
-                                <Combobox<Group>
-                                    label=""
-                                    options={gruppen}
-                                    value={gruppeId}
-                                    onChange={(id) => onGroupChangeManual(id)}
-                                    placeholder="Gruppe wählen…"
-                                />
-                            )}
+                            <Combobox<Group>
+                                label=""
+                                options={gruppen}
+                                value={gruppeId}
+                                onChange={onGroupChange}
+                                placeholder="Gruppe wählen… (z. B. Essen, Mobilität)"
+                                allowCreate
+                                onCreate={(name) => {
+                                    const id = createGroup(name);
+                                    txDraft.set("gruppeId", id);
+                                }}
+                                allowEdit
+                                onEdit={(id, newName) => renameGroup(id, newName)}
+                                onDelete={(id) => {
+                                    deleteGroup(id);
+                                    if (gruppeId === id) txDraft.set("gruppeId", "");
+                                }}
+                            />
                         </>
                     )}
 
@@ -683,27 +334,28 @@ export default function GuestTransactionStep3() {
                     </div>
                 </section>
 
-                {/* Developer Panel (unchanged) */}
+                {/* Developer Panel – leicht angepasst (Kategorien raus aus Anzeige nicht zwingend, но можно оставить) */}
                 <div className="mt-10 border-t border-gray-300 pt-3 text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
                     <div className="flex gap-2 flex-wrap">
                         <button
                             onClick={() => {
                                 localStorage.removeItem("ft_dicts_v2");
                                 localStorage.removeItem("ft_income_dicts_v1");
+                                localStorage.removeItem(PROVIDER_STATS_KEY);
                                 location.reload();
                             }}
                             className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
                         >
-                            🧹 Reset Dictionaries
+                            🧹 Reset Dictionaries & Provider-Stats
                         </button>
 
                         <button
                             onClick={() => {
                                 console.log("Gruppen:", useDicts.getState().gruppen);
-                                console.log("Kategorien:", useDicts.getState().kategorien);
                                 console.log("Anbieter:", useDicts.getState().anbieter);
                                 console.log("Income Types:", useIncomeDicts.getState().incomeTypes);
                                 console.log("Sources:", useIncomeDicts.getState().sources);
+                                console.log("ProviderStats:", loadProviderStats());
                                 alert("✅ Data printed in console");
                             }}
                             className="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition"
@@ -715,7 +367,6 @@ export default function GuestTransactionStep3() {
                     <div className="mt-3 text-gray-500">
                         <p>Gruppen: {useDicts.getState().gruppen.length}</p>
                         <p>Anbieter: {useDicts.getState().anbieter.length}</p>
-                        <p>Kategorien: {Object.keys(useDicts.getState().kategorien).length}</p>
                         <p>Income Types: {useIncomeDicts.getState().incomeTypes.length}</p>
                         <p>Sources: {useIncomeDicts.getState().sources.length}</p>
                     </div>

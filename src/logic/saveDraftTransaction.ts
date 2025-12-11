@@ -1,5 +1,4 @@
 // src/logic/saveDraftTransaction.ts
-import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 
 export type SaveDraftResult = {
@@ -64,7 +63,7 @@ function draftHash(d: {
 }
 
 export function saveDraftTransaction(): SaveDraftResult {
-    const draft = (useTxDraft as any).getState() as any;
+    const draft = txDraft.get() as any;
 
     const {
         kind,

@@ -91,6 +91,15 @@ export default function MonthPage() {
         }
     }, []);
 
+    useEffect(() => {
+        const negExp = items.filter(t => t.kind === "expense" && (t.amount ?? 0) < 0);
+        console.log("Negative expense count:", negExp.length);
+    }, [items]);
+
+
+
+
+
     /** Load accounts + balances */
     const accountsWithBalance = useMemo(() => {
         let accs: any[] = [];
@@ -138,19 +147,27 @@ export default function MonthPage() {
     /** Aggregates for red / yellow / green */
     const expenseTotal = useMemo(
         () =>
-            monthTx.reduce(
-                (sum, tx) =>
-                    tx.kind === "expense"
-                        ? sum + (Number.isFinite(tx.amount) ? tx.amount : 0)
-                        : sum,
-                0
-            ),
+            monthTx.reduce((sum, tx) => {
+                if (tx.kind !== "expense") return sum;
+                const a = Number.isFinite(tx.amount) ? tx.amount : 0;
+                return sum + Math.abs(a);
+            }, 0),
         [monthTx]
     );
 
     const futureTotal = 0;
 
-    const available = totalBalance - expenseTotal - futureTotal;
+    const available = totalBalance - futureTotal;
+
+    // debug balance error
+    useEffect(() => {
+        console.log("=== MONTH DEBUG ===");
+        console.log("accountsWithBalance:", accountsWithBalance);
+        console.log("totalBalance:", totalBalance);
+        console.log("expenseTotal:", expenseTotal);
+        console.log("futureTotal:", futureTotal);
+        console.log("available:", available);
+    }, [accountsWithBalance, totalBalance, expenseTotal, futureTotal, available]);
 
     /** Error view */
     if (parseError) {
@@ -178,6 +195,7 @@ export default function MonthPage() {
     return (
         <div className="bg-white">
             <main className="py-6 flex flex-col max-w-5xl mx-auto px-4 gap-4">
+                <p className="text-xs text-red-500">DEBUG MonthPage ACTIVE</p>
                 <PageHeader
                     left={
                         <Link

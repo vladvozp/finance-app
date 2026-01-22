@@ -96,6 +96,20 @@ function createDefaultAccount(name: string, isMain = false): Account {
     };
 }
 
+function toISODate(d = new Date()) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function isFutureISO(isoDate: string) {
+    const todayISO = toISODate();
+    return isoDate > todayISO; // For YYYY-MM-DD
+}
+
+
+
 // Ensure ft_accounts exists and has at least one account
 export function ensureAccounts(): Account[] {
     try {
@@ -622,13 +636,19 @@ const GuestTransactionOne: React.FC = () => {
         const cents = toCents(amountStr);
         const effectiveDate = date ?? new Date();
         const nowISO = effectiveDate.toISOString();
+        const isoDate = effectiveDate.toISOString().slice(0, 10); // YYYY-MM-DD
+        const todayISO = new Date().toISOString().slice(0, 10);
+
+        const isPlanned = isoDate > todayISO;
 
         // This page creates expense transactions
         txDraft.setMany({
             kind: "expense" as Kind,
             amount: cents / 100,
             amountCents: cents,
-            date: nowISO,
+            date: isoDate,
+            isPlanned: isoDate > todayISO,
+            isDone: isoDate > todayISO ? false : undefined,
             accountId: selectedAccountId || "",
             kontoName: selectedAccountName || "",
         });

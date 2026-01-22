@@ -44,6 +44,11 @@ function draftHash(d: {
     quelleName?: string;
     remark?: string;
     repeat?: unknown;
+    isPlanned?: boolean;
+    isDone?: boolean;
+
+
+
 }): string {
     return [
         d.kind ?? "",
@@ -59,6 +64,8 @@ function draftHash(d: {
         (d.quelleName ?? "").trim(),
         (d.remark ?? "").trim(),
         String(!!d.repeat),
+        String(!!d.isPlanned),
+        String(!!d.isDone),
     ].join("|");
 }
 
@@ -79,6 +86,8 @@ export function saveDraftTransaction(): SaveDraftResult {
         remark,
         date: dateRaw = null,
         repeat = false,
+        isPlanned = false,
+        isDone = false,
     } = draft;
 
     const isExpense = kind === "expense";
@@ -164,6 +173,8 @@ export function saveDraftTransaction(): SaveDraftResult {
         kontoId: accountId || null,
         remark: (remark ?? "").trim(),
         repeat: !!(typeof repeat === "string" ? repeat === "true" : repeat),
+        isPlanned: !!isPlanned,
+        isDone: !!isDone,
     };
 
     const tx =

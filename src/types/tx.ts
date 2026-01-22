@@ -6,6 +6,12 @@ export type Tx = {
     amount: number;
     date: string | null;
 
+    // Planned
+    isPlanned?: boolean;   // Planned  
+    isDone?: boolean;      // for planned
+
+
+
     // EXPENSE-only
     gruppeId?: string;
     kategorieId?: string;
@@ -18,7 +24,7 @@ export type Tx = {
 
     // COMMON
     kontoId?: string | null;
-    // konto?: string; // лучше НЕ хранить; подставлять из словаря при выводе
+    // konto?: string;
     remark?: string | null;
     repeat?: boolean;
 

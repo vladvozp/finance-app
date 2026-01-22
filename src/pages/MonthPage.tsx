@@ -98,9 +98,12 @@ export default function MonthPage() {
 
 
 
-
-
     /** Load accounts + balances */
+    const actualItems = useMemo(
+        () => items.filter((t) => t.isPlanned !== true || t.isDone === true),
+        [items]
+    );
+
     const accountsWithBalance = useMemo(() => {
         let accs: any[] = [];
         try {
@@ -115,9 +118,9 @@ export default function MonthPage() {
 
         return accs.map((acc) => ({
             ...acc,
-            balance: computeAccountBalance(acc, items),
+            balance: computeAccountBalance(acc, actualItems),
         }));
-    }, [items]);
+    }, [actualItems]);
 
     const totalBalance = useMemo(
         () => accountsWithBalance.reduce((s, acc) => s + (acc.balance ?? 0), 0),
@@ -154,8 +157,25 @@ export default function MonthPage() {
             }, 0),
         [monthTx]
     );
+    const monthPlannedTx = useMemo(() => {
+        const todayISO = new Date().toISOString().slice(0, 10);
 
-    const futureTotal = 0;
+        return items.filter((tx) => {
+            const d = (tx.date ?? "").slice(0, 10);
+            return d > todayISO && tx.isPlanned === true && tx.isDone !== true;
+        });
+    }, [items]);
+
+    const futureTotal = useMemo(
+        () =>
+            monthPlannedTx.reduce((sum, tx) => {
+                if (tx.kind !== "expense") return sum;
+                const a = Number.isFinite(tx.amount) ? tx.amount : 0;
+                return sum + Math.abs(a);
+            }, 0),
+        [monthPlannedTx]
+    );
+
 
     const available = totalBalance - futureTotal;
 

@@ -58,6 +58,9 @@ export default function MonthPage() {
     const [items, setItems] = useState<Tx[]>([]);
     const [parseError, setParseError] = useState<string | null>(null);
 
+    const [onlyPlanned, setOnlyPlanned] = useState(false);
+
+
     /** DICTS */
     const { kategorien, anbieter } = useDicts?.() || {};
 
@@ -100,7 +103,7 @@ export default function MonthPage() {
 
     /** Load accounts + balances */
     const actualItems = useMemo(
-        () => items.filter((t) => t.isPlanned !== true || t.isDone === true),
+        () => items.filter((t) => t.status !== "planned" && t.status !== "cancelled"),
         [items]
     );
 
@@ -148,23 +151,32 @@ export default function MonthPage() {
     );
 
     /** Aggregates for red / yellow / green */
+    const monthBookedTx = useMemo(
+        () => monthTx.filter((tx) => tx.status !== "planned" && tx.status !== "cancelled"),
+        [monthTx]
+    );
+
     const expenseTotal = useMemo(
         () =>
-            monthTx.reduce((sum, tx) => {
+            monthBookedTx.reduce((sum, tx) => {
                 if (tx.kind !== "expense") return sum;
                 const a = Number.isFinite(tx.amount) ? tx.amount : 0;
                 return sum + Math.abs(a);
             }, 0),
+        [monthBookedTx]
+    );
+
+    const monthPlannedTx = useMemo(
+        () =>
+            monthTx.filter((tx) => tx.status === "planned"),
         [monthTx]
     );
-    const monthPlannedTx = useMemo(() => {
-        const todayISO = new Date().toISOString().slice(0, 10);
 
-        return items.filter((tx) => {
-            const d = (tx.date ?? "").slice(0, 10);
-            return d > todayISO && tx.isPlanned === true && tx.isDone !== true;
-        });
-    }, [items]);
+
+    const tableTx = useMemo(
+        () => (onlyPlanned ? monthTx.filter(t => t.status === "planned") : monthTx),
+        [onlyPlanned, monthTx]
+    );
 
     const futureTotal = useMemo(
         () =>
@@ -175,7 +187,6 @@ export default function MonthPage() {
             }, 0),
         [monthPlannedTx]
     );
-
 
     const available = totalBalance - futureTotal;
 
@@ -291,6 +302,18 @@ export default function MonthPage() {
                         </div>
                     ) : (
                         <>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    id="only-planned"
+                                    type="checkbox"
+                                    checked={onlyPlanned}
+                                    onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                <label htmlFor="only-planned" className="text-sm text-gray-700">
+                                    Nur geplannt
+                                </label>
+                            </div>
                             <div className="overflow-x-auto border shadow-sm border-gray-300 rounded-xl max-h-[60vh]">
                                 <table className="table">
                                     <thead>
@@ -303,9 +326,19 @@ export default function MonthPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {monthTx.map((tx) => (
+                                        {tableTx.map((tx) => (
                                             <tr key={tx.id}>
-                                                <td>{fmtDate(tx.date)}</td>
+                                                <td>
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{fmtDate(tx.date)}</span>
+
+                                                        {tx.status === "planned" && (
+                                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-yellow-300 bg-yellow-50 text-yellow-800">
+                                                                ⏳ planned
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td>{getKontoName(tx.kontoId ?? undefined)}</td>
                                                 <td>
                                                     {tx.kind === "expense"

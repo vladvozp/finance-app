@@ -1,4 +1,7 @@
 
+
+export type TxStatus = "planned" | "booked" | "cancelled";
+
 /** Domain model for a transaction kept in LocalStorage. */
 export type Tx = {
     id: string;
@@ -6,7 +9,11 @@ export type Tx = {
     amount: number;
     date: string | null;
 
-    // Planned
+    // NEW: lifecycle
+    status: TxStatus;
+
+
+    // Old Planned
     isPlanned?: boolean;   // Planned  
     isDone?: boolean;      // for planned
 

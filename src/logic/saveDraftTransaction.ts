@@ -1,5 +1,6 @@
 // src/logic/saveDraftTransaction.ts
 import { txDraft } from "../store/transactionDraft";
+import type { TxStatus } from "../types/tx";
 
 export type SaveDraftResult = {
     ok: boolean;
@@ -10,11 +11,23 @@ export type SaveDraftResult = {
 
 const TX_KEY = "ft_transactions";
 
+function normalizeTx(raw: any) {
+    const status: TxStatus =
+        raw.status ??
+        (raw.isPlanned === true && raw.isDone !== true ? "planned" : "booked");
+
+    return { ...raw, status };
+}
+
+
+
+
 function readTxList(): any[] {
     try {
         const raw = localStorage.getItem(TX_KEY);
         const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
+        const list = Array.isArray(arr) ? arr : [];
+        return list.map(normalizeTx);
     } catch {
         return [];
     }
@@ -90,6 +103,7 @@ export function saveDraftTransaction(): SaveDraftResult {
         isDone = false,
     } = draft;
 
+    const status: TxStatus = isPlanned ? "planned" : "booked";
     const isExpense = kind === "expense";
     const isIncome = kind === "income";
 
@@ -173,6 +187,7 @@ export function saveDraftTransaction(): SaveDraftResult {
         kontoId: accountId || null,
         remark: (remark ?? "").trim(),
         repeat: !!(typeof repeat === "string" ? repeat === "true" : repeat),
+        status,
         isPlanned: !!isPlanned,
         isDone: !!isDone,
     };

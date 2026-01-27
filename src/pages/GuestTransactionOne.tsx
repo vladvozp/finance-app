@@ -27,7 +27,7 @@ import {
 
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
-import type { Tx } from "../types/tx";
+import type { Tx, TxStatus } from "../types/tx";
 import { computeAccountBalance } from "../utils/accountBalance";
 
 import DatePickerInput from "../components/DatePickerInput";
@@ -420,6 +420,10 @@ const GuestTransactionOne: React.FC = () => {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [account, setAccount] = useState<Account | null>(null);
 
+    const [isPlanned, setIsPlanned] = useState(false);
+
+
+
     const [amountStr, setAmountStr] = useState<string>(
         typeof amount === "number" && amount > 0
             ? amount.toLocaleString("de-DE", {
@@ -638,8 +642,7 @@ const GuestTransactionOne: React.FC = () => {
         const nowISO = effectiveDate.toISOString();
         const isoDate = effectiveDate.toISOString().slice(0, 10); // YYYY-MM-DD
         const todayISO = new Date().toISOString().slice(0, 10);
-
-        const isPlanned = isoDate > todayISO;
+        const status: TxStatus = isPlanned ? "planned" : "booked";
 
         // This page creates expense transactions
         txDraft.setMany({
@@ -647,8 +650,8 @@ const GuestTransactionOne: React.FC = () => {
             amount: cents / 100,
             amountCents: cents,
             date: isoDate,
-            isPlanned: isoDate > todayISO,
-            isDone: isoDate > todayISO ? false : undefined,
+            status,
+            isPlanned: status === "planned",
             accountId: selectedAccountId || "",
             kontoName: selectedAccountName || "",
         });
@@ -953,6 +956,20 @@ const GuestTransactionOne: React.FC = () => {
                         placeholder="Tag/Monat/Jahr"
                         displayFormat="dd.MM.yyyy"
                     />
+                    <div className="mt-3 flex items-center gap-2">
+                        <input
+                            id="tx-planned"
+                            type="checkbox"
+                            checked={isPlanned}
+                            onChange={(e) => setIsPlanned(e.target.checked)}
+                            className="h-4 w-4"
+                        />
+                        <label htmlFor="tx-planned" className="text-sm text-gray-700">
+                            Geplannt
+                        </label>
+                    </div>
+
+
 
                     {/* Provider & Group */}
                     <div className="flex gap-3 mt-6" />

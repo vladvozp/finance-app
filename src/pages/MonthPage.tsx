@@ -8,7 +8,7 @@ import Button from "../components/Button";
 import { Plus } from "lucide-react";
 
 import type { Tx } from "../types/tx";
-import { readTxList } from "../utils/storage";
+import { readTxList, updateTxStatus } from "../utils/storage";
 import { computeAccountBalance } from "../utils/accountBalance";
 import { readKontoMap } from "../utils/lookups";
 import { useDicts } from "../store/dicts";
@@ -60,6 +60,17 @@ export default function MonthPage() {
 
     const [onlyPlanned, setOnlyPlanned] = useState(false);
 
+    const todayISO = new Date().toISOString().slice(0, 10);
+
+    const markBooked = (id: string) => {
+        const next = updateTxStatus(id, "booked");
+        setItems(next);
+    };
+
+    const markCancelled = (id: string) => {
+        const next = updateTxStatus(id, "cancelled");
+        setItems(next);
+    };
 
     /** DICTS */
     const { kategorien, anbieter } = useDicts?.() || {};
@@ -326,46 +337,90 @@ export default function MonthPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {tableTx.map((tx) => (
-                                            <tr key={tx.id}>
-                                                <td>
-                                                    <div className="flex items-center gap-2">
-                                                        <span>{fmtDate(tx.date)}</span>
+                                        {tableTx.map((tx) => {
+                                            const d = (tx.date ?? "").slice(0, 10);
+                                            const isPlanned = tx.status === "planned";
+                                            const isOverdue = isPlanned && d && d < todayISO;
+                                            const isDueToday = isPlanned && d === todayISO;
 
-                                                        {tx.status === "planned" && (
-                                                            <span className="text-[10px] px-2 py-[2px] rounded-full border border-yellow-300 bg-yellow-50 text-yellow-800">
-                                                                ⏳ planned
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td>{getKontoName(tx.kontoId ?? undefined)}</td>
-                                                <td>
-                                                    {tx.kind === "expense"
-                                                        ? getAnbieterName(tx.anbieterId ?? null)
-                                                        : "—"}
-                                                </td>
-                                                <td>
-                                                    {tx.kind === "expense"
-                                                        ? getKategorieName(
-                                                            tx.gruppeId ?? null,
-                                                            tx.kategorieId ?? null
-                                                        )
-                                                        : "—"}
-                                                </td>
-                                                <td
-                                                    className={`text-right tabular-nums ${tx.kind === "income"
-                                                        ? "text-green-700 font-semibold"
-                                                        : "text-red-700 font-semibold"
-                                                        }`}
+                                            return (
+                                                <tr
+                                                    key={tx.id}
+                                                    className={
+                                                        isOverdue ? "bg-red-50" : isDueToday ? "bg-yellow-50" : ""
+                                                    }
                                                 >
-                                                    {fmtMoney(
-                                                        Number.isFinite(tx.amount) ? tx.amount : 0
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    <td>
+                                                        <div className="flex items-center gap-2">
+                                                            <span>{fmtDate(tx.date)}</span>
+
+                                                            {isPlanned && (
+                                                                <span
+                                                                    className={`text-[10px] px-2 py-[2px] rounded-full border
+                  ${isOverdue
+                                                                            ? "border-red-300 bg-red-50 text-red-800"
+                                                                            : isDueToday
+                                                                                ? "border-yellow-300 bg-yellow-50 text-yellow-800"
+                                                                                : "border-gray-300 bg-gray-50 text-gray-700"
+                                                                        }`}
+                                                                >
+                                                                    ⏳ planned
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    <td>{getKontoName(tx.kontoId ?? undefined)}</td>
+
+                                                    <td>
+                                                        {tx.kind === "expense"
+                                                            ? getAnbieterName(tx.anbieterId ?? null)
+                                                            : "—"}
+                                                    </td>
+
+                                                    <td>
+                                                        {tx.kind === "expense"
+                                                            ? getKategorieName(tx.gruppeId ?? null, tx.kategorieId ?? null)
+                                                            : "—"}
+                                                    </td>
+
+                                                    <td
+                                                        className={`text-right tabular-nums ${tx.kind === "income"
+                                                            ? "text-green-700 font-semibold"
+                                                            : "text-red-700 font-semibold"
+                                                            }`}
+                                                    >
+                                                        {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                    </td>
+
+                                                    <td>
+                                                        {isPlanned ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => markBooked(tx.id)}
+                                                                    className="text-xs px-2 py-1 rounded border border-green-300 bg-green-50 hover:bg-green-100"
+                                                                >
+                                                                    ✅ durchführen
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => markCancelled(tx.id)}
+                                                                    className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100"
+                                                                >
+                                                                    🗑 stornieren
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-400">—</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
+
                                 </table>
                             </div>
 

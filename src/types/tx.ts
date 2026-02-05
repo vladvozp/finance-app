@@ -8,6 +8,7 @@ export type Tx = {
     kind: "expense" | "income";
     amount: number;
     date: string | null;
+    createdAt?: string;
 
     // NEW: lifecycle
     status: TxStatus;

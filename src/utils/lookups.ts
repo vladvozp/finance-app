@@ -1,7 +1,7 @@
 // src/utils/lookups.ts
 export type Konto = { id: string; name: string };
 
-const ACC_KEY = "ft_accounts"; // поправь, если у тебя другой ключ
+const ACC_KEY = "ft_accounts";
 
 export function readKontoMap(): Map<string, string> {
     try {

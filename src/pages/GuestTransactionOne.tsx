@@ -28,6 +28,8 @@ import {
 import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 import type { Tx, TxStatus } from "../types/tx";
+
+import { Account } from "../types/account";
 import { computeAccountBalance } from "../utils/accountBalance";
 
 import DatePickerInput from "../components/DatePickerInput";
@@ -41,18 +43,6 @@ const ACC_KEY = "ft_accounts";
 const TX_KEY = "ft_transactions";
 
 type Kind = "expense" | "income";
-
-export interface Account {
-    id: string;
-    name: string;
-    currency: string;
-    openingBalance?: number;
-    openingDate: string | null;
-    archived: boolean;
-    createdAt: string;
-    updatedAt: string;
-    isMain?: boolean;
-}
 
 type AccountWithBalance = Account & { balance: number };
 
@@ -89,6 +79,11 @@ function createDefaultAccount(name: string, isMain = false): Account {
         currency: "EUR",
         openingBalance: 0,
         openingDate: null,
+
+        snapshotBalance: 0,
+        snapshotAt: now,
+
+
         archived: false,
         createdAt: now,
         updatedAt: now,
@@ -266,7 +261,46 @@ function editOpeningBalanceInteractive(
     if (typeof onDone === "function") onDone(list[idx], list);
     return list;
 }
+// Edit current balance
+function editSnapshotBalanceInteractive(
+    accId: string,
+    currentSnapshot: number | undefined,
+    onDone?: (updated: Account, all: Account[]) => void
+): Account[] | null {
+    const input = window.prompt("Kontostand JETZT (EUR):", String(currentSnapshot ?? 0));
+    if (input == null) return null;
 
+    const n = Number(String(input).replace(",", "."));
+    if (!Number.isFinite(n)) {
+        alert("Ungültiger Betrag");
+        return null;
+    }
+
+    let list: Account[] = [];
+    try {
+        const raw = localStorage.getItem(ACC_KEY) || "[]";
+        list = JSON.parse(raw);
+        if (!Array.isArray(list)) list = [];
+    } catch {
+        list = [];
+    }
+
+    const idx = list.findIndex((a) => a.id === accId);
+    if (idx === -1) return null;
+
+    const now = new Date().toISOString();
+
+    list[idx] = {
+        ...list[idx],
+        snapshotBalance: n,
+        snapshotAt: now,
+        updatedAt: now,
+    };
+
+    localStorage.setItem(ACC_KEY, JSON.stringify(list));
+    if (typeof onDone === "function") onDone(list[idx], list);
+    return list;
+}
 // Persisted delete helper
 function deleteAccountInteractive(
     accId: string,
@@ -613,7 +647,7 @@ const GuestTransactionOne: React.FC = () => {
 
     const startEdit = (acc: AccountWithBalance) => {
         setEditingId(acc.id);
-        const current = acc.openingBalance ?? 0;
+        const current = acc.snapshotBalance ?? acc.openingBalance ?? 0;
         setTempBalance(String(current));
     };
 
@@ -623,7 +657,7 @@ const GuestTransactionOne: React.FC = () => {
             setEditingId(null);
             return;
         }
-        editOpeningBalanceInteractive(accId, valueNum, (_, l) => setAccounts(l));
+        editSnapshotBalanceInteractive(accId, valueNum, (_, l) => setAccounts(l));
         setEditingId(null);
     };
 
@@ -639,7 +673,7 @@ const GuestTransactionOne: React.FC = () => {
 
         const cents = toCents(amountStr);
         const effectiveDate = date ?? new Date();
-        const nowISO = effectiveDate.toISOString();
+        const nowISO = new Date().toISOString();
         const isoDate = effectiveDate.toISOString().slice(0, 10); // YYYY-MM-DD
         const todayISO = new Date().toISOString().slice(0, 10);
         const status: TxStatus = isPlanned ? "planned" : "booked";
@@ -650,6 +684,7 @@ const GuestTransactionOne: React.FC = () => {
             amount: cents / 100,
             amountCents: cents,
             date: isoDate,
+            createdAt: nowISO,
             status,
             isPlanned: status === "planned",
             accountId: selectedAccountId || "",

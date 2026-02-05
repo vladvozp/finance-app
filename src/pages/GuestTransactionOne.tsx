@@ -681,6 +681,7 @@ const GuestTransactionOne: React.FC = () => {
         // This page creates expense transactions
         txDraft.setMany({
             kind: "expense" as Kind,
+            kontoId: selectedAccountId,
             amount: cents / 100,
             amountCents: cents,
             date: isoDate,

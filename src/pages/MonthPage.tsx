@@ -483,7 +483,7 @@ export default function MonthPage() {
         [monthPlannedTx]
     );
 
-    const available = totalBalance;
+    const available = totalBalance - futureTotal;
 
     /** Error view */
     if (parseError) {
@@ -567,7 +567,7 @@ export default function MonthPage() {
                     <div className="text-xl font-bold text-gray-900">{fmtMoney(totalBalance)}</div>
                 </section>
 
-                {/* ====== ACCOUNT SELECTION (1:1 like GuestTransactionOne) ====== */}
+                {/* ====== ACCOUNT SELECTION ====== */}
                 <section className="mt-0" ref={comboboxRef}>
                     <h2 className="text-center text-black text-base font-medium mb-1">Konto</h2>
 
@@ -751,7 +751,7 @@ export default function MonthPage() {
                     <div className="border rounded-xl p-2 bg-red-50 border-red-200">
                         <div className="text-xs font-semibold text-red-700">Bereits ausgegeben</div>
                         <div className="text-lg font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
-                        <p className="text-[11px] text-red-700 mt-1">Alle Ausgaben in diesem Monat.</p>
+                        <p className="text-[11px] text-red-700 mt-1">Bereits gebuchte Ausgaben in diesem Monat.</p>
                     </div>
 
                     <div className="border rounded-xl p-2 bg-yellow-50 border-yellow-200">
@@ -764,7 +764,7 @@ export default function MonthPage() {
                         <div className="text-xs font-semibold text-green-700">Verfügbar (geschätzt)</div>
                         <div className="text-lg font-bold text-green-800">{fmtMoney(available)}</div>
                         <p className="text-[11px] text-green-700 mt-1">
-                            Aktueller Bestand aller Konten minus Ausgaben & geplante Abbuchungen.
+                            Gesamtbestand aller Konten minus geplante Abbuchungen dieses Monats.
                         </p>
                     </div>
                 </section>

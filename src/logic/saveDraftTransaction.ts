@@ -101,6 +101,7 @@ export function saveDraftTransaction(): SaveDraftResult {
         repeat = false,
         isPlanned = false,
         isDone = false,
+        createdAt,
     } = draft;
 
     const status: TxStatus = isPlanned ? "planned" : "booked";
@@ -179,6 +180,8 @@ export function saveDraftTransaction(): SaveDraftResult {
     }
 
     // --- build tx ---
+
+    const nowISO = new Date().toISOString();
     const base = {
         id: `txn_${Date.now()}`,
         kind: isExpense ? "expense" : "income",
@@ -190,6 +193,8 @@ export function saveDraftTransaction(): SaveDraftResult {
         status,
         isPlanned: !!isPlanned,
         isDone: !!isDone,
+        createdAt: nowISO,
+        updatedAt: nowISO,
     };
 
     const tx =

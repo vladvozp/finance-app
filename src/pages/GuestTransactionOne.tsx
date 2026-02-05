@@ -678,12 +678,15 @@ const GuestTransactionOne: React.FC = () => {
         const todayISO = new Date().toISOString().slice(0, 10);
         const status: TxStatus = isPlanned ? "planned" : "booked";
 
+        const signedAmount = -(cents / 100);
+        const signedCents = -cents;
+
         // This page creates expense transactions
         txDraft.setMany({
-            kind: "expense" as Kind,
+            kind: "expense",
             kontoId: selectedAccountId,
-            amount: cents / 100,
-            amountCents: cents,
+            amount: signedAmount,
+            amountCents: signedCents,
             date: isoDate,
             createdAt: nowISO,
             status,

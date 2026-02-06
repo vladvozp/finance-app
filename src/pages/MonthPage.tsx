@@ -563,7 +563,7 @@ export default function MonthPage() {
 
                 {/* ====== HAUPTKONTO BALANCE ====== */}
                 <section className="border rounded-xl p-3 bg-white">
-                    <div className="text-xs text-gray-500">Hauptkonto (Gesamt)</div>
+                    <div className="text-xs text-gray-500">Aktueller Kontostand (gesamt, Bank-Abgleich)</div>
                     <div className="text-xl font-bold text-gray-900">{fmtMoney(totalBalance)}</div>
                 </section>
 
@@ -748,19 +748,19 @@ export default function MonthPage() {
 
                 {/* ====== RYG SUMMARY ====== */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="border rounded-xl p-2 bg-red-50 border-red-200">
+                    <div className="border rounded-sm p-2 bg-red-50 border-red-200">
                         <div className="text-xs font-semibold text-red-700">Bereits ausgegeben</div>
                         <div className="text-lg font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
                         <p className="text-[11px] text-red-700 mt-1">Bereits gebuchte Ausgaben in diesem Monat.</p>
                     </div>
 
-                    <div className="border rounded-xl p-2 bg-yellow-50 border-yellow-200">
+                    <div className="border rounded-sm p-2 bg-yellow-50 border-yellow-200">
                         <div className="text-xs font-semibold text-yellow-700">Bald fällig</div>
                         <div className="text-lg font-bold text-yellow-800">{fmtMoney(futureTotal)}</div>
                         <p className="text-[11px] text-yellow-700 mt-1">Geplante Abbuchungen für diesen Monat.</p>
                     </div>
 
-                    <div className="border rounded-xl p-2 bg-green-50 border-green-200">
+                    <div className="border rounded-sm p-2 bg-green-50 border-green-200">
                         <div className="text-xs font-semibold text-green-700">Verfügbar (geschätzt)</div>
                         <div className="text-lg font-bold text-green-800">{fmtMoney(available)}</div>
                         <p className="text-[11px] text-green-700 mt-1">

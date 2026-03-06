@@ -1,5 +1,5 @@
 // store/dicts.ts
-// Best practices: single source of truth, stable IDs, local persistence, simple migration.
+// single source of truth, stable IDs, local persistence, simple migration.
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 

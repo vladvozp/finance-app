@@ -1,21 +1,18 @@
-import React, { lazy, Suspense, useMemo, useId } from "react";
-import type { ComponentType, SVGProps } from "react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
+import React from "react";
+import {
+    Home, ShoppingBasket, Car, Smartphone, HeartPulse, Shirt,
+    GraduationCap, Baby, Clapperboard, Luggage, Wallet, Folder,
+    CircleHelp, LogOut, HelpCircle,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 export type IconSpec = { kind: "lucide" | "emoji"; value: string; color?: string };
 
-function toKebab(name: string) {
-    return name
-        .replace(/[_\s]+/g, "-")
-        .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-        .toLowerCase();
-}
+const ICON_MAP: Record<string, LucideIcon> = {
 
-
-const ALIASES: Record<string, string> = {
-    CircleHelp: "circle-help",
-    HelpCircle: "help-circle",
-    LogOut: "log-out",
+    Home, ShoppingBasket, Car, Smartphone, HeartPulse, Shirt,
+    GraduationCap, Baby, Clapperboard, Luggage, Wallet, Folder,
+    CircleHelp, HelpCircle, LogOut,
 };
 
 export function IconRenderer({
@@ -37,33 +34,14 @@ export function IconRenderer({
         );
     }
 
-    const raw = icon.value?.trim() || "circle-help";
-    const kebab =
-        ALIASES[raw as keyof typeof ALIASES] ?? toKebab(raw);
+    const Icon = ICON_MAP[icon.value?.trim()] ?? CircleHelp;
 
-    const importer =
-        dynamicIconImports[kebab as keyof typeof dynamicIconImports] ??
-        dynamicIconImports["help-circle" as keyof typeof dynamicIconImports] ??
-        dynamicIconImports["circle-help" as keyof typeof dynamicIconImports];
-
-    const LucideIcon = useMemo(
-        () =>
-            lazy(async () => {
-                const mod = await importer();
-                return {
-                    default: (mod as { default: ComponentType<SVGProps<SVGSVGElement>> })
-                        .default,
-                };
-            }),
-        [importer]
-    );
-    const id = useId();
     return (
-        <Suspense fallback={<span className={className} />}>
-
-            <LucideIcon aria-labelledby={id} role="img" className={className}>
-                {title && <title id={id}>{title}</title>}
-            </LucideIcon>
-        </Suspense>
+        <Icon
+            className={className}
+            color={icon.color}
+            aria-label={title}
+            role="img"
+        />
     );
 }

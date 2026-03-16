@@ -3,18 +3,20 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader";
-import Arrowleft from "../assets/Arrowleft.svg?react";
-
 import Button from "../components/Button";
-import { Plus, Settings, Search, Delete, ChevronsDown, Edit3, Trash2 } from "lucide-react";
+import { MoveLeft, Plus, Settings, Search, Delete, ChevronsDown, Edit3, Trash2 } from "lucide-react";
 
 import type { Tx } from "../types/tx";
 import { readTxList, updateTxStatus } from "../utils/storage";
 import { computeAccountBalance } from "../utils/accountBalance";
 import { readKontoMap } from "../utils/lookups";
 import { useDicts } from "../store/dicts";
-
 import type { Account } from "../types/account";
+
+import { useLocation } from "react-router-dom";
+
+
+
 
 const ACC_KEY = "ft_accounts";
 const TX_KEY = "ft_transactions";
@@ -77,10 +79,8 @@ function createDefaultAccount(name: string, isMain = false): Account {
         currency: "EUR",
         openingBalance: 0,
         openingDate: null,
-
         snapshotBalance: 0,
         snapshotAt: now,
-
         archived: false,
         createdAt: now,
         updatedAt: now,
@@ -277,12 +277,9 @@ function deleteAccountInteractive(accId: string, onDone?: (next: Account[]) => v
 
 export default function MonthPage() {
     const navigate = useNavigate();
-
     const [items, setItems] = useState<Tx[]>([]);
     const [parseError, setParseError] = useState<string | null>(null);
-
     const [onlyPlanned, setOnlyPlanned] = useState(false);
-
     const todayISO = new Date().toISOString().slice(0, 10);
 
     /** ===== Selected month state ===== */
@@ -353,6 +350,19 @@ export default function MonthPage() {
 
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [selectedAccountName, setSelectedAccountName] = useState<string>("");
+
+    const location = useLocation();
+
+    useEffect(() => {
+        try {
+            const parsed = readTxList();
+            setItems(parsed);
+            setParseError(null);
+        } catch {
+            setItems([]);
+            setParseError("Fehler beim Lesen oder Parsen.");
+        }
+    }, [location.key]);
 
     // Ensure accounts exist
     useEffect(() => {
@@ -492,7 +502,7 @@ export default function MonthPage() {
                 <PageHeader
                     left={
                         <Link to="/guest" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
-                            <Arrowleft className="w-5 h-5" /> Zurück
+                            <MoveLeft className="w-5 h-5" /> Zurück
                         </Link>
                     }
                     center={null}
@@ -513,7 +523,7 @@ export default function MonthPage() {
                 <PageHeader
                     left={
                         <Link to="/login" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
-                            <Arrowleft className="w-5 h-5" />
+                            <MoveLeft className="w-5 h-5" />
                             Zurück
                         </Link>
                     }

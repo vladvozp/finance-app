@@ -3,10 +3,10 @@ import { useState, ChangeEvent, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { txDraft } from "../store/transactionDraft";
 import { toCents } from "../utils/currency";
-import { saveDraftTransaction, type SaveDraftResult } from "../logic/saveDraftTransaction";
-import { bumpProviderStats, getMostUsedGroupForProvider } from "../services/providerStatsService";
+import { bumpProviderStats } from "../services/providerStatsService";
 import { loadProviderStats, saveProviderStats, type ProviderStats } from "../repositories/providerStatsRepository";
-import type { TxStatus } from "../types/tx";
+import type { Tx, TxStatus } from "../types/tx";
+import { useAccountsStore } from "../store/accounts";
 
 export function useTransactionForm(
     amount: number,
@@ -16,6 +16,7 @@ export function useTransactionForm(
     gruppeId: string,
 ) {
     const navigate = useNavigate();
+    const addTransaction = useAccountsStore((s) => s.addTransaction);
 
     const [date, setDate] = useState<Date | null>(new Date());
     const [isPlanned, setIsPlanned] = useState(false);
@@ -34,7 +35,6 @@ export function useTransactionForm(
         loadProviderStats()
     );
 
-    // Amount handlers
     const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;
         const cleaned = v.replace(/[^\d.,\s]/g, "");
@@ -75,17 +75,32 @@ export function useTransactionForm(
         const isoDate = effectiveDate.toISOString().slice(0, 10);
         const status: TxStatus = isPlanned ? "planned" : "booked";
 
-        txDraft.setMany({
+        const tx: Tx = {
+            id: crypto.randomUUID(),
             kind: "expense",
             kontoId: selectedAccountId,
             amount: -(cents / 100),
-            amountCents: -cents,
             date: isoDate,
             createdAt: nowISO,
             status,
             isPlanned: status === "planned",
-            accountId: selectedAccountId || "",
-            kontoName: selectedAccountName || "",
+            gruppeId: gruppeId || undefined,
+            anbieterId: anbieterId || undefined,
+        };
+
+        // Сохраняем в Zustand store (persist автоматически пишет в localStorage)
+        addTransaction(tx);
+
+        // Обновляем draft для совместимости
+        txDraft.setMany({
+            kind: "expense",
+            kontoId: selectedAccountId,
+            amount: tx.amount,
+            date: isoDate,
+            createdAt: nowISO,
+            status,
+            accountId: selectedAccountId,
+            kontoName: selectedAccountName,
         });
 
         if (anbieterId) {
@@ -94,18 +109,8 @@ export function useTransactionForm(
             saveProviderStats(updated);
         }
 
-        const res: SaveDraftResult = saveDraftTransaction();
         setSaving(false);
-
-        if (!res.ok) {
-            const message = res.errors?.length
-                ? res.errors.join(" · ")
-                : "Unknown error";
-            alert("Please check: " + message);
-            return;
-        }
-
-        alert(res.duplicate ? "Already saved ✅" : "Saved ✅");
+        alert("Saved ✅");
         navigate("/MonthPage");
     };
 

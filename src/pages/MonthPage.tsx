@@ -325,6 +325,8 @@ export default function MonthPage() {
     const getAnbieterName = (aid?: string | null) => lookupNameById(aid ?? undefined, anbieter) ?? (aid ?? "—");
 
     /** Load transactions once */
+    const location = useLocation();
+
     useEffect(() => {
         try {
             const parsed = readTxList();
@@ -334,7 +336,7 @@ export default function MonthPage() {
             setItems([]);
             setParseError("Fehler beim Lesen oder Parsen.");
         }
-    }, []);
+    }, [location.key]);
 
     /** ===== Accounts state (COPY 1:1 flow from GuestTransactionOne) ===== */
     const [query, setQuery] = useState<string>("");
@@ -351,24 +353,11 @@ export default function MonthPage() {
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [selectedAccountName, setSelectedAccountName] = useState<string>("");
 
-    const location = useLocation();
-
-    useEffect(() => {
-        try {
-            const parsed = readTxList();
-            setItems(parsed);
-            setParseError(null);
-        } catch {
-            setItems([]);
-            setParseError("Fehler beim Lesen oder Parsen.");
-        }
-    }, [location.key]);
-
     // Ensure accounts exist
     useEffect(() => {
         const accs = ensureAccounts();
         setAccounts(accs);
-    }, []);
+    }, [location.key]);
 
     // Auto-select main account
     useEffect(() => {

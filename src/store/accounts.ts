@@ -61,7 +61,7 @@ type AccountsState = {
 export const useAccountsStore = create<AccountsState>()(
     persist(
         (set, get) => ({
-            accounts: [],
+            accounts: [createDefaultAccount("Hauptkonto", true)],
             transactions: [],
 
             // ---- Accounts ----
@@ -124,32 +124,6 @@ export const useAccountsStore = create<AccountsState>()(
                 accounts: state.accounts,
                 transactions: state.transactions,
             }),
-            // Миграция старых данных при первом запуске
-            onRehydrateStorage: () => (state) => {
-                if (!state) return;
-                if (state.accounts.length === 0) {
-                    try {
-                        const raw = localStorage.getItem("ft_accounts");
-                        if (raw) {
-                            const parsed = JSON.parse(raw);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                state.accounts = ensureOneMain(parsed);
-                            }
-                        }
-                    } catch { /* ignore */ }
-                }
-                if (state.transactions.length === 0) {
-                    try {
-                        const raw = localStorage.getItem("ft_transactions");
-                        if (raw) {
-                            const parsed = JSON.parse(raw);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                state.transactions = parsed;
-                            }
-                        }
-                    } catch { /* ignore */ }
-                }
-            },
         }
     )
 );

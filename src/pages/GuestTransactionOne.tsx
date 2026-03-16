@@ -39,392 +39,60 @@ import { Combobox, type ComboOption } from "../components/ui/combobox";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 
+// Helpers 
+import { fmtEur, toCents } from "../utils/currency"
+
+// Create accounts
+import {
+    ensureAccounts,
+    createNewAccountInteractive,
+    renameAccountInteractive,
+    editOpeningBalanceInteractive,
+    editSnapshotBalanceInteractive,
+    deleteAccountInteractive,
+} from "../repositories/accountRepository";
+
+import {
+    loadProviderStats,
+    saveProviderStats,
+    type ProviderStats,
+} from "../repositories/providerStatsRepository";
+
+// services
+import {
+    bumpProviderStats,
+    getMostUsedGroupForProvider,
+} from "../services/providerStatsService";
+
+// toISODate
+import { toISODate, isFutureISO } from "../utils/date";
+
+import { useAccounts, type AccountWithBalance } from "../hooks/useAccounts";
+
+import { useTransactionForm } from "../hooks/useTransactionForm";
+
+
 const ACC_KEY = "ft_accounts";
 const TX_KEY = "ft_transactions";
 
 type Kind = "expense" | "income";
-
-type AccountWithBalance = Account & { balance: number };
 
 type Provider = ComboOption & {};
 type Group = ComboOption & {};
 type Type = ComboOption & {};
 type Source = ComboOption & {};
 
-// ---------- Helpers ----------
-const fmtEur = (n: number): string =>
-    new Intl.NumberFormat("de-DE", {
-        style: "currency",
-        currency: "EUR",
-    }).format(n);
 
-// Parse "1.000,00" → 100000 cents, "1000" → 100000 cents, "12,3" → 1230 cents
-const toCents = (s: string | number): number => {
-    if (!s && s !== 0) return 0;
-    const cleaned = String(s)
-        .replace(/\s/g, "")
-        .replace(/\./g, "")
-        .replace(",", ".");
-    const n = Number(cleaned);
-    return Number.isFinite(n) ? Math.round(n * 100) : 0;
-};
-
-// Create a new account object with sane defaults
-function createDefaultAccount(name: string, isMain = false): Account {
-    const now = new Date().toISOString();
-    const id = crypto?.randomUUID ? crypto.randomUUID() : `acc_${Date.now()}`;
-    return {
-        id,
-        name,
-        currency: "EUR",
-        openingBalance: 0,
-        openingDate: null,
-
-        snapshotBalance: 0,
-        snapshotAt: now,
-
-
-        archived: false,
-        createdAt: now,
-        updatedAt: now,
-        isMain,
-    };
-}
-
-function toISODate(d = new Date()) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-}
-
-function isFutureISO(isoDate: string) {
-    const todayISO = toISODate();
-    return isoDate > todayISO; // For YYYY-MM-DD
-}
-
-
-
-// Ensure ft_accounts exists and has at least one account
-export function ensureAccounts(): Account[] {
-    try {
-        const raw = localStorage.getItem(ACC_KEY);
-        if (!raw) {
-            const seed = [createDefaultAccount("Hauptkonto", true)];
-            localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-            return seed;
-        }
-
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed) || parsed.length === 0) {
-            const seed = [createDefaultAccount("Hauptkonto", true)];
-            localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-            return seed;
-        }
-
-        let list = parsed as Account[];
-
-        const hasMain = list.some((a) => a.isMain === true);
-
-        if (!hasMain) {
-            list = list.map((a, idx) => ({
-                ...a,
-                isMain: idx === 0,
-            }));
-        }
-
-        const mainIndices = list
-            .map((a, i) => (a.isMain ? i : -1))
-            .filter((i) => i >= 0);
-
-        if (mainIndices.length > 1) {
-            const keep = mainIndices[0];
-            list = list.map((a, idx) => ({
-                ...a,
-                isMain: idx === keep,
-            }));
-        }
-
-        localStorage.setItem(ACC_KEY, JSON.stringify(list));
-        return list;
-    } catch {
-        const seed = [createDefaultAccount("Hauptkonto", true)];
-        localStorage.setItem(ACC_KEY, JSON.stringify(seed));
-        return seed;
-    }
-}
-
-// Quick create (replace with modal later)
-function createNewAccountInteractive(
-    onPicked?: (acc: Account) => void
-): Account[] | null {
-    const rawName = window.prompt("Enter account name:", "New account");
-    if (!rawName) return null;
-
-    const name = rawName.trim();
-    if (!name) return null;
-
-    let list: Account[] = [];
-    try {
-        const raw = localStorage.getItem(ACC_KEY);
-        list = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(list)) list = [];
-    } catch {
-        list = [];
-    }
-
-    const exists = list.some(
-        (a) => a.name.trim().toLowerCase() === name.toLowerCase()
-    );
-
-    if (exists) {
-        const proceed = window.confirm(
-            `An account named "${name}" already exists.\nCreate another one anyway?`
-        );
-        if (!proceed) return null;
-    }
-
-    const newAcc = createDefaultAccount(name);
-    const next = [...list, newAcc];
-    localStorage.setItem(ACC_KEY, JSON.stringify(next));
-
-    if (typeof onPicked === "function") onPicked(newAcc);
-    return next;
-}
-
-// Rename account inline
-function renameAccountInteractive(
-    accId: string,
-    currentName: string,
-    onDone?: (updated: Account, all: Account[]) => void
-): Account[] | null {
-    const nextName = (window.prompt("Neuer Kontoname:", currentName) || "").trim();
-    if (!nextName || nextName === currentName) return null;
-
-    let list: Account[] = [];
-    try {
-        const raw = localStorage.getItem(ACC_KEY) || "[]";
-        list = JSON.parse(raw);
-        if (!Array.isArray(list)) list = [];
-    } catch {
-        list = [];
-    }
-
-    const idx = list.findIndex((a) => a.id === accId);
-    if (idx === -1) return null;
-
-    list[idx] = {
-        ...list[idx],
-        name: nextName,
-        updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(ACC_KEY, JSON.stringify(list));
-    if (typeof onDone === "function") onDone(list[idx], list);
-    return list;
-}
-
-// Edit opening balance (current balance stays computed)
-function editOpeningBalanceInteractive(
-    accId: string,
-    currentOpening: number | undefined,
-    onDone?: (updated: Account, all: Account[]) => void
-): Account[] | null {
-    const input = window.prompt(
-        "Anfangssaldo (EUR):",
-        String(currentOpening ?? 0)
-    );
-    if (input == null) return null;
-    const n = Number(String(input).replace(",", "."));
-    if (!Number.isFinite(n)) {
-        alert("Ungültiger Betrag");
-        return null;
-    }
-
-    let list: Account[] = [];
-    try {
-        const raw = localStorage.getItem(ACC_KEY) || "[]";
-        list = JSON.parse(raw);
-        if (!Array.isArray(list)) list = [];
-    } catch {
-        list = [];
-    }
-
-    const idx = list.findIndex((a) => a.id === accId);
-    if (idx === -1) return null;
-
-    list[idx] = {
-        ...list[idx],
-        openingBalance: n,
-        updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(ACC_KEY, JSON.stringify(list));
-    if (typeof onDone === "function") onDone(list[idx], list);
-    return list;
-}
-// Edit current balance
-function editSnapshotBalanceInteractive(
-    accId: string,
-    currentSnapshot: number | undefined,
-    onDone?: (updated: Account, all: Account[]) => void
-): Account[] | null {
-    const input = window.prompt("Kontostand JETZT (EUR):", String(currentSnapshot ?? 0));
-    if (input == null) return null;
-
-    const n = Number(String(input).replace(",", "."));
-    if (!Number.isFinite(n)) {
-        alert("Ungültiger Betrag");
-        return null;
-    }
-
-    let list: Account[] = [];
-    try {
-        const raw = localStorage.getItem(ACC_KEY) || "[]";
-        list = JSON.parse(raw);
-        if (!Array.isArray(list)) list = [];
-    } catch {
-        list = [];
-    }
-
-    const idx = list.findIndex((a) => a.id === accId);
-    if (idx === -1) return null;
-
-    const now = new Date().toISOString();
-
-    list[idx] = {
-        ...list[idx],
-        snapshotBalance: n,
-        snapshotAt: now,
-        updatedAt: now,
-    };
-
-    localStorage.setItem(ACC_KEY, JSON.stringify(list));
-    if (typeof onDone === "function") onDone(list[idx], list);
-    return list;
-}
-// Persisted delete helper
-function deleteAccountInteractive(
-    accId: string,
-    onDone?: (next: Account[]) => void
-): Account[] | null {
-    const accRaw = localStorage.getItem(ACC_KEY);
-    const accounts: Account[] = accRaw ? JSON.parse(accRaw) : [];
-
-    const txRaw = localStorage.getItem(TX_KEY);
-    const tx: Tx[] = txRaw ? JSON.parse(txRaw) : [];
-
-    const acc = accounts.find((a) => a.id === accId);
-    if (!acc) return null;
-
-    const txCount = tx.filter((t) => t && t.kontoId === accId).length;
-    if (txCount > 0) {
-        alert(
-            `Konto "${acc.name}" hat ${txCount} Buchung(en). Es kann nicht gelöscht werden.`
-        );
-        return null;
-    }
-
-    const balance = computeAccountBalance(acc, tx);
-
-    if (balance !== 0) {
-        alert(
-            `Konto "${acc.name}" kann nur gelöscht werden, wenn der Kontostand 0,00 € ist.`
-        );
-        return null;
-    }
-
-    if (!window.confirm(`Konto "${acc.name}" wirklich löschen?`)) return null;
-
-    const next = accounts.filter((a) => a.id !== accId);
-    localStorage.setItem(ACC_KEY, JSON.stringify(next));
-
-    if (typeof onDone === "function") onDone(next);
-    return next;
-}
-
-// ---------- Provider stats (learning: Provider -> Group) ----------
-
-type ProviderStats = {
-    providerCounts: Record<string, number>;
-    providerGroupCounts: Record<string, Record<string, number>>;
-};
-
-const PROVIDER_STATS_KEY = "ft_provider_stats_v1";
-
-function loadProviderStats(): ProviderStats {
-    try {
-        const raw = localStorage.getItem(PROVIDER_STATS_KEY);
-        if (!raw) return { providerCounts: {}, providerGroupCounts: {} };
-        const parsed = JSON.parse(raw);
-        return {
-            providerCounts: parsed.providerCounts || {},
-            providerGroupCounts: parsed.providerGroupCounts || {},
-        };
-    } catch {
-        return { providerCounts: {}, providerGroupCounts: {} };
-    }
-}
-
-function saveProviderStats(stats: ProviderStats) {
-    try {
-        localStorage.setItem(PROVIDER_STATS_KEY, JSON.stringify(stats));
-    } catch {
-        // ignore
-    }
-}
-
-function bumpProviderStats(
-    stats: ProviderStats,
-    providerId: string,
-    groupId: string | ""
-): ProviderStats {
-    if (!providerId) return stats;
-
-    const next: ProviderStats = {
-        providerCounts: { ...stats.providerCounts },
-        providerGroupCounts: { ...stats.providerGroupCounts },
-    };
-
-    next.providerCounts[providerId] = (next.providerCounts[providerId] || 0) + 1;
-
-    if (groupId) {
-        const existingGroups = next.providerGroupCounts[providerId] || {};
-        next.providerGroupCounts[providerId] = {
-            ...existingGroups,
-            [groupId]: (existingGroups[groupId] || 0) + 1,
-        };
-    }
-
-    return next;
-}
-
-function getMostUsedGroupForProvider(
-    providerId: string,
-    stats: ProviderStats
-): string {
-    const groups = stats.providerGroupCounts[providerId];
-    if (!groups) return "";
-    let bestId = "";
-    let bestCount = 0;
-    for (const [gid, count] of Object.entries(groups)) {
-        if (count > bestCount) {
-            bestId = gid;
-            bestCount = count;
-        }
-    }
-    return bestId;
-}
 
 // ---------- Page ----------
 
 const GuestTransactionOne: React.FC = () => {
     const navigate = useNavigate();
 
-    const [date, setDate] = useState<Date | null>(new Date());
-
     // Pull draft (used mainly for amount/account prefill and remark/provider/group)
     const draft = useTxDraft() as any;
     const {
-        amount = "",
+        amount = 0,
         accountId = "",
         gruppeId = "",
         anbieterId = "",
@@ -451,60 +119,40 @@ const GuestTransactionOne: React.FC = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [tempBalance, setTempBalance] = useState<string>("");
 
-    const [accounts, setAccounts] = useState<Account[]>([]);
     const [account, setAccount] = useState<Account | null>(null);
 
-    const [isPlanned, setIsPlanned] = useState(false);
+
+    const {
+        accounts,
+        setAccounts,
+        selectedAccountId,
+        setSelectedAccountId,
+        selectedAccountName,
+        setSelectedAccountName,
+        accountsWithBalance,
+        totalBalance,
+        filtered,
+    } = useAccounts(accountId, query, setQuery);
 
 
-
-    const [amountStr, setAmountStr] = useState<string>(
-        typeof amount === "number" && amount > 0
-            ? amount.toLocaleString("de-DE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })
-            : ""
+    const {
+        date, setDate,
+        isPlanned, setIsPlanned,
+        saving,
+        amountStr,
+        providerStats,
+        onAmountChange,
+        handleKeyDown,
+        handleBlur,
+        canSave,
+        handleSave,
+    } = useTransactionForm(
+        amount,
+        selectedAccountId,
+        selectedAccountName,
+        anbieterId,
+        gruppeId,
     );
-
-    const [selectedAccountId, setSelectedAccountId] = useState<string>("");
-    const [selectedAccountName, setSelectedAccountName] = useState<string>("");
-
-    const [saving, setSaving] = useState<boolean>(false);
-
-    // Ensure accounts exist
-    useEffect(() => {
-        const accs = ensureAccounts();
-        setAccounts(accs);
-    }, []);
-
-    // Auto-select main account
-    useEffect(() => {
-        if (!account && accounts.length > 0) {
-            const main = accounts.find((a) => a.isMain) ?? accounts[0];
-            setAccount(main);
-        }
-    }, [accounts, account]);
-
-    // Reflect selected account into query field
-    useEffect(() => {
-        if (account) {
-            setQuery(account.name);
-            setSelectedAccountId(account.id);
-            setSelectedAccountName(account.name);
-        }
-    }, [account]);
-
-    // Prefill selection from store if account still exists
-    useEffect(() => {
-        if (!accountId || accounts.length === 0) return;
-        const acc = accounts.find((a) => a.id === accountId);
-        if (acc) {
-            setSelectedAccountId(acc.id);
-            setSelectedAccountName(acc.name);
-            setQuery(acc.name);
-        }
-    }, [accountId, accounts]);
 
     // Close combobox on outside click
     useEffect(() => {
@@ -522,64 +170,6 @@ const GuestTransactionOne: React.FC = () => {
         return () => document.removeEventListener("mousedown", onDoc);
     }, [open]);
 
-    // Compute balances per account from transactions
-    const accountsWithBalance: AccountWithBalance[] = useMemo(() => {
-        let tx: Tx[] = [];
-        try {
-            const raw = localStorage.getItem(TX_KEY);
-            const parsed = raw ? JSON.parse(raw) : [];
-            tx = Array.isArray(parsed) ? parsed : [];
-        } catch {
-            tx = [];
-        }
-
-        return accounts.map((acc) => ({
-            ...acc,
-            balance: computeAccountBalance(acc, tx),
-        }));
-    }, [accounts]);
-
-    const totalBalance = useMemo(
-        () => accountsWithBalance.reduce((s, a) => s + (a.balance || 0), 0),
-        [accountsWithBalance]
-    );
-
-    const filtered: AccountWithBalance[] = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        if (!q) return accountsWithBalance;
-        return accountsWithBalance.filter((a) =>
-            a.name.toLowerCase().includes(q)
-        );
-    }, [query, accountsWithBalance]);
-
-    // Amount handlers
-    const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value;
-        const cleaned = v.replace(/[^\d.,\s]/g, "");
-        const normalized = cleaned.replace(/\./g, ",");
-        setAmountStr(normalized);
-    };
-
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
-    };
-
-    const handleBlur = () => {
-        const cents = toCents(amountStr);
-        if (cents <= 0) {
-            txDraft.setMany({ amount: 0, amountCents: 0 });
-            setAmountStr("");
-        } else {
-            const euros = cents / 100;
-            txDraft.setMany({ amount: euros, amountCents: cents });
-            setAmountStr(
-                euros.toLocaleString("de-DE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
-            );
-        }
-    };
 
     // Account pick
     const onAccountPick = (acc: { id: string; name: string }) => {
@@ -605,10 +195,6 @@ const GuestTransactionOne: React.FC = () => {
 
     const anbieter = useDicts((s) => s.anbieter);
 
-    // Provider stats (Provider → Group)
-    const [providerStats, setProviderStats] = useState<ProviderStats>(() =>
-        loadProviderStats()
-    );
 
     // Provider options sorted by usage count
     const providerOptions: Provider[] = useMemo(() => {
@@ -641,10 +227,6 @@ const GuestTransactionOne: React.FC = () => {
         txDraft.set("gruppeId", id);
     }, []);
 
-    // Simple button-level validation: amount > 0, account selected, date present
-    const canSave =
-        toCents(amountStr) > 0 && !!selectedAccountId && date !== null;
-
     const startEdit = (acc: AccountWithBalance) => {
         setEditingId(acc.id);
         const current = acc.snapshotBalance ?? acc.openingBalance ?? 0;
@@ -665,63 +247,16 @@ const GuestTransactionOne: React.FC = () => {
         setEditingId(null);
     };
 
-    // Main save handler: write draft fields, update provider stats, persist transaction
-    const handleSave = () => {
-        if (!canSave || saving) return;
+    const cents = toCents(amountStr);
+    const effectiveDate = date ?? new Date();
+    const nowISO = new Date().toISOString();
+    const isoDate = effectiveDate.toISOString().slice(0, 10); // YYYY-MM-DD
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const status: TxStatus = isPlanned ? "planned" : "booked";
 
-        setSaving(true);
+    const signedAmount = -(cents / 100);
+    const signedCents = -cents;
 
-        const cents = toCents(amountStr);
-        const effectiveDate = date ?? new Date();
-        const nowISO = new Date().toISOString();
-        const isoDate = effectiveDate.toISOString().slice(0, 10); // YYYY-MM-DD
-        const todayISO = new Date().toISOString().slice(0, 10);
-        const status: TxStatus = isPlanned ? "planned" : "booked";
-
-        const signedAmount = -(cents / 100);
-        const signedCents = -cents;
-
-        // This page creates expense transactions
-        txDraft.setMany({
-            kind: "expense",
-            kontoId: selectedAccountId,
-            amount: signedAmount,
-            amountCents: signedCents,
-            date: isoDate,
-            createdAt: nowISO,
-            status,
-            isPlanned: status === "planned",
-            accountId: selectedAccountId || "",
-            kontoName: selectedAccountName || "",
-        });
-
-        // Learning signal for Provider → Group
-        if (anbieterId) {
-            const updated = bumpProviderStats(providerStats, anbieterId, gruppeId || "");
-            setProviderStats(updated);
-            saveProviderStats(updated);
-        }
-
-        const res: SaveDraftResult = saveDraftTransaction();
-        setSaving(false);
-
-        if (!res.ok) {
-            const message =
-                res.errors && res.errors.length > 0
-                    ? res.errors.join(" · ")
-                    : "Unknown error";
-            alert("Please check: " + message);
-            return;
-        }
-
-        if (res.duplicate) {
-            alert("Already saved ✅");
-        } else {
-            alert("Saved ✅");
-        }
-
-        navigate("/MonthPage");
-    };
 
     return (
         <div className="bg-white">

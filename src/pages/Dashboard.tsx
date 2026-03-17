@@ -6,7 +6,8 @@ import Arrowleft from "../assets/Arrowleft.svg?react";
 import { Trash2, SquarePlus, SquareMinus, Settings, ArchiveRestore } from "lucide-react";
 
 import type { Tx } from "../types/tx";
-import { readKontoMap } from "../utils/lookups";
+// import { readKontoMap } from "../utils/lookups";
+import { useAccountsStore } from "../store/accounts";
 import { readTxList, writeTxList } from "../utils/storage";
 import { useDicts } from "../store/dicts";
 import { computeAccountBalance } from "../utils/accountBalance";
@@ -171,10 +172,9 @@ export default function Dashboard() {
     };
 
     /** Name lookups (best-effort; fallbacks to IDs) */
-    const getKontoName = (() => {
-        const kontoMap = readKontoMap(); // read once
-        return (id?: string) => (id ? kontoMap.get(id) ?? id : "—");
-    })();
+    const { accounts } = useAccountsStore();
+    const getKontoName = (id?: string) =>
+        accounts.find((a) => a.id === id)?.name ?? id ?? "—";
 
     const getGruppeName = (gid?: string | null) =>
         lookupNameById(gid ?? undefined, gruppen) ?? (gid ?? "—");

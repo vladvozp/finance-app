@@ -9,7 +9,6 @@ import { MoveLeft, Plus, Settings } from "lucide-react";
 import type { Tx } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
-import { readKontoMap } from "../utils/lookups";
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -43,8 +42,9 @@ export default function MonthPage() {
     const todayISO = new Date().toISOString().slice(0, 10);
 
     // Store
-    const { transactions, getTotalBalance, updateTransaction } = useAccountsStore();
+    const { accounts, transactions, getTotalBalance, updateTransaction } = useAccountsStore();
     const totalBalance = getTotalBalance();
+
 
     // Month navigation
     const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -65,9 +65,10 @@ export default function MonthPage() {
 
     // Dicts
     const { kategorien, anbieter } = useDicts();
-    const kontoMap = readKontoMap();
 
-    const getKontoName = (id?: string) => (id ? kontoMap.get(id) ?? id : "—");
+
+    const getKontoName = (id?: string) =>
+        accounts.find((a) => a.id === id)?.name ?? id ?? "—";
     const getAnbieterName = (id?: string | null) =>
         anbieter.find((a) => a.id === id)?.name ?? id ?? "—";
     const getKategorieName = (gid?: string | null, kid?: string | null) => {

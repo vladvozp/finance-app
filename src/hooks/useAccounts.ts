@@ -1,11 +1,7 @@
 // src/hooks/useAccounts.ts
 import { useState, useEffect, useMemo } from "react";
-import type { Tx } from "../types/tx";
+import { useAccountsStore } from "../store/accounts";
 import type { Account } from "../types/account";
-import { ensureAccounts } from "../repositories/accountRepository";
-import { computeAccountBalance } from "../utils/accountBalance";
-
-const TX_KEY = "ft_transactions";
 
 export type AccountWithBalance = Account & { balance: number };
 
@@ -14,16 +10,11 @@ export function useAccounts(
     query: string,
     setQuery: (q: string) => void,
 ) {
-    const [accounts, setAccounts] = useState<Account[]>([]);
+    const { accounts, getAccountsWithBalance, getTotalBalance } = useAccountsStore();
+
     const [account, setAccount] = useState<Account | null>(null);
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
     const [selectedAccountName, setSelectedAccountName] = useState<string>("");
-
-    // Ensure accounts exist
-    useEffect(() => {
-        const accs = ensureAccounts();
-        setAccounts(accs);
-    }, []);
 
     // Auto-select main account
     useEffect(() => {
@@ -42,7 +33,7 @@ export function useAccounts(
         }
     }, [account]);
 
-    // Prefill from store if account still exists
+    // Prefill from draft if account still exists
     useEffect(() => {
         if (!accountId || accounts.length === 0) return;
         const acc = accounts.find((a) => a.id === accountId);
@@ -53,24 +44,14 @@ export function useAccounts(
         }
     }, [accountId, accounts]);
 
-    const accountsWithBalance: AccountWithBalance[] = useMemo(() => {
-        let tx: Tx[] = [];
-        try {
-            const raw = localStorage.getItem(TX_KEY);
-            const parsed = raw ? JSON.parse(raw) : [];
-            tx = Array.isArray(parsed) ? parsed : [];
-        } catch {
-            tx = [];
-        }
-        return accounts.map((acc) => ({
-            ...acc,
-            balance: computeAccountBalance(acc, tx),
-        }));
-    }, [accounts]);
+    const accountsWithBalance: AccountWithBalance[] = useMemo(
+        () => getAccountsWithBalance(),
+        [accounts]
+    );
 
     const totalBalance = useMemo(
-        () => accountsWithBalance.reduce((s, a) => s + (a.balance || 0), 0),
-        [accountsWithBalance]
+        () => getTotalBalance(),
+        [accounts]
     );
 
     const filtered: AccountWithBalance[] = useMemo(() => {
@@ -83,7 +64,7 @@ export function useAccounts(
 
     return {
         accounts,
-        setAccounts,
+        setAccounts: useAccountsStore.getState().setTransactions, // не нужен, но для совместимости
         selectedAccountId,
         setSelectedAccountId,
         selectedAccountName,

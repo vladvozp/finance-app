@@ -88,9 +88,10 @@ export function useTransactionForm(
             anbieterId: anbieterId || undefined,
         };
 
-
+        // Saving Zustand store (persist autosave in localStorage)
         addTransaction(tx);
 
+        // reload draft
         txDraft.setMany({
             kind: "expense",
             kontoId: selectedAccountId,

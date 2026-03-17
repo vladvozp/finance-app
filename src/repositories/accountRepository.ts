@@ -3,7 +3,7 @@ import type { Account } from "../types/account";
 import type { Tx } from "../types/tx";
 import { computeAccountBalance } from "../utils/accountBalance";
 
-const ACC_KEY = "ft_accounts";
+const ACC_KEY = "ft_accounts_v1";
 const TX_KEY = "ft_transactions";
 
 // Create default account

@@ -72,7 +72,7 @@ import { useAccounts, type AccountWithBalance } from "../hooks/useAccounts";
 import { useTransactionForm } from "../hooks/useTransactionForm";
 
 
-const ACC_KEY = "ft_accounts";
+const ACC_KEY = "ft_accounts_v1";
 const TX_KEY = "ft_transactions";
 
 type Kind = "expense" | "income";

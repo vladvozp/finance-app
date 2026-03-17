@@ -30,7 +30,7 @@ import { txDraft } from "../store/transactionDraft";
 import type { Tx } from "../types/tx";
 import { computeAccountBalance } from "../utils/accountBalance";
 
-const ACC_KEY = "ft_accounts";
+const ACC_KEY = "ft_accounts_v1";
 const TX_KEY = "ft_transactions";
 
 type Kind = "expense" | "income";
@@ -736,8 +736,8 @@ const GuestTransactionStep1: React.FC = () => {
                         disabled={!canContinue}
                         onClick={onNext}
                         className={`${!canContinue
-                                ? "bg-gray-200 text-gray-600 cursor-not-allowed"
-                                : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
+                            ? "bg-gray-200 text-gray-600 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:opacity-95 active:scale-95"
                             }`}
                     >
                         Weiter

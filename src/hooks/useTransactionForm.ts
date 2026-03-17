@@ -88,10 +88,9 @@ export function useTransactionForm(
             anbieterId: anbieterId || undefined,
         };
 
-        // Сохраняем в Zustand store (persist автоматически пишет в localStorage)
+
         addTransaction(tx);
 
-        // Обновляем draft для совместимости
         txDraft.setMany({
             kind: "expense",
             kontoId: selectedAccountId,

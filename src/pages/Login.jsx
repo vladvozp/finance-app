@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLoginButton, GuestLoginButton } from "../features/auth/AuthButtons";
 import Button from "../components/Button";
+import { useAccountsStore } from "../store/accounts";
+
 
 export default function Login() {
   // --- design tokens / utility presets (keep in sync with Home.jsx) ---
@@ -24,10 +26,18 @@ export default function Login() {
     // TODO: trigger your OAuth flow here
 
   }
-  function handleGuestLogin() {
-    navigate("/MonthPage");
 
+
+  // SetupPage redirect
+  function handleGuestLogin() {
+    const { accounts } = useAccountsStore.getState();
+    if (accounts.length === 0) {
+      navigate("/setup");
+    } else {
+      navigate("/MonthPage");
+    }
   }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);

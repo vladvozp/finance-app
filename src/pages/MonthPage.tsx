@@ -1,5 +1,5 @@
 // src/pages/MonthPage.tsx
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader";
@@ -45,14 +45,6 @@ export default function MonthPage() {
     // Store
     const { accounts, transactions, getTotalBalance, updateTransaction } = useAccountsStore();
     const totalBalance = getTotalBalance();
-
-    // SetupPage redirect
-    useEffect(() => {
-        if (accounts.length === 0) {
-            navigate("/setup");
-        }
-    }, [accounts]);
-
 
     // Month navigation
     const [selectedMonth, setSelectedMonth] = useState(() => {

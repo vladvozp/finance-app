@@ -1,5 +1,5 @@
 // src/pages/MonthPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader";
@@ -9,6 +9,7 @@ import { MoveLeft, Plus, Settings } from "lucide-react";
 import type { Tx } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
+
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -44,6 +45,13 @@ export default function MonthPage() {
     // Store
     const { accounts, transactions, getTotalBalance, updateTransaction } = useAccountsStore();
     const totalBalance = getTotalBalance();
+
+    // SetupPage redirect
+    useEffect(() => {
+        if (accounts.length === 0) {
+            navigate("/setup");
+        }
+    }, [accounts]);
 
 
     // Month navigation

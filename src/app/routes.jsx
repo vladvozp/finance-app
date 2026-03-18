@@ -13,6 +13,7 @@ import Berichte from "../pages/Berichte.tsx";
 import ProtectedRoute from "../app/ProtectedRoute.jsx"
 import MonthPage from "../pages/MonthPage.tsx"
 import GuestTransactionOne from "../pages/GuestTransactionOne.tsx"
+import SetupPage from "../pages/SetupPage.tsx";
 
 
 export const router = createBrowserRouter([
@@ -33,9 +34,8 @@ export const router = createBrowserRouter([
       { path: "/SettingsPage", element: <SettingsPage /> },
       { path: "/Berichte", element: <Berichte /> },
       { path: "/GuestTransactionOne", element: <GuestTransactionOne /> },
-
-
       { path: "/MonthPage", element: <MonthPage /> },
+      { path: "/setup", element: <SetupPage /> },
     ],
   },
 ]);

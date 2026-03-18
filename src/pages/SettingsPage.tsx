@@ -7,7 +7,7 @@ import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 
 // Icons
-import Arrowleft from "../assets/Arrowleft.svg?react";
+import { MoveLeft } from "lucide-react";
 
 // ---------- Types ----------
 type NotificationPref = "off" | NotificationPermission; // "default" | "denied" | "granted"
@@ -224,8 +224,7 @@ export default function SettingsPage() {
                             onClick={() => navigate(-1)} // go back one step in history
                             className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800 cursor-pointer"
                         >
-                            <Arrowleft className="w-5 h-5" />
-                            Zurück
+                            <MoveLeft className="w-5 h-5" />Zurück
                         </button>
                     }
                     center={<div className="text-base font-medium">Einstellungen</div>}

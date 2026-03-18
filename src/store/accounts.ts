@@ -52,6 +52,7 @@ type AccountsState = {
     addTransaction: (tx: Tx) => void;
     updateTransaction: (id: string, patch: Partial<Tx>) => void;
     setTransactions: (txs: Tx[]) => void;
+    removeTransaction: (id: string) => void;
 
     // Computed
     getAccountsWithBalance: () => AccountWithBalance[];
@@ -99,6 +100,11 @@ export const useAccountsStore = create<AccountsState>()(
                 })),
 
             setTransactions: (transactions) => set({ transactions }),
+
+            removeTransaction: (id) =>
+                set((s) => ({
+                    transactions: s.transactions.filter((t) => t.id !== id),
+                })),
 
             // ---- Computed ----
             getAccountsWithBalance: () => {

@@ -43,7 +43,7 @@ export default function MonthPage() {
     const todayISO = new Date().toISOString().slice(0, 10);
 
     // Store
-    const { accounts, transactions, getTotalBalance, updateTransaction } = useAccountsStore();
+    const { accounts, transactions, getTotalBalance, updateTransaction, removeTransaction } = useAccountsStore();
     const totalBalance = getTotalBalance();
 
     // Month navigation
@@ -64,18 +64,14 @@ export default function MonthPage() {
     };
 
     // Dicts
-    const { kategorien, anbieter } = useDicts();
-
+    const { gruppen, anbieter } = useDicts();
 
     const getKontoName = (id?: string) =>
         accounts.find((a) => a.id === id)?.name ?? id ?? "—";
     const getAnbieterName = (id?: string | null) =>
         anbieter.find((a) => a.id === id)?.name ?? id ?? "—";
-    const getKategorieName = (gid?: string | null, kid?: string | null) => {
-        if (!kid) return "—";
-        const col = kategorien[gid ?? ""] ?? [];
-        return col.find((k) => k.id === kid)?.name ?? kid;
-    };
+    const getGruppeName = (id?: string | null) =>
+        gruppen.find((g) => g.id === id)?.name ?? "—";
 
     // Actions
     const markBooked = (id: string) => updateTransaction(id, { status: "booked" });
@@ -153,26 +149,26 @@ export default function MonthPage() {
                 />
 
                 {/* Kontostand */}
-                <section className="border rounded-xl p-3 bg-white">
+                <section className="border p-2 bg-white">
                     <div className="text-xs text-gray-500">Aktueller Kontostand (gesamt)</div>
-                    <div className="text-xl font-bold text-gray-900">{fmtMoney(totalBalance)}</div>
+                    <div className="text-lg font-bold text-gray-800">{fmtMoney(totalBalance)}</div>
                 </section>
 
                 {/* RYG Summary */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="border rounded-sm p-2 bg-red-50 border-red-200">
                         <div className="text-xs font-semibold text-red-700">Bereits ausgegeben</div>
-                        <div className="text-lg font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
+                        <div className="text-sm font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
                         <p className="text-[11px] text-red-700 mt-1">Bereits gebuchte Ausgaben in diesem Monat.</p>
                     </div>
                     <div className="border rounded-sm p-2 bg-yellow-50 border-yellow-200">
                         <div className="text-xs font-semibold text-yellow-700">Bald fällig</div>
-                        <div className="text-lg font-bold text-yellow-800">{fmtMoney(futureTotal)}</div>
+                        <div className="text-sm font-bold text-yellow-800">{fmtMoney(futureTotal)}</div>
                         <p className="text-[11px] text-yellow-700 mt-1">Geplante Abbuchungen für diesen Monat.</p>
                     </div>
                     <div className="border rounded-sm p-2 bg-green-50 border-green-200">
                         <div className="text-xs font-semibold text-green-700">Verfügbar (geschätzt)</div>
-                        <div className="text-lg font-bold text-green-800">{fmtMoney(available)}</div>
+                        <div className="text-sm font-bold text-green-800">{fmtMoney(available)}</div>
                         <p className="text-[11px] text-green-700 mt-1">Gesamtbestand minus geplante Abbuchungen.</p>
                     </div>
                 </section>
@@ -194,14 +190,14 @@ export default function MonthPage() {
                                 <label htmlFor="only-planned" className="text-sm text-gray-700">Nur geplannt</label>
                             </div>
 
-                            <div className="overflow-x-auto border shadow-sm border-gray-300 rounded-xl max-h-[60vh]">
+                            <div className="overflow-x-auto border shadow-sm border-gray-300 max-h-[60vh]">
                                 <table className="w-full border-collapse table-fixed text-sm">
                                     <thead className="sticky top-0 z-10 bg-white">
                                         <tr className="text-xs text-gray-700">
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[120px]">Datum</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[170px]">Konto</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[170px]">Anbieter</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left">Kategorie</th>
+                                            <th className="border border-gray-200 px-2 py-2 text-left w-[80px]">Datum</th>
+                                            <th className="border border-gray-200 px-2 py-2 text-left w-[120px]">Konto</th>
+                                            <th className="border border-gray-200 px-2 py-2 text-left w-[150px]">Anbieter</th>
+                                            <th className="border border-gray-200 px-2 py-2 text-left w-[150px]">Gruppe</th>
                                             <th className="border border-gray-200 px-2 py-2 text-right w-[130px]">Betrag</th>
                                             <th className="border border-gray-200 px-2 py-2 text-left w-[220px]">Aktion</th>
                                         </tr>
@@ -243,7 +239,7 @@ export default function MonthPage() {
                                                         <span className="block truncate">{tx.kind === "expense" ? getAnbieterName((tx as any).anbieterId) : "—"}</span>
                                                     </td>
                                                     <td className="border border-gray-200 px-2 py-1 align-middle">
-                                                        <span className="block truncate">{tx.kind === "expense" ? getKategorieName((tx as any).gruppeId, (tx as any).kategorieId) : "—"}</span>
+                                                        <span className="block truncate">{tx.kind === "expense" ? getGruppeName((tx as any).gruppeId) : "—"}</span>
                                                     </td>
                                                     <td className={`border border-gray-200 px-2 py-1 text-right tabular-nums align-middle ${amountClass}`}>
                                                         {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
@@ -260,8 +256,17 @@ export default function MonthPage() {
                                                                     🗑 stornieren
                                                                 </button>
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-xs text-gray-400">—</span>
+                                                        ) : (<button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (window.confirm("Transaktion wirklich löschen?")) {
+                                                                    removeTransaction(tx.id);
+                                                                }
+                                                            }}
+                                                            className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100 text-red-700"
+                                                        >
+                                                            🗑 löschen
+                                                        </button>
                                                         )}
                                                     </td>
                                                 </tr>

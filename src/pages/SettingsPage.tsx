@@ -10,7 +10,7 @@ import { useAccountsStore } from "../store/accounts";
 
 
 // Icons
-import { MoveLeft } from "lucide-react";
+import { Edit3, Trash2, Plus, MoveLeft } from "lucide-react";
 
 // ---------- Types ----------
 type NotificationPref = "off" | NotificationPermission; // "default" | "denied" | "granted"
@@ -150,6 +150,22 @@ function Section({ id, title, children, defaultOpen = true }: SectionProps) {
 export default function SettingsPage() {
     const navigate = useNavigate();
 
+    // accounts
+    const { accounts, updateAccount, removeAccount, addAccount, getAccountsWithBalance } = useAccountsStore();
+    const accountsWithBalance = getAccountsWithBalance();
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [tempBalance, setTempBalance] = useState<string>("");
+
+    const saveEdit = async (accId: string) => {
+        const valueNum = Number(String(tempBalance).replace(",", "."));
+        if (Number.isNaN(valueNum)) { setEditingId(null); return; }
+        await updateAccount(accId, {
+            snapshotBalance: valueNum,
+            snapshotAt: new Date().toISOString(),
+        });
+        setEditingId(null);
+    };
+
     // aria ids
     const currencyId = useId();
     const dateId = useId();
@@ -214,10 +230,6 @@ export default function SettingsPage() {
         }
     }, [settings.currency]);
 
-
-    const { accounts } = useAccountsStore();
-
-
     return (
         <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
             <style>{`
@@ -244,21 +256,79 @@ export default function SettingsPage() {
                     {/* Accounts */}
                     <Section id="accounts-section" title="Konten">
                         <div className="flex flex-col gap-3">
-                            {accounts.map((acc) => (
-                                <div key={acc.id} className="flex items-center justify-between border border-gray-200 px-3 py-2">
-                                    <div>
-                                        <div className="text-sm font-medium">{acc.name}</div>
-                                        <div className="text-xs text-gray-500">{acc.currency}</div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => navigate(`/account/${acc.id}`)}
-                                        className="text-xs px-3 py-1 border border-gray-300 hover:bg-gray-50 transition"
-                                    >
-                                        Bearbeiten
-                                    </button>
-                                </div>
-                            ))}
+                            <ul className="divide-y divide-gray-200">
+                                {accountsWithBalance.map((acc) => (
+                                    <li key={acc.id} className="py-2 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const nextName = window.prompt("Neuer Kontoname:", acc.name)?.trim();
+                                                    if (!nextName || nextName === acc.name) return;
+                                                    updateAccount(acc.id, { name: nextName });
+                                                }}
+                                                className="p-1 cursor-pointer transition hover:scale-105"
+                                                title="Konto umbenennen"
+                                            >
+                                                <Edit3 className="w-4 h-4 text-gray-600" />
+                                            </button>
+                                            <span className="font-medium truncate" title={acc.name}>{acc.name}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {editingId === acc.id ? (
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    value={tempBalance}
+                                                    onChange={(e) => setTempBalance(e.target.value)}
+                                                    onBlur={() => saveEdit(acc.id)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") saveEdit(acc.id);
+                                                        if (e.key === "Escape") setEditingId(null);
+                                                    }}
+                                                    className="w-24 border border-gray-300 rounded px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <span
+                                                    className="tabular-nums cursor-pointer hover:text-blue-600 transition"
+                                                    onClick={() => {
+                                                        setEditingId(acc.id);
+                                                        setTempBalance(String(acc.snapshotBalance ?? 0));
+                                                    }}
+                                                >
+                                                    {new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(acc.balance ?? 0)}
+                                                </span>
+                                            )}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!window.confirm(`Konto "${acc.name}" wirklich löschen?`)) return;
+                                                    removeAccount(acc.id);
+                                                }}
+                                                className="p-1 text-gray-600 hover:text-red-600 transition cursor-pointer"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const rawName = window.prompt("Kontoname:", "Neues Konto");
+                                    if (!rawName?.trim()) return;
+                                    await addAccount(rawName.trim());
+                                }}
+                                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mt-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Neues Konto hinzufügen</span>
+                            </button>
                         </div>
                     </Section>
                     {/* Currency */}

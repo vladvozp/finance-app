@@ -61,7 +61,7 @@ type AccountsState = {
 export const useAccountsStore = create<AccountsState>()(
     persist(
         (set, get) => ({
-            accounts: [createDefaultAccount("Hauptkonto", true)],
+            accounts: [],
             transactions: [],
 
             // ---- Accounts ----

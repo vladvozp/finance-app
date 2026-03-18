@@ -1,11 +1,19 @@
 // src/store/accounts.ts
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type { Account } from "../types/account";
 import type { Tx } from "../types/tx";
 import { computeAccountBalance } from "../utils/accountBalance";
+import {
+    fetchAccounts,
+    fetchTransactions,
+    insertAccount,
+    updateAccountInDb,
+    deleteAccountFromDb,
+    insertTransaction,
+    updateTransactionInDb,
+    deleteTransactionFromDb,
+} from "../repositories/supabaseAccountRepository";
 
-// ---- Utils ----
 const newId = () =>
     typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
@@ -36,100 +44,109 @@ function ensureOneMain(list: Account[]): Account[] {
     return list;
 }
 
-// ---- Types ----
 export type AccountWithBalance = Account & { balance: number };
 
 type AccountsState = {
     accounts: Account[];
     transactions: Tx[];
+    loaded: boolean;
 
-    // Accounts
-    addAccount: (name: string, isMain?: boolean) => Account;
-    updateAccount: (id: string, patch: Partial<Account>) => void;
-    removeAccount: (id: string) => void;
+    loadFromSupabase: () => Promise<void>;
 
-    // Transactions
-    addTransaction: (tx: Tx) => void;
-    updateTransaction: (id: string, patch: Partial<Tx>) => void;
+    addAccount: (name: string, isMain?: boolean) => Promise<Account>;
+    updateAccount: (id: string, patch: Partial<Account>) => Promise<void>;
+    removeAccount: (id: string) => Promise<void>;
+
+    addTransaction: (tx: Tx) => Promise<void>;
+    updateTransaction: (id: string, patch: Partial<Tx>) => Promise<void>;
+    removeTransaction: (id: string) => Promise<void>;
     setTransactions: (txs: Tx[]) => void;
-    removeTransaction: (id: string) => void;
 
-    // Computed
     getAccountsWithBalance: () => AccountWithBalance[];
     getTotalBalance: () => number;
 };
 
 export const useAccountsStore = create<AccountsState>()(
-    persist(
-        (set, get) => ({
-            accounts: [],
-            transactions: [],
+    (set, get) => ({
+        accounts: [],
+        transactions: [],
+        loaded: false,
 
-            // ---- Accounts ----
-            addAccount: (name, isMain = false) => {
-                const acc = createDefaultAccount(name, isMain);
-                set((s) => ({
-                    accounts: ensureOneMain([...s.accounts, acc]),
-                }));
-                return acc;
-            },
+        loadFromSupabase: async () => {
+            try {
+                const [accounts, transactions] = await Promise.all([
+                    fetchAccounts(),
+                    fetchTransactions(),
+                ]);
+                set({ accounts, transactions, loaded: true });
+            } catch (e) {
+                console.error("Supabase load error:", e);
+                set({ loaded: true });
+            }
+        },
 
-            updateAccount: (id, patch) =>
-                set((s) => ({
-                    accounts: s.accounts.map((a) =>
-                        a.id === id
-                            ? { ...a, ...patch, updatedAt: new Date().toISOString() }
-                            : a
-                    ),
-                })),
+        addAccount: async (name, isMain = false) => {
+            const acc = createDefaultAccount(name, isMain);
+            set((s) => ({ accounts: ensureOneMain([...s.accounts, acc]) }));
+            await insertAccount(acc);
+            return acc;
+        },
 
-            removeAccount: (id) =>
-                set((s) => ({
-                    accounts: ensureOneMain(s.accounts.filter((a) => a.id !== id)),
-                })),
+        updateAccount: async (id, patch) => {
+            set((s) => ({
+                accounts: s.accounts.map((a) =>
+                    a.id === id
+                        ? { ...a, ...patch, updatedAt: new Date().toISOString() }
+                        : a
+                ),
+            }));
+            await updateAccountInDb(id, patch);
+        },
 
-            // ---- Transactions ----
-            addTransaction: (tx) =>
-                set((s) => ({ transactions: [...s.transactions, tx] })),
+        removeAccount: async (id) => {
+            set((s) => ({
+                accounts: ensureOneMain(s.accounts.filter((a) => a.id !== id)),
+            }));
+            await deleteAccountFromDb(id);
+        },
 
-            updateTransaction: (id, patch) =>
-                set((s) => ({
-                    transactions: s.transactions.map((t) =>
-                        t.id === id ? { ...t, ...patch } : t
-                    ),
-                })),
+        addTransaction: async (tx) => {
+            set((s) => ({ transactions: [...s.transactions, tx] }));
+            await insertTransaction(tx);
+        },
 
-            setTransactions: (transactions) => set({ transactions }),
+        updateTransaction: async (id, patch) => {
+            set((s) => ({
+                transactions: s.transactions.map((t) =>
+                    t.id === id ? { ...t, ...patch } : t
+                ),
+            }));
+            await updateTransactionInDb(id, patch);
+        },
 
-            removeTransaction: (id) =>
-                set((s) => ({
-                    transactions: s.transactions.filter((t) => t.id !== id),
-                })),
+        removeTransaction: async (id) => {
+            set((s) => ({
+                transactions: s.transactions.filter((t) => t.id !== id),
+            }));
+            await deleteTransactionFromDb(id);
+        },
 
-            // ---- Computed ----
-            getAccountsWithBalance: () => {
-                const { accounts, transactions } = get();
-                return accounts.map((acc) => ({
-                    ...acc,
-                    balance: computeAccountBalance(acc, transactions),
-                }));
-            },
+        setTransactions: (transactions) => set({ transactions }),
 
-            getTotalBalance: () => {
-                const { accounts, transactions } = get();
-                return accounts.reduce(
-                    (sum, acc) => sum + computeAccountBalance(acc, transactions),
-                    0
-                );
-            },
-        }),
-        {
-            name: "ft_accounts_v1",
-            storage: createJSONStorage(() => localStorage),
-            partialize: (state) => ({
-                accounts: state.accounts,
-                transactions: state.transactions,
-            }),
-        }
-    )
+        getAccountsWithBalance: () => {
+            const { accounts, transactions } = get();
+            return accounts.map((acc) => ({
+                ...acc,
+                balance: computeAccountBalance(acc, transactions),
+            }));
+        },
+
+        getTotalBalance: () => {
+            const { accounts, transactions } = get();
+            return accounts.reduce(
+                (sum, acc) => sum + computeAccountBalance(acc, transactions),
+                0
+            );
+        },
+    })
 );

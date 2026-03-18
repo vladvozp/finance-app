@@ -263,11 +263,11 @@ const GuestTransactionOne: React.FC = () => {
                                 ))}
                                 <li className="mt-1 border-t border-gray-200 pt-1">
                                     <button type="button"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             setOpen(false);
                                             const rawName = window.prompt("Enter account name:", "New account");
                                             if (!rawName?.trim()) return;
-                                            const acc = addAccount(rawName.trim());
+                                            const acc = await addAccount(rawName.trim());
                                             onAccountPick(acc);
                                         }}
                                         className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left cursor-pointer hover:bg-white/70 transition">

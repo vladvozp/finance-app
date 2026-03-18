@@ -16,7 +16,7 @@ export default function SetupPage() {
     const [currency, setCurrency] = useState("EUR");
     const [error, setError] = useState("");
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!name.trim()) {
             setError("Bitte einen Kontonamen eingeben.");
             return;
@@ -28,11 +28,10 @@ export default function SetupPage() {
             return;
         }
 
-        const acc = addAccount(name.trim(), true);
+        const acc = await addAccount(name.trim(), true);
 
-        // Setze Startguthaben wenn angegeben
         if (balance) {
-            useAccountsStore.getState().updateAccount(acc.id, {
+            await useAccountsStore.getState().updateAccount(acc.id, {
                 snapshotBalance: balanceNum,
                 snapshotAt: new Date().toISOString(),
                 currency,

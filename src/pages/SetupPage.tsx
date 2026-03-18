@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAccountsStore } from "../store/accounts";
+import Button from "../components/Button";
 
 const CURRENCIES = ["EUR", "USD", "CHF", "GBP"];
 
@@ -99,14 +100,7 @@ export default function SetupPage() {
                     {error && (
                         <p className="text-sm text-red-500">{error}</p>
                     )}
-
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        className="w-full h-12 bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-                    >
-                        Konto erstellen & starten
-                    </button>
+                    <Button onClick={handleSubmit} variant="primary"> Konto erstellen & starten</Button>
                 </div>
             </div>
         </div>

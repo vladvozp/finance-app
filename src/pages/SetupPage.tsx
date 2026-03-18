@@ -6,6 +6,7 @@ import Button from "../components/Button";
 
 const CURRENCIES = ["EUR", "USD", "CHF", "GBP"];
 
+
 export default function SetupPage() {
     const navigate = useNavigate();
     const { addAccount } = useAccountsStore();
@@ -42,8 +43,8 @@ export default function SetupPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex items-center justify-center px-4">
-            <div className="w-full max-w-sm">
+        <div className=" flex items-start sm:items-center justify-center bg-white">
+            <div className="py-10 sm:py-14 space-y-7">
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">Willkommen 👋</h1>
                 <p className="text-sm text-gray-500 mb-8">
                     Erstelle dein erstes Konto um zu starten.

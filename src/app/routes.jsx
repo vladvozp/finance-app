@@ -15,6 +15,7 @@ import MonthPage from "../pages/MonthPage.tsx"
 import GuestTransactionOne from "../pages/GuestTransactionOne.tsx"
 import SetupPage from "../pages/SetupPage.tsx";
 import AccountEditPage from "../pages/AccountEditPage.tsx";
+import TransactionEditPage from "../pages/TransactionEditPage.tsx";
 
 
 export const router = createBrowserRouter([
@@ -38,6 +39,8 @@ export const router = createBrowserRouter([
       { path: "/MonthPage", element: <MonthPage /> },
       { path: "/setup", element: <SetupPage /> },
       { path: "/account/:id", element: <AccountEditPage /> },
+      { path: "/transaction/:id/edit", element: <TransactionEditPage /> },
+
     ],
   },
 ]);

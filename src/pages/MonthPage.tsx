@@ -256,17 +256,27 @@ export default function MonthPage() {
                                                                     🗑 stornieren
                                                                 </button>
                                                             </div>
-                                                        ) : (<button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                if (window.confirm("Transaktion wirklich löschen?")) {
-                                                                    removeTransaction(tx.id);
-                                                                }
-                                                            }}
-                                                            className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100 text-red-700"
-                                                        >
-                                                            🗑 löschen
-                                                        </button>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => navigate(`/transaction/${tx.id}/edit`)}
+                                                                    className="text-xs px-2 py-1 rounded border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
+                                                                >
+                                                                    ✏️ bearbeiten
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (window.confirm("Transaktion wirklich löschen?")) {
+                                                                            removeTransaction(tx.id);
+                                                                        }
+                                                                    }}
+                                                                    className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100 text-red-700"
+                                                                >
+                                                                    🗑 löschen
+                                                                </button>
+                                                            </div>
                                                         )}
                                                     </td>
                                                 </tr>

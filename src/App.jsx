@@ -8,19 +8,13 @@ export default function App() {
   const loadFromSupabase = useAccountsStore((s) => s.loadFromSupabase);
 
   useEffect(() => {
-    async function init() {
-      // check session
-      const { data } = await supabase.auth.getSession();
 
+    supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         await loadFromSupabase();
       }
+    });
 
-    }
-    init();
-  }, []);
-  // for new users (Google OAuth) 
-  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === "SIGNED_IN" && session) {
@@ -33,9 +27,9 @@ export default function App() {
         }
       }
     );
+
     return () => subscription.unsubscribe();
   }, []);
-
 
   return <RouterProvider router={router} />;
 }

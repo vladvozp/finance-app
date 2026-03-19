@@ -51,8 +51,11 @@ export default function Login() {
 
   async function handleGuestLogin() {
     try {
+      console.log("Guest login started");
       await signInAnonymously();
+      console.log("signInAnonymously done");
     } catch (err: any) {
+      console.error("Guest login error:", err);
       setError(err.message ?? "Fehler beim Gastlogin.");
     }
   }

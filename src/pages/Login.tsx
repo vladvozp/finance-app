@@ -26,17 +26,12 @@ export default function Login() {
       if (mode === "register") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert("Bestätigungs-E-Mail gesendet! Bitte überprüfe dein Postfach.");
+        alert("Bestätigungs-E-Mail gesendet!");
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-
-      await useAccountsStore.getState().loadFromSupabase();
-      const { accounts } = useAccountsStore.getState();
-      navigate(accounts.length === 0 ? "/setup" : "/MonthPage");
-
     } catch (err: any) {
       setError(err.message ?? "Fehler beim Anmelden.");
     } finally {
@@ -57,9 +52,6 @@ export default function Login() {
   async function handleGuestLogin() {
     try {
       await signInAnonymously();
-      await useAccountsStore.getState().loadFromSupabase();
-      const { accounts } = useAccountsStore.getState();
-      navigate(accounts.length === 0 ? "/setup" : "/MonthPage");
     } catch (err: any) {
       setError(err.message ?? "Fehler beim Gastlogin.");
     }

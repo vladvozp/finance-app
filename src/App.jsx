@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/routes.jsx";
 import { useAccountsStore } from "./store/accounts";
-import { supabase } from "./lib/supabase";
+import { supabase, signInAnonymously } from "./lib/supabase";
 
 export default function App() {
   const loadFromSupabase = useAccountsStore((s) => s.loadFromSupabase);

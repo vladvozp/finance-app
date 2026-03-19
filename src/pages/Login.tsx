@@ -8,7 +8,6 @@ export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
-
   async function handleGoogleLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -32,14 +31,13 @@ export default function Login() {
   }
 
   return (
-    <main className="flex items-start sm:items-center justify-center bg-white">
-      <section className="py-10 sm:py-14 space-y-7 w-full max-w-sm px-4">
+    <main className="flex items-center justify-center bg-white">
+      <section className="py-10 space-y-7 w-full max-w-sm px-4">
         <h1 className="text-[14px] font-bold text-left">
           Willkommen bei Finance Tracker!
         </h1>
 
         <GoogleLoginButton onClick={handleGoogleLogin} disabled={false} loading={false} />
-
         <div className="flex items-center gap-3 text-gray-500">
           <div className="flex-1 border-t border-gray-300" />
           <span className="text-sm">oder</span>

@@ -6,7 +6,6 @@ import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import { MoveLeft, Plus, Settings } from "lucide-react";
 
-import type { Tx } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
 

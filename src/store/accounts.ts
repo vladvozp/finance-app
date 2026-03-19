@@ -52,6 +52,7 @@ type AccountsState = {
     loaded: boolean;
 
     loadFromSupabase: () => Promise<void>;
+    clearAll: () => void;
 
     addAccount: (name: string, isMain?: boolean) => Promise<Account>;
     updateAccount: (id: string, patch: Partial<Account>) => Promise<void>;
@@ -66,87 +67,103 @@ type AccountsState = {
     getTotalBalance: () => number;
 };
 
-export const useAccountsStore = create<AccountsState>()(
-    (set, get) => ({
-        accounts: [],
-        transactions: [],
-        loaded: false,
+export const useAccountsStore = create<AccountsState>()((set, get) => ({
+    accounts: [],
+    transactions: [],
+    loaded: false,
 
-        loadFromSupabase: async () => {
-            try {
-                const [accounts, transactions] = await Promise.all([
-                    fetchAccounts(),
-                    fetchTransactions(),
-                ]);
-                set({ accounts, transactions, loaded: true });
-            } catch (e) {
-                console.error("Supabase load error:", e);
-                set({ loaded: true });
-            }
-        },
+    loadFromSupabase: async () => {
+        try {
+            set({ loaded: false });
 
-        addAccount: async (name, isMain = false) => {
-            const acc = createDefaultAccount(name, isMain);
-            set((s) => ({ accounts: ensureOneMain([...s.accounts, acc]) }));
-            await insertAccount(acc);
-            return acc;
-        },
+            const [accounts, transactions] = await Promise.all([
+                fetchAccounts(),
+                fetchTransactions(),
+            ]);
 
-        updateAccount: async (id, patch) => {
-            set((s) => ({
-                accounts: s.accounts.map((a) =>
-                    a.id === id
-                        ? { ...a, ...patch, updatedAt: new Date().toISOString() }
-                        : a
-                ),
-            }));
-            await updateAccountInDb(id, patch);
-        },
+            set({
+                accounts: ensureOneMain(accounts),
+                transactions,
+                loaded: true,
+            });
+        } catch (e) {
+            console.error("Supabase load error:", e);
+            set({
+                accounts: [],
+                transactions: [],
+                loaded: true,
+            });
+        }
+    },
 
-        removeAccount: async (id) => {
-            set((s) => ({
-                accounts: ensureOneMain(s.accounts.filter((a) => a.id !== id)),
-            }));
-            await deleteAccountFromDb(id);
-        },
+    clearAll: () =>
+        set({
+            accounts: [],
+            transactions: [],
+            loaded: false,
+        }),
 
-        addTransaction: async (tx) => {
-            set((s) => ({ transactions: [...s.transactions, tx] }));
-            await insertTransaction(tx);
-        },
+    addAccount: async (name, isMain = false) => {
+        const acc = createDefaultAccount(name, isMain);
+        await insertAccount(acc);
+        set((s) => ({ accounts: ensureOneMain([...s.accounts, acc]) }));
+        return acc;
+    },
 
-        updateTransaction: async (id, patch) => {
-            set((s) => ({
-                transactions: s.transactions.map((t) =>
-                    t.id === id ? { ...t, ...patch } : t
-                ),
-            }));
-            await updateTransactionInDb(id, patch);
-        },
+    updateAccount: async (id, patch) => {
+        set((s) => ({
+            accounts: s.accounts.map((a) =>
+                a.id === id
+                    ? { ...a, ...patch, updatedAt: new Date().toISOString() }
+                    : a
+            ),
+        }));
+        await updateAccountInDb(id, patch);
+    },
 
-        removeTransaction: async (id) => {
-            set((s) => ({
-                transactions: s.transactions.filter((t) => t.id !== id),
-            }));
-            await deleteTransactionFromDb(id);
-        },
+    removeAccount: async (id) => {
+        set((s) => ({
+            accounts: ensureOneMain(s.accounts.filter((a) => a.id !== id)),
+        }));
+        await deleteAccountFromDb(id);
+    },
 
-        setTransactions: (transactions) => set({ transactions }),
+    addTransaction: async (tx) => {
+        set((s) => ({ transactions: [...s.transactions, tx] }));
+        await insertTransaction(tx);
+    },
 
-        getAccountsWithBalance: () => {
-            const { accounts, transactions } = get();
-            return accounts.map((acc) => ({
-                ...acc,
-                balance: computeAccountBalance(acc, transactions),
-            }));
-        },
+    updateTransaction: async (id, patch) => {
+        set((s) => ({
+            transactions: s.transactions.map((t) =>
+                t.id === id ? { ...t, ...patch } : t
+            ),
+        }));
+        await updateTransactionInDb(id, patch);
+    },
 
-        getTotalBalance: () => {
-            const { accounts, transactions } = get();
-            return accounts.reduce(
-                (sum, acc) => sum + computeAccountBalance(acc, transactions),
-                0
-            );
-        },
-    })
-);
+    removeTransaction: async (id) => {
+        set((s) => ({
+            transactions: s.transactions.filter((t) => t.id !== id),
+        }));
+        await deleteTransactionFromDb(id);
+    },
+
+    setTransactions: (transactions) => set({ transactions }),
+
+    getAccountsWithBalance: () => {
+        const { accounts, transactions } = get();
+        return accounts.map((acc) => ({
+            ...acc,
+            balance: computeAccountBalance(acc, transactions),
+        }));
+    },
+
+    getTotalBalance: () => {
+        const { accounts, transactions } = get();
+        return accounts.reduce(
+            (sum, acc) => sum + computeAccountBalance(acc, transactions),
+            0
+        );
+    },
+}));

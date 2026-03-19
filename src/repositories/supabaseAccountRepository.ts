@@ -3,19 +3,27 @@ import type { Account } from "../types/account";
 import type { Tx } from "../types/tx";
 
 async function getUserId(): Promise<string> {
-    const { data } = await supabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) throw error;
     if (!data.user) throw new Error("Not authenticated");
+
     return data.user.id;
 }
 
 // ---- Accounts ----
 export async function fetchAccounts(): Promise<Account[]> {
+    const userId = await getUserId();
+
     const { data, error } = await supabase
         .from("accounts")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at");
+
     if (error) throw error;
-    return data.map(row => ({
+
+    return (data ?? []).map((row) => ({
         id: row.id,
         name: row.name,
         currency: row.currency,
@@ -32,6 +40,7 @@ export async function fetchAccounts(): Promise<Account[]> {
 
 export async function insertAccount(acc: Account): Promise<void> {
     const userId = await getUserId();
+
     const { error } = await supabase.from("accounts").insert({
         id: acc.id,
         name: acc.name,
@@ -46,35 +55,60 @@ export async function insertAccount(acc: Account): Promise<void> {
         updated_at: acc.updatedAt,
         user_id: userId,
     });
+
     if (error) throw error;
 }
 
-export async function updateAccountInDb(id: string, patch: Partial<Account>): Promise<void> {
-    const { error } = await supabase.from("accounts").update({
-        name: patch.name,
-        currency: patch.currency,
-        opening_balance: patch.openingBalance,
-        snapshot_balance: patch.snapshotBalance,
-        snapshot_at: patch.snapshotAt,
-        is_main: patch.isMain,
-        updated_at: new Date().toISOString(),
-    }).eq("id", id);
+export async function updateAccountInDb(
+    id: string,
+    patch: Partial<Account>
+): Promise<void> {
+    const userId = await getUserId();
+
+    const { error } = await supabase
+        .from("accounts")
+        .update({
+            name: patch.name,
+            currency: patch.currency,
+            opening_balance: patch.openingBalance,
+            opening_date: patch.openingDate,
+            snapshot_balance: patch.snapshotBalance,
+            snapshot_at: patch.snapshotAt,
+            is_main: patch.isMain,
+            archived: patch.archived,
+            updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .eq("user_id", userId);
+
     if (error) throw error;
 }
 
 export async function deleteAccountFromDb(id: string): Promise<void> {
-    const { error } = await supabase.from("accounts").delete().eq("id", id);
+    const userId = await getUserId();
+
+    const { error } = await supabase
+        .from("accounts")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
+
     if (error) throw error;
 }
 
 // ---- Transactions ----
 export async function fetchTransactions(): Promise<Tx[]> {
+    const userId = await getUserId();
+
     const { data, error } = await supabase
         .from("transactions")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at");
+
     if (error) throw error;
-    return data.map(row => ({
+
+    return (data ?? []).map((row) => ({
         id: row.id,
         kind: row.kind,
         amount: row.amount,
@@ -92,6 +126,7 @@ export async function fetchTransactions(): Promise<Tx[]> {
 
 export async function insertTransaction(tx: Tx): Promise<void> {
     const userId = await getUserId();
+
     const { error } = await supabase.from("transactions").insert({
         id: tx.id,
         kind: tx.kind,
@@ -107,18 +142,44 @@ export async function insertTransaction(tx: Tx): Promise<void> {
         repeat: tx.repeat,
         user_id: userId,
     });
+
     if (error) throw error;
 }
 
-export async function updateTransactionInDb(id: string, patch: Partial<Tx>): Promise<void> {
-    const { error } = await supabase.from("transactions").update({
-        status: patch.status,
-        is_planned: patch.isPlanned,
-    }).eq("id", id);
+export async function updateTransactionInDb(
+    id: string,
+    patch: Partial<Tx>
+): Promise<void> {
+    const userId = await getUserId();
+
+    const { error } = await supabase
+        .from("transactions")
+        .update({
+            kind: patch.kind,
+            amount: patch.amount,
+            date: patch.date,
+            status: patch.status,
+            is_planned: patch.isPlanned,
+            gruppe_id: patch.gruppeId,
+            anbieter_id: patch.anbieterId,
+            konto_id: patch.kontoId,
+            remark: patch.remark,
+            repeat: patch.repeat,
+        })
+        .eq("id", id)
+        .eq("user_id", userId);
+
     if (error) throw error;
 }
 
 export async function deleteTransactionFromDb(id: string): Promise<void> {
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
+    const userId = await getUserId();
+
+    const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
+
     if (error) throw error;
 }

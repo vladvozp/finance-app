@@ -2,25 +2,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLoginButton, GuestLoginButton } from "../features/auth/AuthButtons";
-import { signInAnonymously } from "../lib/supabase";
+import { supabase, signInAnonymously } from "../lib/supabase";
 
 export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
+
   async function handleGoogleLogin() {
-    try {
-      const { supabase } = await import("../lib/supabase");
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/MonthPage`,
-        },
-      });
-      if (oauthError) setError(oauthError.message);
-    } catch (err: any) {
-      setError(err.message ?? "Fehler beim Google-Login.");
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) setError(error.message);
   }
 
   async function handleGuestLogin() {
@@ -42,11 +38,11 @@ export default function Login() {
           Willkommen bei Finance Tracker!
         </h1>
 
-        <GoogleLoginButton onClick={handleGoogleLogin} />
+        <GoogleLoginButton onClick={handleGoogleLogin} disabled={false} loading={false} />
 
         <div className="flex items-center gap-3 text-gray-500">
           <div className="flex-1 border-t border-gray-300" />
-          <span className="text-sm">или</span>
+          <span className="text-sm">oder</span>
           <div className="flex-1 border-t border-gray-300" />
         </div>
 

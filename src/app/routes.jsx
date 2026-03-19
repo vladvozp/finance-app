@@ -9,13 +9,13 @@ import GuestTransactionOne from "../pages/GuestTransactionOne.tsx"
 import SetupPage from "../pages/SetupPage.tsx";
 import AccountEditPage from "../pages/AccountEditPage.tsx";
 import TransactionEditPage from "../pages/TransactionEditPage.tsx";
-
+import RootGate from "../app/RootGate.tsx"
 
 export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: "/", element: <Login /> },
+      { path: "/", element: <RootGate /> },
       { path: "/login", element: <Login /> },
       { path: "/Dashboard", element: <Dashboard /> },
       { path: "/SettingsPage", element: <SettingsPage /> },

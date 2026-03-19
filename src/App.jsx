@@ -12,15 +12,11 @@ export default function App() {
       // check session
       const { data } = await supabase.auth.getSession();
 
-      if (!data.session) {
-        // Anonymiusly login
-        await signInAnonymously();
+      if (data.session) {
+        await loadFromSupabase();
       }
 
-      // load 
-      await loadFromSupabase();
     }
-
     init();
   }, []);
 

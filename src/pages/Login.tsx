@@ -15,7 +15,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [mode, setMode] = useState < "login" | "register" > ("login");
+  const [mode, setMode] = useState<"login" | "register">("login");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +72,9 @@ export default function Login() {
           Willkommen bei Finance Tracker!
         </h1>
 
-        <GoogleLoginButton onClick={handleGoogleLogin} />
+        <GoogleLoginButton onClick={handleGoogleLogin}
+          disabled={loading}
+          loading={loading} />
 
         <div className="flex items-center gap-3 text-gray-500">
           <div className="flex-1 border-t border-gray-300" />
@@ -107,7 +109,7 @@ export default function Login() {
 
           {error && <p className="text-sm text-red-500">{error}</p>}
 
-          <Button variant="primary" disabled={loading}>
+          <Button variant="primary" disabled={loading} onClick={handleSubmit}>
             {loading ? "Laden…" : mode === "login" ? "Anmelden" : "Registrieren"}
           </Button>
         </form>

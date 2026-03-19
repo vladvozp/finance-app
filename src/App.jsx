@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/routes.jsx";
 import { useAccountsStore } from "./store/accounts";
-import { supabase, signInAnonymously } from "./lib/supabase";
+import { supabase } from "./lib/supabase";
 
 export default function App() {
   const loadFromSupabase = useAccountsStore((s) => s.loadFromSupabase);
@@ -12,6 +12,12 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         await loadFromSupabase();
+
+        if (window.location.pathname === "/login" ||
+          window.location.pathname === "/") {
+          const { accounts } = useAccountsStore.getState();
+          window.location.href = accounts.length === 0 ? "/setup" : "/MonthPage";
+        }
       }
     });
 
@@ -20,7 +26,11 @@ export default function App() {
         if (event === "SIGNED_IN" && session) {
           await loadFromSupabase();
           const { accounts } = useAccountsStore.getState();
-          window.location.href = accounts.length === 0 ? "/setup" : "/MonthPage";
+
+          if (window.location.pathname === "/login" ||
+            window.location.pathname === "/") {
+            window.location.href = accounts.length === 0 ? "/setup" : "/MonthPage";
+          }
         }
         if (event === "SIGNED_OUT") {
           window.location.href = "/login";

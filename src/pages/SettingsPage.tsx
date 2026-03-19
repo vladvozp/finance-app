@@ -7,6 +7,7 @@ import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 
 import { useAccountsStore } from "../store/accounts";
+import { supabase } from "../lib/supabase";
 
 
 // Icons
@@ -76,6 +77,13 @@ function readSettings(): AppSettings {
         return { ...DEFAULT_SETTINGS };
     }
 }
+
+// ---------- supabase  ----------
+async function handleSignOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+}
+
 
 function writeSettings(next: AppSettings): void {
     try {
@@ -413,7 +421,15 @@ export default function SettingsPage() {
                             </p>
                         </div>
                     </Section>
-
+                    <div className="pt-2">
+                        <button
+                            type="button"
+                            onClick={handleSignOut}
+                            className="w-full h-12 border border-red-300 text-red-600 hover:bg-red-50 transition"
+                        >
+                            Abmelden
+                        </button>
+                    </div>
                     {/* Save row  */}
                     <div className="pt-2">
                         <Button variant="primary" disabled={!dirty || saving} onClick={saveAll}>

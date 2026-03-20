@@ -30,12 +30,12 @@ const DEFAULT_GRUPPEN: Omit<Gruppe, "createdAt">[] = [
     { id: "finanzen", name: "Finanzen & Versicherungen" },
 ];
 
-const DEFAULT_ANBIETER: Omit<Anbieter, never>[] = [
-    { id: "rewe", name: "Rewe", gruppenId: "lebensmittel" },
-    { id: "lidl", name: "Lidl", gruppenId: "lebensmittel" },
-    { id: "aral", name: "Aral", gruppenId: "mobilitaet" },
-    { id: "shell", name: "Shell", gruppenId: "mobilitaet" },
-    { id: "hausverwaltung", name: "Hausverwaltung / Vermieter", gruppenId: "wohnen" },
+const DEFAULT_ANBIETER = [
+    { id: "rewe", name: "Rewe", gruppenId: "" },
+    { id: "lidl", name: "Lidl", gruppenId: "" },
+    { id: "aral", name: "Aral", gruppenId: "" },
+    { id: "shell", name: "Shell", gruppenId: "" },
+    { id: "hausverwaltung", name: "Hausverwaltung / Vermieter", gruppenId: "" },
 ];
 
 // ---- Store ----

@@ -58,10 +58,11 @@ export async function fetchAnbieter(): Promise<Anbieter[]> {
 
 export async function insertAnbieter(anbieter: Anbieter): Promise<void> {
     const userId = await getUserId();
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(anbieter.gruppenId);
     const { error } = await supabase.from("anbieter").insert({
         id: anbieter.id,
         name: anbieter.name,
-        gruppen_id: anbieter.gruppenId || null,
+        gruppen_id: isUUID ? anbieter.gruppenId : null,
         user_id: userId,
     });
     if (error) throw error;

@@ -20,11 +20,11 @@ export default function RootGate() {
         const checkUserAndAccounts = async () => {
             setLoading(true);
 
-            const { data, error } = await supabase.auth.getUser();
+            const { data: { session } } = await supabase.auth.getSession();
 
             if (!mounted) return;
 
-            if (error || !data.user) {
+            if (!session) {
                 setHasUser(false);
                 setLoading(false);
                 return;
@@ -32,11 +32,16 @@ export default function RootGate() {
 
             setHasUser(true);
 
-            await loadFromSupabase();
-            await loadDicts();
+            try {
+                await loadFromSupabase();
+                await loadDicts();
+            } catch (e) {
+                console.error("Load error:", e);
+            }
 
             if (!mounted) return;
             setLoading(false);
+
         };
 
         checkUserAndAccounts();
@@ -60,7 +65,7 @@ export default function RootGate() {
             mounted = false;
             subscription.unsubscribe();
         };
-    }, [loadFromSupabase]);
+    }, [loadFromSupabase, loadDicts]);
 
     if (loading) {
         return <div>Loading...</div>;

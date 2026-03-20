@@ -1,5 +1,5 @@
 // src/pages/MonthPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PageHeader from "../components/PageHeader";
@@ -38,11 +38,20 @@ function monthLabelDE(d: Date) {
 }
 
 export default function MonthPage() {
+    const { transactions, getTotalBalance, updateTransaction, removeTransaction, accounts, loaded, loadFromSupabase } = useAccountsStore();
+    const { loadFromSupabase: loadDicts, loaded: dictsLoaded } = useDicts();
+
+    useEffect(() => {
+        if (!loaded) loadFromSupabase();
+        if (!dictsLoaded) loadDicts();
+    }, []);
+
+
+
     const navigate = useNavigate();
     const todayISO = new Date().toISOString().slice(0, 10);
 
     // Store
-    const { accounts, transactions, getTotalBalance, updateTransaction, removeTransaction } = useAccountsStore();
     const totalBalance = getTotalBalance();
 
     // Month navigation

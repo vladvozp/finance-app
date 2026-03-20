@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAccountsStore } from "../store/accounts";
+import { useDicts } from "../store/dicts";
 
 export default function RootGate() {
     const loadFromSupabase = useAccountsStore((s) => s.loadFromSupabase);
@@ -9,6 +10,9 @@ export default function RootGate() {
 
     const [loading, setLoading] = useState(true);
     const [hasUser, setHasUser] = useState(false);
+
+    const loadDicts = useDicts((s) => s.loadFromSupabase);
+
 
     useEffect(() => {
         let mounted = true;
@@ -29,6 +33,7 @@ export default function RootGate() {
             setHasUser(true);
 
             await loadFromSupabase();
+            await loadDicts();
 
             if (!mounted) return;
             setLoading(false);

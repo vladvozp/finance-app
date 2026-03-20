@@ -1,6 +1,9 @@
 // store/dicts.ts
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import {
+    fetchGruppen, insertGruppe, updateGruppeInDb, deleteGruppeFromDb,
+    fetchAnbieter, insertAnbieter, updateAnbieterInDb, deleteAnbieterFromDb,
+} from "../repositories/supabaseDictsRepository";
 
 // ---- Types ----
 export type Gruppe = { id: string; name: string; createdAt: string };
@@ -12,99 +15,119 @@ const newId = () =>
         ? crypto.randomUUID()
         : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
-// ---- Seeders ----
-function seedGroups(): Gruppe[] {
-    const now = new Date().toISOString();
-    return [
-        { id: newId(), name: "Wohnen", createdAt: now },
-        { id: newId(), name: "Lebensmittel & Haushalt", createdAt: now },
-        { id: newId(), name: "Mobilität", createdAt: now },
-        { id: newId(), name: "Kommunikation & Technik", createdAt: now },
-        { id: newId(), name: "Gesundheit", createdAt: now },
-        { id: newId(), name: "Kleidung & Pflege", createdAt: now },
-        { id: newId(), name: "Bildung & Kurse", createdAt: now },
-        { id: newId(), name: "Kinder & Familie", createdAt: now },
-        { id: newId(), name: "Freizeit & Medien", createdAt: now },
-        { id: newId(), name: "Reisen & Urlaub", createdAt: now },
-        { id: newId(), name: "Finanzen & Versicherungen", createdAt: now },
-    ];
-}
+// ---- Seed data ----
+const DEFAULT_GRUPPEN: Omit<Gruppe, "createdAt">[] = [
+    { id: "wohnen", name: "Wohnen" },
+    { id: "lebensmittel", name: "Lebensmittel & Haushalt" },
+    { id: "mobilitaet", name: "Mobilität" },
+    { id: "kommunikation", name: "Kommunikation & Technik" },
+    { id: "gesundheit", name: "Gesundheit" },
+    { id: "kleidung", name: "Kleidung & Pflege" },
+    { id: "bildung", name: "Bildung & Kurse" },
+    { id: "kinder", name: "Kinder & Familie" },
+    { id: "freizeit", name: "Freizeit & Medien" },
+    { id: "reisen", name: "Reisen & Urlaub" },
+    { id: "finanzen", name: "Finanzen & Versicherungen" },
+];
 
-function seedProviders(groups: Gruppe[]): Anbieter[] {
-    const id = (name: string) => groups.find(g => g.name === name)?.id ?? "";
-    return [
-        { id: "rewe", name: "Rewe", gruppenId: id("Lebensmittel & Haushalt") },
-        { id: "lidl", name: "Lidl", gruppenId: id("Lebensmittel & Haushalt") },
-        { id: "aral", name: "Aral", gruppenId: id("Mobilität") },
-        { id: "shell", name: "Shell", gruppenId: id("Mobilität") },
-        { id: "hausverwaltung", name: "Hausverwaltung / Vermieter", gruppenId: id("Wohnen") },
-    ];
-}
+const DEFAULT_ANBIETER: Omit<Anbieter, never>[] = [
+    { id: "rewe", name: "Rewe", gruppenId: "lebensmittel" },
+    { id: "lidl", name: "Lidl", gruppenId: "lebensmittel" },
+    { id: "aral", name: "Aral", gruppenId: "mobilitaet" },
+    { id: "shell", name: "Shell", gruppenId: "mobilitaet" },
+    { id: "hausverwaltung", name: "Hausverwaltung / Vermieter", gruppenId: "wohnen" },
+];
 
 // ---- Store ----
 type DictsState = {
     gruppen: Gruppe[];
     anbieter: Anbieter[];
+    loaded: boolean;
 
-    // Groups CRUD
-    createGroup: (name: string) => string;
-    renameGroup: (id: string, newName: string) => void;
-    deleteGroup: (id: string) => void;
+    loadFromSupabase: () => Promise<void>;
+    seedIfEmpty: () => Promise<void>;
 
-    // Providers CRUD
-    createProvider: (name: string, gruppenId?: string) => string;
-    renameProvider: (id: string, newName: string) => void;
-    deleteProvider: (id: string) => void;
+    createGroup: (name: string) => Promise<string>;
+    renameGroup: (id: string, newName: string) => Promise<void>;
+    deleteGroup: (id: string) => Promise<void>;
+
+    createProvider: (name: string, gruppenId?: string) => Promise<string>;
+    renameProvider: (id: string, newName: string) => Promise<void>;
+    deleteProvider: (id: string) => Promise<void>;
 };
 
 export const useDicts = create<DictsState>()(
-    persist(
-        (set) => {
-            const initialGroups = seedGroups();
-            const initialProviders = seedProviders(initialGroups);
+    (set, get) => ({
+        gruppen: [],
+        anbieter: [],
+        loaded: false,
 
-            return {
-                gruppen: initialGroups,
-                anbieter: initialProviders,
+        loadFromSupabase: async () => {
+            try {
+                const [gruppen, anbieter] = await Promise.all([
+                    fetchGruppen(),
+                    fetchAnbieter(),
+                ]);
+                set({ gruppen, anbieter, loaded: true });
 
-                // ---- Groups ----
-                createGroup: (name) => {
-                    const id = newId();
-                    const now = new Date().toISOString();
-                    set(s => ({ gruppen: [...s.gruppen, { id, name, createdAt: now }] }));
-                    return id;
-                },
-                renameGroup: (id, newName) => {
-                    set(s => ({ gruppen: s.gruppen.map(g => g.id === id ? { ...g, name: newName } : g) }));
-                },
-                deleteGroup: (id) => {
-                    set(s => ({
-                        gruppen: s.gruppen.filter(g => g.id !== id),
-                        anbieter: s.anbieter.map(a => a.gruppenId === id ? { ...a, gruppenId: "" } : a),
-                    }));
-                },
-
-                // ---- Providers ----
-                createProvider: (name, gruppenId = "") => {
-                    const id = newId();
-                    set(s => ({ anbieter: [...s.anbieter, { id, name, gruppenId }] }));
-                    return id;
-                },
-                renameProvider: (id, newName) => {
-                    set(s => ({ anbieter: s.anbieter.map(a => a.id === id ? { ...a, name: newName } : a) }));
-                },
-                deleteProvider: (id) => {
-                    set(s => ({ anbieter: s.anbieter.filter(a => a.id !== id) }));
-                },
-            };
+                // Если пусто — засеять дефолтными
+                if (gruppen.length === 0) {
+                    await get().seedIfEmpty();
+                }
+            } catch (e) {
+                console.error("Dicts load error:", e);
+                set({ loaded: true });
+            }
         },
-        {
-            name: "ft_dicts_v3",
-            storage: createJSONStorage(() => localStorage),
-            partialize: (s) => ({
-                gruppen: s.gruppen,
-                anbieter: s.anbieter,
-            }),
-        }
-    )
+
+        seedIfEmpty: async () => {
+            const now = new Date().toISOString();
+            const gruppen = DEFAULT_GRUPPEN.map(g => ({ ...g, createdAt: now }));
+            const anbieter = DEFAULT_ANBIETER;
+
+            await Promise.all(gruppen.map(g => insertGruppe(g)));
+            await Promise.all(anbieter.map(a => insertAnbieter(a)));
+
+            set({ gruppen, anbieter });
+        },
+
+        createGroup: async (name) => {
+            const id = newId();
+            const gruppe: Gruppe = { id, name, createdAt: new Date().toISOString() };
+            set((s) => ({ gruppen: [...s.gruppen, gruppe] }));
+            await insertGruppe(gruppe);
+            return id;
+        },
+
+        renameGroup: async (id, newName) => {
+            set((s) => ({ gruppen: s.gruppen.map(g => g.id === id ? { ...g, name: newName } : g) }));
+            await updateGruppeInDb(id, newName);
+        },
+
+        deleteGroup: async (id) => {
+            set((s) => ({
+                gruppen: s.gruppen.filter(g => g.id !== id),
+                anbieter: s.anbieter.map(a => a.gruppenId === id ? { ...a, gruppenId: "" } : a),
+            }));
+            await deleteGruppeFromDb(id);
+        },
+
+        createProvider: async (name, gruppenId = "") => {
+            const id = newId();
+            const anbieter: Anbieter = { id, name, gruppenId };
+            set((s) => ({ anbieter: [...s.anbieter, anbieter] }));
+            await insertAnbieter(anbieter);
+            return id;
+        },
+
+        renameProvider: async (id, newName) => {
+            set((s) => ({ anbieter: s.anbieter.map(a => a.id === id ? { ...a, name: newName } : a) }));
+            await updateAnbieterInDb(id, newName);
+        },
+
+        deleteProvider: async (id) => {
+            set((s) => ({ anbieter: s.anbieter.filter(a => a.id !== id) }));
+            await deleteAnbieterFromDb(id);
+        },
+    })
 );

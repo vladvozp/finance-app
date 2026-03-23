@@ -128,11 +128,11 @@ export default function MonthPage() {
         <div className="bg-white">
             <main className="py-6 flex flex-col max-w-5xl mx-auto px-4 gap-4">
                 <PageHeader
-                    left={
-                        <Link to="/login" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
+                    left={null
+                     /*   <Link to="/login" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
                             <MoveLeft className="w-5 h-5" /> Zurück
                         </Link>
-                    }
+                 */   }
                     center={
                         <div className="flex items-center justify-center gap-3">
                             <button type="button" onClick={goPrevMonth}
@@ -167,17 +167,17 @@ export default function MonthPage() {
                     <div className="border rounded-sm p-2 bg-red-50 border-red-200">
                         <div className="text-xs font-semibold text-red-700">Bereits ausgegeben</div>
                         <div className="text-sm font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
-                        <p className="text-[11px] text-red-700 mt-1">Bereits gebuchte Ausgaben in diesem Monat.</p>
+                        <p className="text-[11px] text-red-700 mt-1">Ausgaben in diesem Monat</p>
                     </div>
                     <div className="border rounded-sm p-2 bg-yellow-50 border-yellow-200">
                         <div className="text-xs font-semibold text-yellow-700">Bald fällig</div>
                         <div className="text-sm font-bold text-yellow-800">{fmtMoney(futureTotal)}</div>
-                        <p className="text-[11px] text-yellow-700 mt-1">Geplante Abbuchungen für diesen Monat.</p>
+                        <p className="text-[11px] text-yellow-700 mt-1">Geplante Ausgaben</p>
                     </div>
                     <div className="border rounded-sm p-2 bg-green-50 border-green-200">
-                        <div className="text-xs font-semibold text-green-700">Verfügbar (geschätzt)</div>
+                        <div className="text-xs font-semibold text-green-700">Was dir bleibt</div>
                         <div className="text-sm font-bold text-green-800">{fmtMoney(available)}</div>
-                        <p className="text-[11px] text-green-700 mt-1">Gesamtbestand minus geplante Abbuchungen.</p>
+                        <p className="text-[11px] text-green-700 mt-1">Nach allen geplanten Ausgaben</p>
                     </div>
                 </section>
 
@@ -185,7 +185,7 @@ export default function MonthPage() {
                 <section className="flex-1 flex flex-col gap-3">
                     {monthTx.length === 0 ? (
                         <div className="card bg-base-200 p-6">
-                            <p className="opacity-80 text-sm mb-3">Noch keine Transaktionen in diesem Monat.</p>
+                            <p className="opacity-80 text-sm mb-3">Füge deine erste Transaktion hinzu</p>
                             <Button variant="primary" icon={Plus} onClick={() => navigate("/GuestTransactionOne")}>
                                 Transaktion
                             </Button>

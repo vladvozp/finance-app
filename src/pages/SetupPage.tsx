@@ -42,14 +42,13 @@ export default function SetupPage() {
     };
 
     return (
-        <div className="bg-white">
-            <div className="py-6 flex flex-col max-w-5xl mx-auto px-4 gap-4">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Willkommen 👋</h1>
-                <p className="text-sm text-gray-500 mb-8">
-                    Erstelle dein erstes Konto um zu starten.
-                </p>
-
-                <div className="flex flex-col gap-4">
+        <div className="bg-white py-50 mx-auto">
+            <div className="flex flex-col px-5 gap-6">
+                <h1 className="text-sm font-bold text-gray-800">  </h1>
+                <p className="text-sm font-bold text-gray-800">
+                    Erstelle dein erstes Konto <p> und sieh sofort deinen aktuellen Kontostand.
+                    </p></p>
+                <div className="flex flex-col gap-6">
                     {/* Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -59,7 +58,7 @@ export default function SetupPage() {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="z. B. Hauptkonto, Sparkasse"
+                            placeholder="z. B. Hauptkonto oder PayPal"
                             className="w-full h-12 border border-gray-400 px-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                         />
                     </div>
@@ -67,7 +66,7 @@ export default function SetupPage() {
                     {/* Balance */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Aktueller Kontostand
+                            Dein aktueller Kontostand
                         </label>
                         <input
                             inputMode="decimal"
@@ -100,7 +99,7 @@ export default function SetupPage() {
                     {error && (
                         <p className="text-sm text-red-500">{error}</p>
                     )}
-                    <Button onClick={handleSubmit} variant="primary"> Konto erstellen & starten</Button>
+                    <Button onClick={handleSubmit} variant="primary"> Konto erstellen und starten</Button>
                 </div>
             </div>
         </div>

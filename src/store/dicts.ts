@@ -81,16 +81,24 @@ export const useDicts = create<DictsState>()(
         },
 
         seedIfEmpty: async () => {
+            console.log("seedIfEmpty called");
             const now = new Date().toISOString();
             const gruppen = DEFAULT_GRUPPEN.map(g => ({ ...g, createdAt: now }));
             const anbieter = DEFAULT_ANBIETER;
 
-            await Promise.all(gruppen.map(g => insertGruppe(g)));
-            await Promise.all(anbieter.map(a => insertAnbieter(a)));
+            console.log("inserting gruppen:", gruppen);
+
+            try {
+                await Promise.all(gruppen.map(g => insertGruppe(g)));
+                console.log("gruppen inserted");
+                await Promise.all(anbieter.map(a => insertAnbieter(a)));
+                console.log("anbieter inserted");
+            } catch (e) {
+                console.error("seedIfEmpty error:", e);
+            }
 
             set({ gruppen, anbieter });
         },
-
         createGroup: async (name) => {
             const id = newId();
             const gruppe: Gruppe = { id, name, createdAt: new Date().toISOString() };

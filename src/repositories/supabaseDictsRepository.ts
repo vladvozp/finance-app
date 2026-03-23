@@ -21,8 +21,7 @@ export async function fetchGruppen(): Promise<Gruppe[]> {
     }));
 }
 
-export async function insertGruppe(gruppe: Gruppe): Promise<void> {
-    const userId = await getUserId();
+export async function insertGruppe(gruppe: Gruppe, userId: string): Promise<void> {
     const { error } = await supabase.from("gruppen").insert({
         id: gruppe.id,
         name: gruppe.name,
@@ -31,6 +30,7 @@ export async function insertGruppe(gruppe: Gruppe): Promise<void> {
     });
     if (error) throw error;
 }
+
 
 export async function updateGruppeInDb(id: string, name: string): Promise<void> {
     const { error } = await supabase.from("gruppen").update({ name }).eq("id", id);
@@ -56,8 +56,7 @@ export async function fetchAnbieter(): Promise<Anbieter[]> {
     }));
 }
 
-export async function insertAnbieter(anbieter: Anbieter): Promise<void> {
-    const userId = await getUserId();
+export async function insertAnbieter(anbieter: Anbieter, userId: string): Promise<void> {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(anbieter.gruppenId);
     const { error } = await supabase.from("anbieter").insert({
         id: anbieter.id,

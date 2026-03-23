@@ -4,6 +4,7 @@ import {
     fetchGruppen, insertGruppe, updateGruppeInDb, deleteGruppeFromDb,
     fetchAnbieter, insertAnbieter, updateAnbieterInDb, deleteAnbieterFromDb,
 } from "../repositories/supabaseDictsRepository";
+import { supabase } from "../lib/supabase";
 
 // ---- Types ----
 export type Gruppe = { id: string; name: string; createdAt: string };
@@ -81,29 +82,33 @@ export const useDicts = create<DictsState>()(
         },
 
         seedIfEmpty: async () => {
-            console.log("seedIfEmpty called");
+            const { data } = await supabase.auth.getSession();
+            const userId = data.session?.user?.id;
+            if (!userId) {
+                console.error("No user session in seedIfEmpty");
+                return;
+            }
+
             const now = new Date().toISOString();
             const gruppen = DEFAULT_GRUPPEN.map(g => ({ ...g, createdAt: now }));
-            const anbieter = DEFAULT_ANBIETER;
-
-            console.log("inserting gruppen:", gruppen);
 
             try {
-                await Promise.all(gruppen.map(g => insertGruppe(g)));
-                console.log("gruppen inserted");
-                await Promise.all(anbieter.map(a => insertAnbieter(a)));
-                console.log("anbieter inserted");
+                await Promise.all(gruppen.map(g => insertGruppe(g, userId)));
+                await Promise.all(DEFAULT_ANBIETER.map(a => insertAnbieter(a, userId)));
+                set({ gruppen, anbieter: DEFAULT_ANBIETER });
             } catch (e) {
                 console.error("seedIfEmpty error:", e);
             }
-
-            set({ gruppen, anbieter });
         },
+
+
         createGroup: async (name) => {
             const id = newId();
             const gruppe: Gruppe = { id, name, createdAt: new Date().toISOString() };
             set((s) => ({ gruppen: [...s.gruppen, gruppe] }));
-            await insertGruppe(gruppe);
+            const { data } = await supabase.auth.getSession();
+            const userId = data.session?.user?.id ?? "";
+            await insertGruppe(gruppe, userId);
             return id;
         },
 
@@ -124,7 +129,9 @@ export const useDicts = create<DictsState>()(
             const id = newId();
             const anbieter: Anbieter = { id, name, gruppenId };
             set((s) => ({ anbieter: [...s.anbieter, anbieter] }));
-            await insertAnbieter(anbieter);
+            const { data } = await supabase.auth.getSession();
+            const userId = data.session?.user?.id ?? "";
+            await insertAnbieter(anbieter, userId);
             return id;
         },
 

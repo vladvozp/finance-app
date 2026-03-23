@@ -71,8 +71,7 @@ export const useDicts = create<DictsState>()(
                 ]);
                 set({ gruppen, anbieter, loaded: true });
 
-                // Если пусто — засеять дефолтными
-                if (gruppen.length === 0) {
+                if (gruppen.length === 0 || anbieter.length === 0) {
                     await get().seedIfEmpty();
                 }
             } catch (e) {
@@ -84,20 +83,21 @@ export const useDicts = create<DictsState>()(
         seedIfEmpty: async () => {
             const { data } = await supabase.auth.getSession();
             const userId = data.session?.user?.id;
-            if (!userId) {
-                console.error("No user session in seedIfEmpty");
-                return;
-            }
+            if (!userId) return;
 
             const now = new Date().toISOString();
-            const gruppen = DEFAULT_GRUPPEN.map(g => ({ ...g, createdAt: now }));
+            const { gruppen: existingGruppen, anbieter: existingAnbieter } = get();
 
-            try {
+            if (existingGruppen.length === 0) {
+                const gruppen = DEFAULT_GRUPPEN.map(g => ({ ...g, createdAt: now }));
                 await Promise.all(gruppen.map(g => insertGruppe(g, userId)));
-                await Promise.all(DEFAULT_ANBIETER.map(a => insertAnbieter(a, userId)));
-                set({ gruppen, anbieter: DEFAULT_ANBIETER });
-            } catch (e) {
-                console.error("seedIfEmpty error:", e);
+                set({ gruppen });
+            }
+
+            if (existingAnbieter.length === 0) {
+                const anbieter = DEFAULT_ANBIETER;
+                await Promise.all(anbieter.map(a => insertAnbieter(a, userId)));
+                set({ anbieter });
             }
         },
 

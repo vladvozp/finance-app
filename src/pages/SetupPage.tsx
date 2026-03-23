@@ -1,9 +1,8 @@
 // src/pages/SetupPage.tsx
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAccountsStore } from "../store/accounts";
 import Button from "../components/Button";
-import { supabase } from "../lib/supabase";
 
 const CURRENCIES = ["EUR", "USD", "CHF", "GBP"];
 
@@ -16,14 +15,6 @@ export default function SetupPage() {
     const [balance, setBalance] = useState("");
     const [currency, setCurrency] = useState("EUR");
     const [error, setError] = useState("");
-
-    useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user?.is_anonymous) {
-                setBalance("5000");
-            }
-        });
-    }, []);
 
     const handleSubmit = async () => {
         if (!name.trim()) {

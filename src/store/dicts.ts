@@ -17,17 +17,17 @@ const newId = () =>
 
 // ---- Seed data ----
 const DEFAULT_GRUPPEN: Omit<Gruppe, "createdAt">[] = [
-    { id: "wohnen", name: "Wohnen" },
-    { id: "lebensmittel", name: "Lebensmittel & Haushalt" },
-    { id: "mobilitaet", name: "Mobilität" },
-    { id: "kommunikation", name: "Kommunikation & Technik" },
-    { id: "gesundheit", name: "Gesundheit" },
-    { id: "kleidung", name: "Kleidung & Pflege" },
-    { id: "bildung", name: "Bildung & Kurse" },
-    { id: "kinder", name: "Kinder & Familie" },
-    { id: "freizeit", name: "Freizeit & Medien" },
-    { id: "reisen", name: "Reisen & Urlaub" },
-    { id: "finanzen", name: "Finanzen & Versicherungen" },
+    { id: newId(), name: "Wohnen" },
+    { id: newId(), name: "Lebensmittel & Haushalt" },
+    { id: newId(), name: "Mobilität" },
+    { id: newId(), name: "Kommunikation & Technik" },
+    { id: newId(), name: "Gesundheit" },
+    { id: newId(), name: "Kleidung & Pflege" },
+    { id: newId(), name: "Bildung & Kurse" },
+    { id: newId(), name: "Kinder & Familie" },
+    { id: newId(), name: "Freizeit & Medien" },
+    { id: newId(), name: "Reisen & Urlaub" },
+    { id: newId(), name: "Finanzen & Versicherungen" },
 ];
 
 const DEFAULT_ANBIETER = [

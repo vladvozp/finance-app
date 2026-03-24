@@ -19,7 +19,11 @@ export default function Login() {
     <main className="py-6 flex flex-col">
       <div className="bg-white py-30 mx-auto">
         <h1 className="text-[18px] font-bold shadow-xl text-left">
-          Wie viel Geld hast du wirklich?
+          Wie viel kannst du heute wirklich ausgeben?
+
+          Nicht irgendwann.
+          Sondern jetzt – klar und ehrlich.
+
         </h1>
       </div>
       <GoogleLoginButton onClick={handleGoogleLogin} disabled={false} loading={false} />

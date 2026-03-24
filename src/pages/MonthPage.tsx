@@ -90,30 +90,28 @@ function MetricCard({
     const c = toneMap[tone];
 
     return (
-        <section
-            className={[
-                "min-w-0 border px-3 py-3",
-                c.wrap,
-                featured ? "md:col-span-2" : "",
-            ].join(" ")}
-        >
-            <div className={`min-w-0 text-[11px] font-medium uppercase tracking-wide ${c.title}`}>
+        <section className={`min-w-0 border px-4 py-4 ${c.wrap}`}>
+            <div className={`text-[11px] font-medium uppercase tracking-wide ${c.title}`}>
                 {title}
             </div>
 
             <div
                 className={[
-                    "mt-2 min-w-0 font-semibold tabular-nums tracking-tight",
+                    "mt-2 min-w-0 truncate font-semibold tabular-nums tracking-tight",
                     featured
-                        ? `truncate text-4xl sm:text-5xl ${c.value}`
-                        : `truncate text-lg sm:text-xl ${c.value}`,
+                        ? `text-4xl sm:text-5xl ${c.value}`
+                        : `text-2xl ${c.value}`,
                 ].join(" ")}
                 title={value}
             >
                 {value}
             </div>
 
-            {hint ? <p className={`mt-1 text-xs leading-5 ${c.hint}`}>{hint}</p> : null}
+            {hint ? (
+                <p className={`mt-2 text-sm leading-6 ${c.hint}`}>
+                    {hint}
+                </p>
+            ) : null}
         </section>
     );
 }

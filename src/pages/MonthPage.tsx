@@ -1,14 +1,13 @@
 // src/pages/MonthPage.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Plus, Settings } from "lucide-react";
 
 import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
-import { MoveLeft, Plus, Settings } from "lucide-react";
 
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
-
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -19,80 +18,184 @@ function fmtMoney(n: number) {
 
 function fmtDate(iso: string | null | undefined) {
     if (!iso) return "—";
+
     if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
         const [y, m, d] = iso.split("-").map(Number);
         return new Intl.DateTimeFormat("de-DE").format(new Date(y, m - 1, d));
     }
+
     const d = new Date(iso);
-    return isNaN(d.getTime()) ? "—" : new Intl.DateTimeFormat("de-DE").format(d);
+    return Number.isNaN(d.getTime())
+        ? "—"
+        : new Intl.DateTimeFormat("de-DE").format(d);
 }
 
 function addMonths(base: Date, delta: number) {
     return new Date(base.getFullYear(), base.getMonth() + delta, 1);
 }
+
 function monthPrefix(d: Date) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
 function monthLabelDE(d: Date) {
-    return new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(d);
+    return new Intl.DateTimeFormat("de-DE", {
+        month: "long",
+        year: "numeric",
+    }).format(d);
+}
+
+type MetricCardProps = {
+    title: string;
+    value: string;
+    hint?: string;
+    tone?: "neutral" | "red" | "yellow" | "green";
+    featured?: boolean;
+};
+
+function MetricCard({
+    title,
+    value,
+    hint,
+    tone = "neutral",
+    featured = false,
+}: MetricCardProps) {
+    const toneMap = {
+        neutral: {
+            wrap: "border-gray-300 bg-white",
+            title: "text-gray-700",
+            value: "text-gray-900",
+            hint: "text-gray-500",
+        },
+        red: {
+            wrap: "border-gray-300 bg-white",
+            title: "text-gray-700",
+            value: "text-red-700",
+            hint: "text-gray-500",
+        },
+        yellow: {
+            wrap: "border-gray-300 bg-white",
+            title: "text-gray-700",
+            value: "text-yellow-700",
+            hint: "text-gray-500",
+        },
+        green: {
+            wrap: "border-gray-300 bg-white",
+            title: "text-gray-700",
+            value: "text-green-700",
+            hint: "text-gray-500",
+        },
+    };
+
+    const c = toneMap[tone];
+
+    return (
+        <section
+            className={[
+                "min-w-0 border px-3 py-3",
+                c.wrap,
+                featured ? "md:col-span-2" : "",
+            ].join(" ")}
+        >
+            <div className={`min-w-0 text-[11px] font-medium uppercase tracking-wide ${c.title}`}>
+                {title}
+            </div>
+
+            <div
+                className={[
+                    "mt-2 min-w-0 font-semibold tabular-nums tracking-tight",
+                    featured
+                        ? `truncate text-4xl sm:text-5xl ${c.value}`
+                        : `truncate text-lg sm:text-xl ${c.value}`,
+                ].join(" ")}
+                title={value}
+            >
+                {value}
+            </div>
+
+            {hint ? <p className={`mt-1 text-xs leading-5 ${c.hint}`}>{hint}</p> : null}
+        </section>
+    );
 }
 
 export default function MonthPage() {
-    const { transactions, getTotalBalance, updateTransaction, removeTransaction, accounts, loaded, loadFromSupabase } = useAccountsStore();
-    const { loadFromSupabase: loadDicts, loaded: dictsLoaded } = useDicts();
-
-    useEffect(() => {
-        if (!loaded) loadFromSupabase();
-        if (!dictsLoaded) loadDicts();
-    }, []);
-
-
-
     const navigate = useNavigate();
     const todayISO = new Date().toISOString().slice(0, 10);
 
-    // Store
-    const totalBalance = getTotalBalance();
+    const {
+        transactions,
+        getTotalBalance,
+        updateTransaction,
+        removeTransaction,
+        accounts,
+        loaded,
+        loadFromSupabase,
+    } = useAccountsStore();
 
-    // Month navigation
+    const {
+        loadFromSupabase: loadDicts,
+        loaded: dictsLoaded,
+        gruppen,
+        anbieter,
+    } = useDicts();
+
+    useEffect(() => {
+        if (!loaded) void loadFromSupabase();
+        if (!dictsLoaded) void loadDicts();
+    }, [loaded, dictsLoaded, loadFromSupabase, loadDicts]);
+
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const d = new Date();
         return new Date(d.getFullYear(), d.getMonth(), 1);
     });
+
     const [onlyPlanned, setOnlyPlanned] = useState(false);
 
-    const selectedMonthPrefix = useMemo(() => monthPrefix(selectedMonth), [selectedMonth]);
-    const selectedMonthLabel = useMemo(() => monthLabelDE(selectedMonth), [selectedMonth]);
+    const totalBalance = getTotalBalance();
+
+    const selectedMonthPrefix = useMemo(
+        () => monthPrefix(selectedMonth),
+        [selectedMonth]
+    );
+
+    const selectedMonthLabel = useMemo(
+        () => monthLabelDE(selectedMonth),
+        [selectedMonth]
+    );
 
     const goPrevMonth = () => setSelectedMonth((m) => addMonths(m, -1));
-    const goNextMonth = () => setSelectedMonth((m) => addMonths(m, +1));
+    const goNextMonth = () => setSelectedMonth((m) => addMonths(m, 1));
     const goThisMonth = () => {
         const d = new Date();
         setSelectedMonth(new Date(d.getFullYear(), d.getMonth(), 1));
     };
 
-    // Dicts
-    const { gruppen, anbieter } = useDicts();
-
     const getKontoName = (id?: string) =>
         accounts.find((a) => a.id === id)?.name ?? id ?? "—";
+
     const getAnbieterName = (id?: string | null) =>
         anbieter.find((a) => a.id === id)?.name ?? id ?? "—";
+
     const getGruppeName = (id?: string | null) =>
         gruppen.find((g) => g.id === id)?.name ?? "—";
 
-    // Actions
     const markBooked = (id: string) => updateTransaction(id, { status: "booked" });
-    const markCancelled = (id: string) => updateTransaction(id, { status: "cancelled" });
+    const markCancelled = (id: string) =>
+        updateTransaction(id, { status: "cancelled" });
 
-    // Filtering
     const monthTx = useMemo(
-        () => transactions.filter((tx) => (tx.date ?? "").startsWith(selectedMonthPrefix)),
+        () =>
+            transactions.filter((tx) =>
+                (tx.date ?? "").startsWith(selectedMonthPrefix)
+            ),
         [transactions, selectedMonthPrefix]
     );
 
     const monthBookedTx = useMemo(
-        () => monthTx.filter((tx) => tx.status !== "planned" && tx.status !== "cancelled"),
+        () =>
+            monthTx.filter(
+                (tx) => tx.status !== "planned" && tx.status !== "cancelled"
+            ),
         [monthTx]
     );
 
@@ -102,114 +205,189 @@ export default function MonthPage() {
     );
 
     const tableTx = useMemo(
-        () => (onlyPlanned ? monthTx.filter((t) => t.status === "planned") : monthTx),
-        [onlyPlanned, monthTx]
+        () => (onlyPlanned ? monthPlannedTx : monthTx),
+        [onlyPlanned, monthPlannedTx, monthTx]
     );
 
     const expenseTotal = useMemo(
-        () => monthBookedTx.reduce((sum, tx) => {
-            if (tx.kind !== "expense") return sum;
-            return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-        }, 0),
+        () =>
+            monthBookedTx.reduce((sum, tx) => {
+                if (tx.kind !== "expense") return sum;
+                return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
+            }, 0),
         [monthBookedTx]
     );
 
     const futureTotal = useMemo(
-        () => monthPlannedTx.reduce((sum, tx) => {
-            if (tx.kind !== "expense") return sum;
-            return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-        }, 0),
+        () =>
+            monthPlannedTx.reduce((sum, tx) => {
+                if (tx.kind !== "expense") return sum;
+                return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
+            }, 0),
         [monthPlannedTx]
     );
 
     const available = totalBalance - futureTotal;
 
     return (
-        <div className="bg-white">
-            <main className="py-6 flex flex-col max-w-5xl mx-auto px-4 gap-4">
+        <div className="min-h-screen bg-white">
+            <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6">
                 <PageHeader
-                    left={null
-                     /*   <Link to="/login" className="flex items-center gap-2 text-sm text-gray-600 underline hover:text-gray-800">
-                            <MoveLeft className="w-5 h-5" /> Zurück
-                        </Link>
-                 */   }
+                    left={
+                        <div className="min-w-0">
+                            <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                                Gesamtstand
+                            </div>
+                            <div
+                                className="truncate text-base font-semibold tabular-nums tracking-tight text-gray-900 sm:text-lg"
+                                title={fmtMoney(totalBalance)}
+                            >
+                                {fmtMoney(totalBalance)}
+                            </div>
+                        </div>
+                    }
                     center={
-                        <div className="flex items-center justify-center gap-3">
-                            <button type="button" onClick={goPrevMonth}
-                                className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">‹</button>
-                            <div className="flex flex-col items-center leading-tight">
-                                <h1 className="text-sm font-semibold text-gray-600">{selectedMonthLabel}</h1>
-                                <button type="button" onClick={goThisMonth}
-                                    className="text-xs text-gray-500 underline hover:text-gray-700">
+                        <div className="flex min-w-0 items-center justify-center gap-2">
+                            <button
+                                type="button"
+                                onClick={goPrevMonth}
+                                className="border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50"
+                            >
+                                ‹
+                            </button>
+
+                            <div className="flex min-w-0 flex-col items-center leading-tight">
+                                <h1 className="text-sm font-semibold tracking-tight text-gray-800 whitespace-nowrap">
+                                    {selectedMonthLabel}
+                                </h1>
+                                <button
+                                    type="button"
+                                    onClick={goThisMonth}
+                                    className="text-[11px] text-gray-500 underline underline-offset-2 hover:text-gray-700"
+                                >
                                     Dieser Monat
                                 </button>
                             </div>
-                            <button type="button" onClick={goNextMonth}
-                                className="px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">›</button>
+
+                            <button
+                                type="button"
+                                onClick={goNextMonth}
+                                className="border border-gray-300 px-2 py-1 text-sm hover:bg-gray-50"
+                            >
+                                ›
+                            </button>
                         </div>
                     }
                     right={
-                        <Link to="/SettingsPage" aria-label="Einstellungen"
-                            className="group p-2 text-gray-600 transition inline-flex items-center justify-center">
-                            <Settings className="w-5 h-5 transition-transform duration-500 group-hover:animate-spin" />
+                        <Link
+                            to="/SettingsPage"
+                            aria-label="Einstellungen"
+                            className="group inline-flex items-center justify-center p-2 text-gray-600 transition"
+                        >
+                            <Settings className="h-6 w-6 transition-transform duration-500 group-hover:animate-spin" />
                         </Link>
                     }
                 />
 
-                {/* Kontostand */}
-                <section className="border p-2 bg-white">
-                    <div className="text-xs text-gray-500">Aktueller Kontostand (gesamt)</div>
-                    <div className="text-lg font-bold text-gray-800">{fmtMoney(totalBalance)}</div>
+                {/* Metrics */}
+                <section className="flex flex-col gap-3">
+                    <MetricCard
+                        title="Was dir bleibt"
+                        value={fmtMoney(available)}
+                        hint="Nach allen geplanten Ausgaben"
+                        tone="green"
+                        featured
+                    />
+
+                    <MetricCard
+                        title="Bald fällig"
+                        value={fmtMoney(futureTotal)}
+                        hint="Geplante Ausgaben"
+                        tone="yellow"
+                    />
+
+                    <MetricCard
+                        title="Bereits ausgegeben"
+                        value={fmtMoney(expenseTotal)}
+                        hint="Ausgaben in diesem Monat"
+                        tone="red"
+                    />
+
+
                 </section>
 
-                {/* RYG Summary */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="border rounded-sm p-2 bg-red-50 border-red-200">
-                        <div className="text-xs font-semibold text-red-700">Bereits ausgegeben</div>
-                        <div className="text-sm font-bold text-red-800">{fmtMoney(expenseTotal)}</div>
-                        <p className="text-[11px] text-red-700 mt-1">Ausgaben in diesem Monat</p>
-                    </div>
-                    <div className="border rounded-sm p-2 bg-yellow-50 border-yellow-200">
-                        <div className="text-xs font-semibold text-yellow-700">Bald fällig</div>
-                        <div className="text-sm font-bold text-yellow-800">{fmtMoney(futureTotal)}</div>
-                        <p className="text-[11px] text-yellow-700 mt-1">Geplante Ausgaben</p>
-                    </div>
-                    <div className="border rounded-sm p-2 bg-green-50 border-green-200">
-                        <div className="text-xs font-semibold text-green-700">Was dir bleibt</div>
-                        <div className="text-sm font-bold text-green-800">{fmtMoney(available)}</div>
-                        <p className="text-[11px] text-green-700 mt-1">Nach allen geplanten Ausgaben</p>
-                    </div>
-                </section>
-
-                {/* Transactions */}
-                <section className="flex-1 flex flex-col gap-3">
+                {/* Content */}
+                <section className="flex flex-1 flex-col gap-3">
                     {monthTx.length === 0 ? (
-                        <div className="card bg-base-200 p-6">
-                            <p className="opacity-80 text-sm mb-3">Füge deine erste Transaktion hinzu</p>
-                            <Button variant="primary" icon={Plus} onClick={() => navigate("/GuestTransactionOne")}>
-                                Transaktion
-                            </Button>
+                        <div className="border border-gray-300 bg-white px-4 py-6">
+                            <h2 className="text-base font-semibold text-gray-900">
+                                Noch keine Transaktionen in diesem Monat
+                            </h2>
+
+                            <p className="mt-1 text-sm text-gray-500">
+                                Starte mit den Ausgabe oder Einnahme.
+                            </p>
+
+                            <div className="mt-4">
+                                <Button
+                                    variant="primary"
+                                    icon={Plus}
+                                    onClick={() => navigate("/GuestTransactionOne")}
+                                >
+                                    Transaktion
+                                </Button>
+                            </div>
                         </div>
                     ) : (
                         <>
-                            <div className="flex items-center gap-2">
-                                <input id="only-planned" type="checkbox" checked={onlyPlanned}
-                                    onChange={(e) => setOnlyPlanned(e.target.checked)} className="h-4 w-4" />
-                                <label htmlFor="only-planned" className="text-sm text-gray-700">Nur geplannt</label>
+                            <div className="flex flex-wrap items-center justify-between gap-3 border border-gray-300 bg-white px-3 py-2">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <input
+                                        id="only-planned"
+                                        type="checkbox"
+                                        checked={onlyPlanned}
+                                        onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                        className="h-4 w-4"
+                                    />
+                                    <label htmlFor="only-planned" className="text-sm text-gray-700">
+                                        Nur geplant
+                                    </label>
+                                </div>
+
+                                <Button
+                                    variant="primary"
+                                    icon={Plus}
+                                    onClick={() => navigate("/GuestTransactionOne")}
+                                >
+                                    Transaktion
+                                </Button>
                             </div>
 
-                            <div className="overflow-x-auto border shadow-sm border-gray-300 max-h-[60vh]">
-                                <table className="w-full border-collapse table-fixed text-sm">
-                                    <thead className="sticky top-0 z-10 bg-white">
-                                        <tr className="text-xs text-gray-700">
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[80px]">Datum</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[120px]">Konto</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[150px]">Anbieter</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[150px]">Gruppe</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-right w-[130px]">Betrag</th>
-                                            <th className="border border-gray-200 px-2 py-2 text-left w-[220px]">Aktion</th>
+                            <div className="overflow-x-auto border border-gray-300 bg-white">
+                                <table className="w-full table-fixed border-collapse text-sm">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Datum
+                                            </th>
+                                            <th className="w-[120px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Konto
+                                            </th>
+                                            <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Anbieter
+                                            </th>
+                                            <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Gruppe
+                                            </th>
+                                            <th className="w-[120px] border-b border-gray-300 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Betrag
+                                            </th>
+                                            <th className="w-[220px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                Aktion
+                                            </th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         {tableTx.map((tx) => {
                                             const d = (tx.date ?? "").slice(0, 10);
@@ -218,60 +396,117 @@ export default function MonthPage() {
                                             const isOverdue = isPlanned && d < todayISO;
                                             const isDueToday = isPlanned && d === todayISO;
 
-                                            const rowClass = isCancelled ? "bg-gray-50 text-gray-500 opacity-70"
-                                                : isOverdue ? "bg-red-50"
-                                                    : isDueToday ? "bg-yellow-50" : "";
+                                            const rowClass = isCancelled
+                                                ? "bg-gray-50 text-gray-500"
+                                                : isOverdue
+                                                    ? "bg-red-50"
+                                                    : isDueToday
+                                                        ? "bg-yellow-50"
+                                                        : "hover:bg-gray-50";
 
-                                            const amountClass = isCancelled ? "text-gray-500 font-semibold"
-                                                : tx.kind === "income" ? "text-green-700 font-semibold"
+                                            const amountClass = isCancelled
+                                                ? "text-gray-500 font-semibold"
+                                                : tx.kind === "income"
+                                                    ? "text-green-700 font-semibold"
                                                     : "text-red-700 font-semibold";
 
                                             return (
-                                                <tr key={tx.id} className={`${rowClass} ${rowClass ? "" : "hover:bg-gray-50"}`}>
-                                                    <td className="border border-gray-200 px-2 py-1 whitespace-nowrap align-middle">
-                                                        <div className="flex items-center gap-2">
-                                                            <span>{fmtDate(tx.date)}</span>
+                                                <tr key={tx.id} className={rowClass}>
+                                                    <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <div className="flex min-w-0 items-center gap-2">
+                                                            <span className="truncate">{fmtDate(tx.date)}</span>
+
                                                             {isCancelled ? (
-                                                                <span className="text-[10px] px-2 py-[2px] rounded-full border border-gray-300 bg-gray-50 text-gray-600">✖ cancelled</span>
+                                                                <span className="shrink-0 border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
+                                                                    storniert
+                                                                </span>
                                                             ) : isPlanned ? (
-                                                                <span className={`text-[10px] px-2 py-[2px] rounded-full border ${isOverdue ? "border-red-300 bg-red-50 text-red-800" : isDueToday ? "border-yellow-300 bg-yellow-50 text-yellow-800" : "border-gray-300 bg-gray-50 text-gray-700"}`}>
-                                                                    ⏳ planned
+                                                                <span
+                                                                    className={`shrink-0 border px-2 py-[1px] text-[10px] ${isOverdue
+                                                                        ? "border-red-300 text-red-700"
+                                                                        : isDueToday
+                                                                            ? "border-yellow-400 text-yellow-700"
+                                                                            : "border-gray-300 text-gray-600"
+                                                                        }`}
+                                                                >
+                                                                    geplant
                                                                 </span>
                                                             ) : null}
                                                         </div>
                                                     </td>
-                                                    <td className="border border-gray-200 px-2 py-1 align-middle">
-                                                        <span className="block truncate">{getKontoName((tx as any).kontoId)}</span>
+
+                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <span
+                                                            className="block truncate"
+                                                            title={getKontoName((tx as any).kontoId)}
+                                                        >
+                                                            {getKontoName((tx as any).kontoId)}
+                                                        </span>
                                                     </td>
-                                                    <td className="border border-gray-200 px-2 py-1 align-middle">
-                                                        <span className="block truncate">{tx.kind === "expense" ? getAnbieterName((tx as any).anbieterId) : "—"}</span>
+
+                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <span
+                                                            className="block truncate"
+                                                            title={
+                                                                tx.kind === "expense"
+                                                                    ? getAnbieterName((tx as any).anbieterId)
+                                                                    : "—"
+                                                            }
+                                                        >
+                                                            {tx.kind === "expense"
+                                                                ? getAnbieterName((tx as any).anbieterId)
+                                                                : "—"}
+                                                        </span>
                                                     </td>
-                                                    <td className="border border-gray-200 px-2 py-1 align-middle">
-                                                        <span className="block truncate">{tx.kind === "expense" ? getGruppeName((tx as any).gruppeId) : "—"}</span>
+
+                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <span
+                                                            className="block truncate"
+                                                            title={
+                                                                tx.kind === "expense"
+                                                                    ? getGruppeName((tx as any).gruppeId)
+                                                                    : "—"
+                                                            }
+                                                        >
+                                                            {tx.kind === "expense"
+                                                                ? getGruppeName((tx as any).gruppeId)
+                                                                : "—"}
+                                                        </span>
                                                     </td>
-                                                    <td className={`border border-gray-200 px-2 py-1 text-right tabular-nums align-middle ${amountClass}`}>
+
+                                                    <td
+                                                        className={`border-b border-gray-200 px-3 py-3 text-right tabular-nums align-middle ${amountClass}`}
+                                                        title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                    >
                                                         {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
                                                     </td>
-                                                    <td className="border border-gray-200 px-2 py-1 align-middle">
+
+                                                    <td className="border-b border-gray-200 px-3 py-3 align-middle">
                                                         {isPlanned ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <button type="button" onClick={() => markBooked(tx.id)}
-                                                                    className="text-xs px-2 py-1 rounded border border-green-300 bg-green-50 hover:bg-green-100">
-                                                                    ✅ durchführen
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => markBooked(tx.id)}
+                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                >
+                                                                    durchführen
                                                                 </button>
-                                                                <button type="button" onClick={() => markCancelled(tx.id)}
-                                                                    className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100">
-                                                                    🗑 stornieren
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => markCancelled(tx.id)}
+                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                >
+                                                                    stornieren
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex flex-wrap items-center gap-2">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => navigate(`/transaction/${tx.id}/edit`)}
-                                                                    className="text-xs px-2 py-1 rounded border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
+                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                 >
-                                                                    ✏️ bearbeiten
+                                                                    bearbeiten
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -280,9 +515,9 @@ export default function MonthPage() {
                                                                             removeTransaction(tx.id);
                                                                         }
                                                                     }}
-                                                                    className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 hover:bg-red-100 text-red-700"
+                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                 >
-                                                                    🗑 löschen
+                                                                    löschen
                                                                 </button>
                                                             </div>
                                                         )}
@@ -292,12 +527,6 @@ export default function MonthPage() {
                                         })}
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <div className="py-6 flex flex-col">
-                                <Button variant="primary" icon={Plus} onClick={() => navigate("/GuestTransactionOne")}>
-                                    Transaktion
-                                </Button>
                             </div>
                         </>
                     )}

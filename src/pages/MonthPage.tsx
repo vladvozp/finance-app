@@ -1,4 +1,3 @@
-// src/pages/MonthPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Settings } from "lucide-react";
@@ -8,6 +7,7 @@ import Button from "../components/Button";
 
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
+import { useIncomeDicts } from "../store/incomeDicts";
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -137,10 +137,25 @@ export default function MonthPage() {
         anbieter,
     } = useDicts();
 
+    const {
+        loadFromSupabase: loadIncomeDicts,
+        loaded: incomeDictsLoaded,
+        categories: incomeCategories,
+        sources: incomeSources,
+    } = useIncomeDicts();
+
     useEffect(() => {
         if (!loaded) void loadFromSupabase();
         if (!dictsLoaded) void loadDicts();
-    }, [loaded, dictsLoaded, loadFromSupabase, loadDicts]);
+        if (!incomeDictsLoaded) void loadIncomeDicts();
+    }, [
+        loaded,
+        dictsLoaded,
+        incomeDictsLoaded,
+        loadFromSupabase,
+        loadDicts,
+        loadIncomeDicts,
+    ]);
 
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const d = new Date();
@@ -168,7 +183,7 @@ export default function MonthPage() {
         setSelectedMonth(new Date(d.getFullYear(), d.getMonth(), 1));
     };
 
-    const getKontoName = (id?: string) =>
+    const getKontoName = (id?: string | null) =>
         accounts.find((a) => a.id === id)?.name ?? id ?? "—";
 
     const getAnbieterName = (id?: string | null) =>
@@ -176,6 +191,12 @@ export default function MonthPage() {
 
     const getGruppeName = (id?: string | null) =>
         gruppen.find((g) => g.id === id)?.name ?? "—";
+
+    const getIncomeSourceName = (id?: string | null) =>
+        incomeSources.find((s) => s.id === id)?.name ?? id ?? "—";
+
+    const getIncomeCategoryName = (id?: string | null) =>
+        incomeCategories.find((c) => c.id === id)?.name ?? id ?? "—";
 
     const markBooked = (id: string) => updateTransaction(id, { status: "booked" });
     const markCancelled = (id: string) =>
@@ -216,7 +237,7 @@ export default function MonthPage() {
         [monthBookedTx]
     );
 
-    const futureTotal = useMemo(
+    const plannedExpenseTotal = useMemo(
         () =>
             monthPlannedTx.reduce((sum, tx) => {
                 if (tx.kind !== "expense") return sum;
@@ -225,7 +246,16 @@ export default function MonthPage() {
         [monthPlannedTx]
     );
 
-    const available = totalBalance - futureTotal;
+    const plannedIncomeTotal = useMemo(
+        () =>
+            monthPlannedTx.reduce((sum, tx) => {
+                if (tx.kind !== "income") return sum;
+                return sum + (Number.isFinite(tx.amount) ? tx.amount : 0);
+            }, 0),
+        [monthPlannedTx]
+    );
+
+    const available = totalBalance - plannedExpenseTotal + plannedIncomeTotal;
 
     return (
         <div className="min-h-screen bg-white">
@@ -287,19 +317,25 @@ export default function MonthPage() {
                     }
                 />
 
-                {/* Metrics */}
                 <section className="flex flex-col gap-3">
                     <MetricCard
                         title="Was dir bleibt"
                         value={fmtMoney(available)}
-                        hint="Nach allen geplanten Ausgaben"
+                        hint="Mit geplanten Einnahmen und Ausgaben"
                         tone="green"
                         featured
                     />
 
                     <MetricCard
+                        title="Geplante Einnahmen"
+                        value={fmtMoney(plannedIncomeTotal)}
+                        hint="Noch nicht gebucht"
+                        tone="neutral"
+                    />
+
+                    <MetricCard
                         title="Bald fällig"
-                        value={fmtMoney(futureTotal)}
+                        value={fmtMoney(plannedExpenseTotal)}
                         hint="Geplante Ausgaben"
                         tone="yellow"
                     />
@@ -310,11 +346,8 @@ export default function MonthPage() {
                         hint="Ausgaben in diesem Monat"
                         tone="red"
                     />
-
-
                 </section>
 
-                {/* Content */}
                 <section className="flex flex-1 flex-col gap-3">
                     {monthTx.length === 0 ? (
                         <div className="border border-gray-300 bg-white px-4 py-6">
@@ -323,16 +356,24 @@ export default function MonthPage() {
                             </h2>
 
                             <p className="mt-1 text-sm text-gray-500">
-                                Starte mit den Ausgabe oder Einnahme.
+                                Starte mit deiner ersten Ausgabe oder Einnahme.
                             </p>
 
-                            <div className="mt-4">
+                            <div className="mt-4 flex flex-wrap gap-2">
                                 <Button
                                     variant="primary"
                                     icon={Plus}
                                     onClick={() => navigate("/GuestTransactionOne")}
                                 >
-                                    Transaktion
+                                    Ausgabe
+                                </Button>
+
+                                <Button
+                                    variant="primary"
+                                    icon={Plus}
+                                    onClick={() => navigate("/IncomeTransactionOne")}
+                                >
+                                    Einnahme
                                 </Button>
                             </div>
                         </div>
@@ -352,13 +393,23 @@ export default function MonthPage() {
                                     </label>
                                 </div>
 
-                                <Button
-                                    variant="primary"
-                                    icon={Plus}
-                                    onClick={() => navigate("/GuestTransactionOne")}
-                                >
-                                    Transaktion
-                                </Button>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        variant="primary"
+                                        icon={Plus}
+                                        onClick={() => navigate("/GuestTransactionOne")}
+                                    >
+                                        Ausgabe
+                                    </Button>
+
+                                    <Button
+                                        variant="primary"
+                                        icon={Plus}
+                                        onClick={() => navigate("/IncomeTransactionOne")}
+                                    >
+                                        Einnahme
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="overflow-x-auto border border-gray-300 bg-white">
@@ -372,10 +423,10 @@ export default function MonthPage() {
                                                 Konto
                                             </th>
                                             <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-                                                Anbieter
+                                                Anbieter / Quelle
                                             </th>
                                             <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-                                                Gruppe
+                                                Gruppe / Kategorie
                                             </th>
                                             <th className="w-[120px] border-b border-gray-300 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Betrag
@@ -448,12 +499,12 @@ export default function MonthPage() {
                                                             title={
                                                                 tx.kind === "expense"
                                                                     ? getAnbieterName((tx as any).anbieterId)
-                                                                    : "—"
+                                                                    : getIncomeSourceName((tx as any).quelleId)
                                                             }
                                                         >
                                                             {tx.kind === "expense"
                                                                 ? getAnbieterName((tx as any).anbieterId)
-                                                                : "—"}
+                                                                : getIncomeSourceName((tx as any).quelleId)}
                                                         </span>
                                                     </td>
 
@@ -463,12 +514,12 @@ export default function MonthPage() {
                                                             title={
                                                                 tx.kind === "expense"
                                                                     ? getGruppeName((tx as any).gruppeId)
-                                                                    : "—"
+                                                                    : getIncomeCategoryName((tx as any).incomeKategorieId)
                                                             }
                                                         >
                                                             {tx.kind === "expense"
                                                                 ? getGruppeName((tx as any).gruppeId)
-                                                                : "—"}
+                                                                : getIncomeCategoryName((tx as any).incomeKategorieId)}
                                                         </span>
                                                     </td>
 
@@ -501,7 +552,13 @@ export default function MonthPage() {
                                                             <div className="flex flex-wrap items-center gap-2">
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => navigate(`/transaction/${tx.id}/edit`)}
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            tx.kind === "income"
+                                                                                ? `/income-transaction/${tx.id}/edit`
+                                                                                : `/transaction/${tx.id}/edit`
+                                                                        )
+                                                                    }
                                                                     className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                 >
                                                                     bearbeiten

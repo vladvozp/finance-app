@@ -1,39 +1,26 @@
-
-
 export type TxStatus = "planned" | "booked" | "cancelled";
 
-/** Domain model for a transaction kept in LocalStorage. */
 export type Tx = {
     id: string;
+
     kind: "expense" | "income";
+    status: TxStatus;
+
     amount: number;
     date: string | null;
     createdAt?: string;
 
-    // NEW: lifecycle
-    status: TxStatus;
+    kontoId?: string | null;
 
-
-    // Old Planned
-    isPlanned?: boolean;   // Planned  
-    isDone?: boolean;      // for planned
-
-
-
-    // EXPENSE-only
+    // expense
     gruppeId?: string;
-    kategorieId?: string;
     anbieterId?: string | null;
 
-    // INCOME-only
-    incomeType?: "GEHALT" | "RENTE" | "MIETE" | "VERKAUF" | "GESCHENK" | "SONSTIGES";
+    // income
     quelleId?: string | null;
-    quelleName?: string | null;
+    incomeKategorieId?: string | null;
 
-    // COMMON
-    kontoId?: string | null;
-    // konto?: string;
+    // common
     remark?: string | null;
     repeat?: boolean;
-
 };

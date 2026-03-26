@@ -1,19 +1,18 @@
-// src/hooks/useTransactionForm.ts
+// src/hooks/useIncomeTransactionForm.ts
 import { useState, ChangeEvent, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { txDraft } from "../store/transactionDraft";
 import { toCents } from "../utils/currency";
-import { bumpProviderStats } from "../services/providerStatsService";
-import { loadProviderStats, saveProviderStats, type ProviderStats } from "../repositories/providerStatsRepository";
 import type { Tx, TxStatus } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 
-export function useTransactionForm(
+export function useIncomeTransactionForm(
     amount: number,
     selectedAccountId: string,
     selectedAccountName: string,
-    anbieterId: string,
-    gruppeId: string,
+    quelleId: string,
+    incomeKategorieId: string,
+    remark: string,
 ) {
     const navigate = useNavigate();
     const addTransaction = useAccountsStore((s) => s.addTransaction);
@@ -31,10 +30,6 @@ export function useTransactionForm(
             : ""
     );
 
-    const [providerStats, setProviderStats] = useState<ProviderStats>(() =>
-        loadProviderStats()
-    );
-
     const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;
         const cleaned = v.replace(/[^\d.,\s]/g, "");
@@ -43,30 +38,45 @@ export function useTransactionForm(
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-        if (["-", "e", "E", "+"].includes(e.key)) e.preventDefault();
+        if (["-", "e", "E", "+"].includes(e.key)) {
+            e.preventDefault();
+        }
     };
 
     const handleBlur = () => {
         const cents = toCents(amountStr);
+
         if (cents <= 0) {
             txDraft.setMany({ amount: 0, amountCents: 0 });
             setAmountStr("");
-        } else {
-            const euros = cents / 100;
-            txDraft.setMany({ amount: euros, amountCents: cents });
-            setAmountStr(
-                euros.toLocaleString("de-DE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
-            );
+            return;
         }
+
+        const euros = cents / 100;
+
+        txDraft.setMany({
+            amount: euros,
+            amountCents: cents,
+        });
+
+        setAmountStr(
+            euros.toLocaleString("de-DE", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })
+        );
     };
 
-    const canSave = toCents(amountStr) > 0 && !!selectedAccountId && date !== null;
+    const canSave =
+        toCents(amountStr) > 0 &&
+        !!selectedAccountId &&
+        !!quelleId &&
+        !!incomeKategorieId &&
+        date !== null;
 
     const handleSave = () => {
         if (!canSave || saving) return;
+
         setSaving(true);
 
         try {
@@ -78,20 +88,21 @@ export function useTransactionForm(
 
             const tx: Tx = {
                 id: crypto.randomUUID(),
-                kind: "expense",
+                kind: "income",
                 kontoId: selectedAccountId,
-                amount: -(cents / 100),
+                amount: cents / 100,
                 date: isoDate,
                 createdAt: nowISO,
                 status,
-                gruppeId: gruppeId || undefined,
-                anbieterId: anbieterId || undefined,
+                quelleId: quelleId || null,
+                incomeKategorieId: incomeKategorieId || null,
+                remark: remark?.trim() || null,
             };
 
             addTransaction(tx);
 
             txDraft.setMany({
-                kind: "expense",
+                kind: "income",
                 kontoId: selectedAccountId,
                 amount: tx.amount,
                 date: isoDate,
@@ -99,13 +110,10 @@ export function useTransactionForm(
                 status,
                 accountId: selectedAccountId,
                 kontoName: selectedAccountName,
+                quelleId,
+                incomeKategorieId,
+                remark,
             });
-
-            if (anbieterId) {
-                const updated = bumpProviderStats(providerStats, anbieterId, gruppeId || "");
-                setProviderStats(updated);
-                saveProviderStats(updated);
-            }
 
             alert("Saved ✅");
             navigate("/MonthPage");
@@ -121,7 +129,6 @@ export function useTransactionForm(
         setIsPlanned,
         saving,
         amountStr,
-        providerStats,
         onAmountChange,
         handleKeyDown,
         handleBlur,

@@ -9,7 +9,11 @@ import GuestTransactionOne from "../pages/GuestTransactionOne.tsx"
 import SetupPage from "../pages/SetupPage.tsx";
 import AccountEditPage from "../pages/AccountEditPage.tsx";
 import TransactionEditPage from "../pages/TransactionEditPage.tsx";
+import TransactionEditPage from "../pages/TransactionEditPage.tsx"
 import RootGate from "../app/RootGate.tsx"
+import IncomeTransactionOne from "../pages/IncomeTransactionOne.tsx"
+
+
 
 export const router = createBrowserRouter([
   {
@@ -25,7 +29,8 @@ export const router = createBrowserRouter([
       { path: "/setup", element: <SetupPage /> },
       { path: "/account/:id", element: <AccountEditPage /> },
       { path: "/transaction/:id/edit", element: <TransactionEditPage /> },
-
+      { path: "/income-transaction/:id/edit", element: <IncomeTransactionEditPage /> },
+      { path: "/income-transaction", element: <IncomeTransactionOne /> },
     ],
   },
 ]);

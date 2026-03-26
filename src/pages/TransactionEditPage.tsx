@@ -83,7 +83,6 @@ export default function TransactionEditPage() {
             amount: -(cents / 100),
             date: isoDate,
             status,
-            isPlanned: status === "planned",
             gruppeId: gruppeId || undefined,
             anbieterId: anbieterId || undefined,
             remark: remark || undefined,
@@ -148,7 +147,7 @@ export default function TransactionEditPage() {
                     <div className="mt-3 flex items-center gap-2">
                         <input id="tx-planned" type="checkbox" checked={isPlanned}
                             onChange={(e) => setIsPlanned(e.target.checked)} className="h-4 w-4" />
-                        <label htmlFor="tx-planned" className="text-sm text-gray-700">Geplannt</label>
+                        <label htmlFor="tx-planned" className="text-sm text-gray-700">Geplant</label>
                     </div>
                 </div>
 
@@ -161,8 +160,8 @@ export default function TransactionEditPage() {
                         onChange={onProviderChange}
                         placeholder="z. B. Rewe, Aral, Amazon"
                         allowCreate
-                        onCreate={(name) => {
-                            const id = createProvider(name, "");
+                        onCreate={async (name) => {
+                            const id = await createProvider(name, "");
                             setAnbieterId(id);
                         }}
                         allowEdit
@@ -183,8 +182,8 @@ export default function TransactionEditPage() {
                         onChange={onGroupChange}
                         placeholder="Gruppe wählen…"
                         allowCreate
-                        onCreate={(name) => {
-                            const id = createGroup(name);
+                        onCreate={async (name) => {
+                            const id = await createGroup(name);
                             setGruppeId(id);
                         }}
                         allowEdit

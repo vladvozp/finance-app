@@ -405,7 +405,7 @@ export default function MonthPage() {
                                     <Button
                                         variant="primary"
                                         icon={Plus}
-                                        onClick={() => navigate("/IncomeTransactionOne")}
+                                        onClick={() => navigate("/income-transaction")}
                                     >
                                         Einnahme
                                     </Button>

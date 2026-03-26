@@ -9,7 +9,7 @@ import GuestTransactionOne from "../pages/GuestTransactionOne.tsx"
 import SetupPage from "../pages/SetupPage.tsx";
 import AccountEditPage from "../pages/AccountEditPage.tsx";
 import TransactionEditPage from "../pages/TransactionEditPage.tsx";
-import TransactionEditPage from "../pages/TransactionEditPage.tsx"
+import IncomeTransactionEditPage from "../pages/IncomeTransactionEditPage.tsx";
 import RootGate from "../app/RootGate.tsx"
 import IncomeTransactionOne from "../pages/IncomeTransactionOne.tsx"
 

@@ -18,16 +18,16 @@ export default function Login() {
   return (
     <main className="py-6 flex flex-col">
       <div className="bg-white py-30 mx-auto">
-        <h1 className="text-[18px] font-bold shadow-xl text-left">
-          Wie viel kannst du heute wirklich ausgeben?
-
-          Nicht irgendwann.
-          Sondern jetzt – klar und ehrlich.
-
-        </h1>
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 leading-tight">
+            Wie viel kannst du heute wirklich ausgeben?
+          </h1>
+          <p className="mt-4 text-base text-gray-600">
+            Nicht am Monatsende. Sondern jetzt.
+          </p>
+        </div>
+        <GoogleLoginButton onClick={handleGoogleLogin} disabled={false} loading={false} />
       </div>
-      <GoogleLoginButton onClick={handleGoogleLogin} disabled={false} loading={false} />
-
       {error && <p className="text-sm text-red-500 text-center">{error}</p>}
     </main>
 

@@ -92,7 +92,7 @@ const GuestTransactionOne: React.FC = () => {
         onAmountChange,
         handleKeyDown,
         handleBlur,
-        canSave,
+        // canSave,
         handleSave,
     } = useTransactionForm(
         amount,
@@ -193,24 +193,63 @@ const GuestTransactionOne: React.FC = () => {
                 />
 
                 <section className="flex-1">
-                    <h1 className="text-lg text-gray-600 mb-6">Transaktion anlegen</h1>
-                    <div className="mt-6">
-                        <h2 className="text-center text-black text-base font-medium mb-1">Betrag</h2>
-                        <input
-                            inputMode="decimal"
-                            placeholder="0,00"
-                            value={amountStr}
-                            onChange={onAmountChange}
-                            onKeyDown={handleKeyDown}
-                            onBlur={handleBlur}
-                            className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-                            aria-label="Betrag"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Nur positive Beträge. Beispiel: 12,99</p>
-                    </div>
+                    <input
+                        autoFocus
+                        inputMode="decimal"
+                        placeholder="0,00 €"
+                        value={amountStr}
+                        onChange={onAmountChange}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && amountStr) {
+                                handleSave();
+                            }
+                        }}
+                        onBlur={handleBlur}
+                        className="
+      w-full
+  text-4xl font-semibold text-center
+  h-16
+  bg-transparent
+  outline-none
+  placeholder-gray-300
+    "
+                        aria-label=""
+                    />
                 </section>
 
                 <section className="mt-6" ref={comboboxRef}>
+
+                    <Combobox<Provider>
+                        label="Was war das?"
+                        helperText="optional"
+                        options={providerOptions}
+                        value={anbieterId}
+                        onChange={onProviderChange}
+                        placeholder="Lidl, Kaffee, Tanken …"
+                        allowCreate
+                        onCreate={(name) => {
+                            const id = createProvider(name, "");
+                            txDraft.set("anbieterId", id);
+                        }}
+                        allowEdit
+                        onEdit={(id, newName) => renameProvider(id, newName)}
+                        onDelete={(id) => {
+                            deleteProvider(id);
+                            if (anbieterId === id) txDraft.set("anbieterId", "");
+                        }}
+                    />
+
+
+
+
+
+
+
+
+
+
+
+
                     <h2 className="text-center text-black text-base font-medium mb-1">Konto</h2>
 
                     <div className="relative">
@@ -367,26 +406,6 @@ const GuestTransactionOne: React.FC = () => {
 
                     <div className="flex gap-3 mt-6" />
 
-                    <Combobox<Provider>
-                        label="Anbieter"
-                        helperText="Meistgenutzte Anbieter stehen oben, z. B. Rewe, Aldi, Aral …"
-                        options={providerOptions}
-                        value={anbieterId}
-                        onChange={onProviderChange}
-                        placeholder="z. B. Rewe, Aral, Amazon"
-                        allowCreate
-                        onCreate={(name) => {
-                            const id = createProvider(name, "");
-                            txDraft.set("anbieterId", id);
-                        }}
-                        allowEdit
-                        onEdit={(id, newName) => renameProvider(id, newName)}
-                        onDelete={(id) => {
-                            deleteProvider(id);
-                            if (anbieterId === id) txDraft.set("anbieterId", "");
-                        }}
-                    />
-
                     <div className="mb-2 flex items-center justify-between mt-4">
                         <div className="text-base font-medium">Gruppe</div>
                         <span className="text-xs text-gray-500">optional, z. B. Essen, Mobilität …</span>
@@ -434,13 +453,18 @@ const GuestTransactionOne: React.FC = () => {
                     </div>
 
                     <div className="mt-6">
-                        <Button variant="primary" icon={Save} disabled={!canSave || saving} onClick={handleSave}>
+                        <Button
+                            variant="primary"
+                            icon={Save}
+                            disabled={!amountStr || saving}
+                            onClick={handleSave}
+                        >
                             {saving ? "Speichern…" : "Speichern"}
                         </Button>
                     </div>
                 </section>
             </main>
-        </div>
+        </div >
     );
 };
 

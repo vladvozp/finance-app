@@ -44,10 +44,12 @@ export default function SetupPage() {
     return (
         <div className="bg-white py-30 mx-auto">
             <div className="flex flex-col px-5 gap-6">
-                <h1 className="text-sm font-bold text-gray-800">  </h1>
-                <p className="text-sm font-bold text-gray-800">
-                    Erstelle dein erstes Konto <p> und sieh sofort deinen aktuellen Kontostand.
-                    </p></p>
+                <div className="mb-10 text-center">
+                    <h1 className="text-sm font-bold text-gray-800">  </h1>
+                    <p className="text-xl font-bold text-gray-800">
+                        Erstelle dein erstes Konto <p> und sieh sofort deinen aktuellen Kontostand.
+                        </p></p>
+                </div>
                 <div className="flex flex-col gap-6">
                     {/* Name */}
                     <div>

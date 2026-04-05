@@ -372,7 +372,7 @@ export default function MonthPage() {
 
                 <section className="flex flex-1 flex-col gap-3">
                     {monthTx.length === 0 ? (
-                        <div className="border border-gray-300 bg-white px-4 py-6">
+                        <div className="w-full space-y-4 border border-gray-300 bg-white p-4">
                             <h2 className="text-base font-semibold text-gray-900">
                                 Noch keine Transaktionen in diesem Monat
                             </h2>
@@ -381,7 +381,7 @@ export default function MonthPage() {
                                 Starte mit deiner ersten Ausgabe oder Einnahme.
                             </p>
 
-                            <div className="space-y-4 bg-slate-50 p-4">
+                            <div className="w-full space-y-4 border border-gray-300 bg-white p-4">
                                 <EntryCard
                                     to="/GuestTransactionOne"
                                     title="Neue Ausgabe"
@@ -402,23 +402,24 @@ export default function MonthPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="flex flex-wrap items-center justify-between gap-3 border border-gray-300 bg-white px-3 py-2">
-
-                                <div className="flex flex-wrap gap-2">
-                                    <EntryCard
-                                        to="/GuestTransactionOne"
-                                        title="Neue Ausgabe"
-                                        subtitle="Geld ausgeben"
-                                        Icon={Minus}
-                                        theme="expense"
-                                    />
-                                    <EntryCard
-                                        to="/income-transaction"
-                                        title="Neue Einnahme"
-                                        subtitle="Geld erhalten"
-                                        Icon={Plus}
-                                        theme="income"
-                                    />
+                            <div className="bg-slate-50 p-4">
+                                <div className="mx-auto w-full max-w-2xl space-y-4">
+                                    <div className="flex flex-wrap gap-2">
+                                        <EntryCard
+                                            to="/GuestTransactionOne"
+                                            title="Neue Ausgabe"
+                                            subtitle="Geld ausgeben"
+                                            Icon={Minus}
+                                            theme="expense"
+                                        />
+                                        <EntryCard
+                                            to="/income-transaction"
+                                            title="Neue Einnahme"
+                                            subtitle="Geld erhalten"
+                                            Icon={Plus}
+                                            theme="income"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex min-w-0 items-center gap-2">

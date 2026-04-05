@@ -400,7 +400,7 @@ export default function MonthPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="bg-slate-50 p-4">
+                            <div className="bg-white p-4">
                                 <div className="w-full space-y-4">
                                     <EntryCard
                                         to="/GuestTransactionOne"

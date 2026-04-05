@@ -339,7 +339,7 @@ export default function MonthPage() {
                     }
                 />
 
-                <section className="flex flex-col gap-3">
+                <section className="flex flex-col gap-2">
                     <MetricCard
                         title="Was dir bleibt"
                         value={fmtMoney(monthEndForecast)}
@@ -370,7 +370,7 @@ export default function MonthPage() {
                     />
                 </section>
 
-                <section className="flex flex-1 flex-col gap-3">
+                <section className="flex flex-1 flex-col gap-2">
                     {monthTx.length === 0 ? (
                         <div className="w-full space-y-4 border border-gray-300 bg-white p-4">
                             <h2 className="text-base font-semibold text-gray-900">
@@ -400,7 +400,7 @@ export default function MonthPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="bg-white p-4">
+                            <div className="bg-white p-2">
                                 <div className="w-full space-y-4">
                                     <EntryCard
                                         to="/GuestTransactionOne"

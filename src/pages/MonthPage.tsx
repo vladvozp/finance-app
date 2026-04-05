@@ -403,18 +403,7 @@ export default function MonthPage() {
                     ) : (
                         <>
                             <div className="flex flex-wrap items-center justify-between gap-3 border border-gray-300 bg-white px-3 py-2">
-                                <div className="flex min-w-0 items-center gap-2">
-                                    <input
-                                        id="only-planned"
-                                        type="checkbox"
-                                        checked={onlyPlanned}
-                                        onChange={(e) => setOnlyPlanned(e.target.checked)}
-                                        className="h-4 w-4"
-                                    />
-                                    <label htmlFor="only-planned" className="text-sm text-gray-700">
-                                        Nur geplant
-                                    </label>
-                                </div>
+
                                 <div className="flex flex-wrap gap-2">
                                     <EntryCard
                                         to="/GuestTransactionOne"
@@ -432,7 +421,18 @@ export default function MonthPage() {
                                     />
                                 </div>
                             </div>
-
+                            <div className="flex min-w-0 items-center gap-2">
+                                <input
+                                    id="only-planned"
+                                    type="checkbox"
+                                    checked={onlyPlanned}
+                                    onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                <label htmlFor="only-planned" className="text-sm text-gray-700">
+                                    Nur geplant
+                                </label>
+                            </div>
                             <div className="overflow-x-auto border border-gray-300 bg-white">
                                 <table className="w-full table-fixed border-collapse text-sm">
                                     <thead className="bg-gray-50">

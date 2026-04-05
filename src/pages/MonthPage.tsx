@@ -9,6 +9,9 @@ import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 
+
+import { calculateMonthMetrics } from "../logic/monthMetrics";
+
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
         style: "currency",
@@ -202,61 +205,79 @@ export default function MonthPage() {
     const markCancelled = (id: string) =>
         updateTransaction(id, { status: "cancelled" });
 
-    const monthTx = useMemo(
-        () =>
-            transactions.filter((tx) =>
-                (tx.date ?? "").startsWith(selectedMonthPrefix)
-            ),
-        [transactions, selectedMonthPrefix]
-    );
-
-    const monthBookedTx = useMemo(
-        () =>
-            monthTx.filter(
-                (tx) => tx.status !== "planned" && tx.status !== "cancelled"
-            ),
-        [monthTx]
-    );
-
-    const monthPlannedTx = useMemo(
-        () => monthTx.filter((tx) => tx.status === "planned"),
-        [monthTx]
+    /*  const monthTx = useMemo(
+          () =>
+              transactions.filter((tx) =>
+                  (tx.date ?? "").startsWith(selectedMonthPrefix)
+              ),
+          [transactions, selectedMonthPrefix]
+      );
+  
+      const monthBookedTx = useMemo(
+          () =>
+              monthTx.filter(
+                  (tx) => tx.status !== "planned" && tx.status !== "cancelled"
+              ),
+          [monthTx]
+      );
+  
+      const monthPlannedTx = useMemo(
+          () => monthTx.filter((tx) => tx.status === "planned"),
+          [monthTx]
+      );
+  
+      const tableTx = useMemo(
+          () => (onlyPlanned ? monthPlannedTx : monthTx),
+          [onlyPlanned, monthPlannedTx, monthTx]
+      );
+  
+      const expenseTotal = useMemo(
+          () =>
+              monthBookedTx.reduce((sum, tx) => {
+                  if (tx.kind !== "expense") return sum;
+                  return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
+              }, 0),
+          [monthBookedTx]
+      );
+  
+      const plannedExpenseTotal = useMemo(
+          () =>
+              monthPlannedTx.reduce((sum, tx) => {
+                  if (tx.kind !== "expense") return sum;
+                  return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
+              }, 0),
+          [monthPlannedTx]
+      );
+  
+      const plannedIncomeTotal = useMemo(
+          () =>
+              monthPlannedTx.reduce((sum, tx) => {
+                  if (tx.kind !== "income") return sum;
+                  return sum + (Number.isFinite(tx.amount) ? tx.amount : 0);
+              }, 0),
+          [monthPlannedTx]
+      ); 
+  
+      const available = totalBalance - plannedExpenseTotal + plannedIncomeTotal;
+      
+      */
+    const {
+        monthTx,
+        monthBookedTx,
+        monthPlannedTx,
+        expenseTotal,
+        plannedExpenseTotal,
+        plannedIncomeTotal,
+        monthEndForecast,
+    } = useMemo(
+        () => calculateMonthMetrics(transactions, selectedMonthPrefix, totalBalance),
+        [transactions, selectedMonthPrefix, totalBalance]
     );
 
     const tableTx = useMemo(
         () => (onlyPlanned ? monthPlannedTx : monthTx),
         [onlyPlanned, monthPlannedTx, monthTx]
     );
-
-    const expenseTotal = useMemo(
-        () =>
-            monthBookedTx.reduce((sum, tx) => {
-                if (tx.kind !== "expense") return sum;
-                return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-            }, 0),
-        [monthBookedTx]
-    );
-
-    const plannedExpenseTotal = useMemo(
-        () =>
-            monthPlannedTx.reduce((sum, tx) => {
-                if (tx.kind !== "expense") return sum;
-                return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-            }, 0),
-        [monthPlannedTx]
-    );
-
-    const plannedIncomeTotal = useMemo(
-        () =>
-            monthPlannedTx.reduce((sum, tx) => {
-                if (tx.kind !== "income") return sum;
-                return sum + (Number.isFinite(tx.amount) ? tx.amount : 0);
-            }, 0),
-        [monthPlannedTx]
-    );
-
-    const available = totalBalance - plannedExpenseTotal + plannedIncomeTotal;
-
     return (
         <div className="min-h-screen bg-white">
             <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6">
@@ -320,7 +341,7 @@ export default function MonthPage() {
                 <section className="flex flex-col gap-3">
                     <MetricCard
                         title="Was dir bleibt"
-                        value={fmtMoney(available)}
+                        value={fmtMoney(monthEndForecast)}
                         hint="Mit geplanten Einnahmen und Ausgaben"
                         tone="green"
                         featured

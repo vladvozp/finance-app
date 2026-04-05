@@ -41,6 +41,15 @@ import { useAccounts, type AccountWithBalance } from "../hooks/useAccounts";
 import { useTransactionForm } from "../hooks/useTransactionForm";
 import { useAccountsStore } from "../store/accounts";
 
+
+function fmtMoney(n: number) {
+    return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR",
+    }).format(n);
+}
+
+
 type Provider = ComboOption & {};
 type Group = ComboOption & {};
 
@@ -173,6 +182,9 @@ const GuestTransactionOne: React.FC = () => {
 
     const cancelEdit = () => setEditingId(null);
 
+
+
+
     return (
         <div className="bg-white">
             <main className="py-6 flex flex-col">
@@ -183,7 +195,17 @@ const GuestTransactionOne: React.FC = () => {
                             <MoveLeft className="w-5 h-5" />Zurück
                         </Link>
                     }
-                    center={null}
+                    center={<div className="min-w-0">
+                        <div className="text-[11px] uppercase tracking-wide text-gray-500">
+                            Gesamtstand
+                        </div>
+                        <div
+                            className="truncate text-base font-semibold tabular-nums tracking-tight text-gray-900 sm:text-lg"
+                            title={fmtMoney(totalBalance)}
+                        >
+                            {fmtMoney(totalBalance)}
+                        </div>
+                    </div>}
                     right={
                         <Link to="/SettingsPage" aria-label="Einstellungen"
                             className="group p-2 text-gray-600 transition inline-flex items-center justify-center">
@@ -220,8 +242,8 @@ const GuestTransactionOne: React.FC = () => {
                 <section className="mt-6" ref={comboboxRef}>
 
                     <Combobox<Provider>
-                        label="Was war das?"
-                        helperText="optional"
+                        label=""
+                        helperText=""
                         options={providerOptions}
                         value={anbieterId}
                         onChange={onProviderChange}

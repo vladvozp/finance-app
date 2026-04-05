@@ -35,7 +35,7 @@ export default function MetricCard({
         green: {
             wrap: "border-gray-300 bg-white",
             title: "text-gray-700",
-            value: "text-gray-500",
+            value: "text-green-700",
             hint: "text-gray-500",
         },
     };

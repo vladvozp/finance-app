@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Settings } from "lucide-react";
+import { Minus, Plus, Settings } from "lucide-react";
 
 import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
+import { EntryCard } from "../components/EntryCard";
 
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
@@ -380,22 +381,23 @@ export default function MonthPage() {
                                 Starte mit deiner ersten Ausgabe oder Einnahme.
                             </p>
 
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <Button
-                                    variant="primary"
-                                    icon={Plus}
-                                    onClick={() => navigate("/GuestTransactionOne")}
-                                >
-                                    Ausgabe
-                                </Button>
+                            <div className="space-y-4 bg-slate-50 p-4">
+                                <EntryCard
+                                    to="/GuestTransactionOne"
+                                    title="Neue Ausgabe"
+                                    subtitle="Geld ausgeben"
+                                    Icon={Minus}
+                                    theme="expense"
+                                />
+                                <EntryCard
+                                    to="/income-transaction"
+                                    title="Neue Einnahme"
+                                    subtitle="Geld erhalten"
+                                    Icon={Plus}
+                                    theme="income"
+                                />
 
-                                <Button
-                                    variant="primary"
-                                    icon={Plus}
-                                    onClick={() => navigate("/income-transaction")}
-                                >
-                                    Einnahme
-                                </Button>
+
                             </div>
                         </div>
                     ) : (
@@ -413,23 +415,21 @@ export default function MonthPage() {
                                         Nur geplant
                                     </label>
                                 </div>
-
                                 <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        variant="primary"
-                                        icon={Plus}
-                                        onClick={() => navigate("/GuestTransactionOne")}
-                                    >
-                                        Ausgabe
-                                    </Button>
-
-                                    <Button
-                                        variant="primary"
-                                        icon={Plus}
-                                        onClick={() => navigate("/income-transaction")}
-                                    >
-                                        Einnahme
-                                    </Button>
+                                    <EntryCard
+                                        to="/GuestTransactionOne"
+                                        title="Neue Ausgabe"
+                                        subtitle="Geld ausgeben"
+                                        Icon={Minus}
+                                        theme="expense"
+                                    />
+                                    <EntryCard
+                                        to="/income-transaction"
+                                        title="Neue Einnahme"
+                                        subtitle="Geld erhalten"
+                                        Icon={Plus}
+                                        theme="income"
+                                    />
                                 </div>
                             </div>
 

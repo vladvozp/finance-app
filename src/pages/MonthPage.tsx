@@ -381,7 +381,7 @@ export default function MonthPage() {
                                 Starte mit deiner ersten Ausgabe oder Einnahme.
                             </p>
 
-                            <div className="w-full space-y-4 border border-gray-300 bg-white p-4">
+                            <div className="mt-4 w-full space-y-4">
                                 <EntryCard
                                     to="/GuestTransactionOne"
                                     title="Neue Ausgabe"
@@ -396,30 +396,26 @@ export default function MonthPage() {
                                     Icon={Plus}
                                     theme="income"
                                 />
-
-
                             </div>
                         </div>
                     ) : (
                         <>
                             <div className="bg-slate-50 p-4">
-                                <div className="mx-auto w-full max-w-2xl space-y-4">
-                                    <div className="flex flex-wrap gap-2">
-                                        <EntryCard
-                                            to="/GuestTransactionOne"
-                                            title="Neue Ausgabe"
-                                            subtitle="Geld ausgeben"
-                                            Icon={Minus}
-                                            theme="expense"
-                                        />
-                                        <EntryCard
-                                            to="/income-transaction"
-                                            title="Neue Einnahme"
-                                            subtitle="Geld erhalten"
-                                            Icon={Plus}
-                                            theme="income"
-                                        />
-                                    </div>
+                                <div className="w-full space-y-4">
+                                    <EntryCard
+                                        to="/GuestTransactionOne"
+                                        title="Neue Ausgabe"
+                                        subtitle="Geld ausgeben"
+                                        Icon={Minus}
+                                        theme="expense"
+                                    />
+                                    <EntryCard
+                                        to="/income-transaction"
+                                        title="Neue Einnahme"
+                                        subtitle="Geld erhalten"
+                                        Icon={Plus}
+                                        theme="income"
+                                    />
                                 </div>
                             </div>
                             <div className="flex min-w-0 items-center gap-2">
@@ -609,6 +605,6 @@ export default function MonthPage() {
                     )}
                 </section>
             </main>
-        </div>
+        </div >
     );
 }

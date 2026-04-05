@@ -44,7 +44,7 @@ export function EntryCard({
             </div>
 
             <div className="min-w-0 flex-1">
-                <div className="text font-semibold leading-tight tracking-tight text-slate-800 sm:text">
+                <div className="font-semibold leading-tight tracking-tight text-slate-800 text-base sm:text-lg">
                     {title}
                 </div>
                 <div className="mt-1 text-base leading-snug text-slate-500 sm:text-sm">

@@ -13,6 +13,8 @@ import { useIncomeDicts } from "../store/incomeDicts";
 
 import { calculateMonthMetrics } from "../logic/monthMetrics";
 
+import MetricCard from "../components/MetricCard";
+
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
         style: "currency",
@@ -49,7 +51,7 @@ function monthLabelDE(d: Date) {
     }).format(d);
 }
 
-type MetricCardProps = {
+/* type MetricCardProps = {
     title: string;
     value: string;
     hint?: string;
@@ -103,7 +105,7 @@ function MetricCard({
                 className={[
                     "mt-2 min-w-0 truncate font-semibold tabular-nums tracking-tight",
                     featured
-                        ? `text-4xl sm:text-5xl ${c.value}`
+                        ? `text-3xl sm:text-4xl ${c.value}`
                         : `text-2xl ${c.value}`,
                 ].join(" ")}
                 title={value}
@@ -118,7 +120,7 @@ function MetricCard({
             ) : null}
         </section>
     );
-}
+} */
 
 export default function MonthPage() {
     const navigate = useNavigate();

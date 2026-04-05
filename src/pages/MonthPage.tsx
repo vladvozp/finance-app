@@ -404,15 +404,15 @@ export default function MonthPage() {
                                 <div className="w-full space-y-4">
                                     <EntryCard
                                         to="/GuestTransactionOne"
-                                        title="Neue Ausgabe"
-                                        subtitle="Geld ausgeben"
+                                        title="Geld ausgeben"
+                                        subtitle=""
                                         Icon={Minus}
                                         theme="expense"
                                     />
                                     <EntryCard
                                         to="/income-transaction"
-                                        title="Neue Einnahme"
-                                        subtitle="Geld erhalten"
+                                        title="Geld erhalten"
+                                        subtitle=""
                                         Icon={Plus}
                                         theme="income"
                                     />

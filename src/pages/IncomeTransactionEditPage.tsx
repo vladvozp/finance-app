@@ -204,7 +204,7 @@ export default function IncomeTransactionEditPage() {
                     />
 
                     <Combobox<IncomeCategoryOption>
-                        label="Kategorie"
+                        label=""
                         options={categories}
                         value={incomeKategorieId}
                         onChange={onCategoryChange}

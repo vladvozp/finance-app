@@ -184,7 +184,7 @@ export default function TransactionEditPage() {
 
                     {/* Group */}
                     <Combobox<Group>
-                        label="Gruppe"
+                        label=""
                         options={gruppen}
                         value={gruppeId}
                         onChange={onGroupChange}

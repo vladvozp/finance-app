@@ -9,6 +9,8 @@ import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import { MoveLeft, Save, Edit3 } from "lucide-react";
 import type { TxStatus } from "../types/tx";
+import TransactionDateField from "../components/TransactionDateField";
+
 
 type IncomeSourceOption = ComboOption & {};
 type IncomeCategoryOption = ComboOption & {};
@@ -170,34 +172,16 @@ export default function IncomeTransactionEditPage() {
                 </section>
 
 
-                <div className="mt-6">
-
-                    <DatePickerInput
-                        value={date}
-                        onChange={setDate}
-                        label
-                        minDate={new Date(2020, 0, 1)}
-                        maxDate={new Date(2030, 11, 31)}
-                        placeholder=""
-                        displayFormat="dd.MM.yyyy"
-                    />
-
-                    <div className="mt-3 flex items-center gap-2">
-                        <input
-                            id="tx-planned-income-edit"
-                            type="checkbox"
-                            checked={isPlanned}
-                            onChange={(e) => setIsPlanned(e.target.checked)}
-                            className="h-4 w-4"
-                        />
-                        <label
-                            htmlFor="tx-planned-income-edit"
-                            className="text-sm text-gray-700"
-                        >
-                            Geplant
-                        </label>
-                    </div>
-                </div>
+                {/* Date */}
+                <div className="flex gap-3 mt-6" />
+                <TransactionDateField
+                    value={date}
+                    status={isPlanned ? "planned" : "booked"}
+                    onChange={({ date, status }) => {
+                        setDate(date);
+                        setIsPlanned(status === "planned");
+                    }}
+                />
 
                 <section className="flex-1" ref={comboboxRef}>
                     <Combobox<IncomeSourceOption>

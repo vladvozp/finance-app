@@ -8,6 +8,17 @@ import { loadProviderStats, saveProviderStats, type ProviderStats } from "../rep
 import type { Tx, TxStatus } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 
+
+function formatLocalDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+
+
+
 export function useTransactionForm(
     amount: number,
     selectedAccountId: string,
@@ -73,7 +84,7 @@ export function useTransactionForm(
             const cents = toCents(amountStr);
             const effectiveDate = date ?? new Date();
             const nowISO = new Date().toISOString();
-            const isoDate = effectiveDate.toISOString().slice(0, 10);
+            const isoDate = formatLocalDate(effectiveDate);
             const status: TxStatus = isPlanned ? "planned" : "booked";
 
             const tx: Tx = {

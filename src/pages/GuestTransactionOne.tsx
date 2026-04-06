@@ -13,10 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader.jsx";
 import Button from "../components/Button";
 import {
-    ChevronsDown,
     MoveLeft,
-    Edit3,
-    Trash2,
     Plus,
     Settings,
     Search,
@@ -28,23 +25,16 @@ import { useTxDraft } from "../hooks/useTxDraft";
 import { txDraft } from "../store/transactionDraft";
 import type { TxStatus } from "../types/tx";
 import { Account } from "../types/account";
-
-import DatePickerInput from "../components/DatePickerInput";
-
 import { Combobox, type ComboOption } from "../components/ui/combobox";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
-
 import { fmtEur, toCents } from "../utils/currency";
 import { getMostUsedGroupForProvider } from "../services/providerStatsService";
 import { useAccounts, type AccountWithBalance } from "../hooks/useAccounts";
 import { useTransactionForm } from "../hooks/useTransactionForm";
 import { useAccountsStore } from "../store/accounts";
 
-
 import TransactionDateField from "../components/TransactionDateField";
-
-
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -52,7 +42,6 @@ function fmtMoney(n: number) {
         currency: "EUR",
     }).format(n);
 }
-
 
 type Provider = ComboOption & {};
 type Group = ComboOption & {};
@@ -369,8 +358,9 @@ const GuestTransactionOne: React.FC = () => {
                         }}
                     />
 
-                    <div className="flex gap-3 mt-6" />
 
+                    <div className="flex gap-3 mt-6" />
+                    {/* Remark */}
                     {!showNotiz ? (
                         <button onClick={() => setShowNotiz(true)}>
                             + Notiz hinzufügen

@@ -1,5 +1,5 @@
 // src/pages/TransactionEditPage.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
@@ -100,6 +100,9 @@ export default function TransactionEditPage() {
         setGruppeId(id);
     }, []);
 
+    const comboboxRef = useRef<HTMLDivElement | null>(null);
+    const [showNotiz, setShowNotiz] = useState(false);
+
     if (!tx) return null;
 
     return (
@@ -119,18 +122,30 @@ export default function TransactionEditPage() {
                 <h1 className="text-lg text-gray-600 mb-6">Transaktion bearbeiten</h1>
 
                 {/* Amount */}
-                <div className="mt-6">
-                    <h2 className="text-center text-black text-base font-medium mb-1">Betrag</h2>
+                <section className="flex-1">
                     <input
+                        autoFocus
                         inputMode="decimal"
-                        placeholder="0,00"
+                        placeholder="0,00 €"
                         value={amountStr}
                         onChange={onAmountChange}
-                        onKeyDown={handleKeyDown}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && amountStr) {
+                                handleSave();
+                            }
+                        }}
                         onBlur={handleBlur}
-                        className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                        className="
+      w-full
+  text-4xl font-semibold text-center
+  h-16
+  bg-transparent
+  outline-none
+   placeholder:text-black
+    "
+                        aria-label=""
                     />
-                </div>
+                </section>
 
                 {/* Date */}
                 <div className="mt-6">
@@ -152,9 +167,10 @@ export default function TransactionEditPage() {
                 </div>
 
                 {/* Provider */}
-                <div className="mt-6">
+                <section className="flex-1" ref={comboboxRef}>
+
                     <Combobox<Provider>
-                        label="Anbieter"
+                        label=""
                         options={anbieter}
                         value={anbieterId}
                         onChange={onProviderChange}
@@ -171,10 +187,8 @@ export default function TransactionEditPage() {
                             if (anbieterId === id) setAnbieterId("");
                         }}
                     />
-                </div>
 
-                {/* Group */}
-                <div className="mt-2">
+                    {/* Group */}
                     <Combobox<Group>
                         label="Gruppe"
                         options={gruppen}
@@ -193,35 +207,41 @@ export default function TransactionEditPage() {
                             if (gruppeId === id) setGruppeId("");
                         }}
                     />
-                </div>
 
-                {/* Remark */}
-                <div className="mt-6">
-                    <div className="flex justify-center items-center text-black text-base gap-2 font-medium mb-1">
-                        <span>Bemerkung</span>
-                        <Edit3 className="w-4 h-4" />
-                    </div>
-                    <div className="relative">
-                        <textarea
-                            value={remark}
-                            onChange={(e) => {
-                                if (e.target.value.length <= 100) setRemark(e.target.value);
-                            }}
-                            placeholder="Optionale Notiz…"
-                            className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none outline-none placeholder-gray-400"
-                            maxLength={100}
-                        />
-                        <span className="absolute bottom-1 right-3 text-xs text-gray-500">
-                            {remark.length}/100
-                        </span>
-                    </div>
-                </div>
 
-                <div className="mt-6">
-                    <Button variant="primary" icon={Save} disabled={!canSave || saving} onClick={handleSave}>
-                        {saving ? "Speichern…" : "Speichern"}
-                    </Button>
-                </div>
+                    <div className="flex gap-3 mt-6" />
+                    {/* Remark */}
+                    {!showNotiz ? (
+                        <button onClick={() => setShowNotiz(true)}>
+                            + Notiz hinzufügen
+                        </button>
+                    ) : (
+
+
+                        <div className="relative">
+                            <textarea
+                                value={remark}
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (v.length <= 100) txDraft.set("remark", v);
+                                }}
+                                placeholder="Optionale Notiz (z. B. 'für Schule' …)"
+                                className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none outline-none placeholder-gray-400"
+                                maxLength={100}
+                            />
+                            <span className="absolute bottom-1 right-3 text-xs text-gray-500">
+                                {remark.length}/100
+                            </span>
+                        </div>
+                    )}
+
+
+                    <div className="mt-6">
+                        <Button variant="primary" icon={Save} disabled={!canSave || saving} onClick={handleSave}>
+                            {saving ? "Speichern…" : "Speichern"}
+                        </Button>
+                    </div>
+                </section>
             </main>
         </div>
     );

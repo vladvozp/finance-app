@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAccountsStore } from "../store/accounts";
 import { useIncomeDicts } from "../store/incomeDicts";
@@ -118,6 +118,8 @@ export default function IncomeTransactionEditPage() {
     const onSourceChange = useCallback((id: string) => {
         setQuelleId(id);
     }, []);
+    const comboboxRef = useRef<HTMLDivElement | null>(null);
+    const [showNotiz, setShowNotiz] = useState(false);
 
     const onCategoryChange = useCallback((id: string) => {
         setIncomeKategorieId(id);
@@ -142,34 +144,41 @@ export default function IncomeTransactionEditPage() {
                     right={null}
                 />
 
-                <h1 className="text-lg text-gray-600 mb-6">Einnahme bearbeiten</h1>
-
-                <div className="mt-6">
-                    <h2 className="text-center text-black text-base font-medium mb-1">
-                        Betrag
-                    </h2>
+                <section className="flex-1">
                     <input
+                        autoFocus
                         inputMode="decimal"
-                        placeholder="0,00"
+                        placeholder="0,00 €"
                         value={amountStr}
                         onChange={onAmountChange}
-                        onKeyDown={handleKeyDown}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && amountStr) {
+                                handleSave();
+                            }
+                        }}
                         onBlur={handleBlur}
-                        className="h-12 w-full border shadow-sm border-gray-400 px-3 placeholder-gray-400 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+                        className="
+      w-full
+  text-4xl font-semibold text-center
+  h-16
+  bg-transparent
+  outline-none
+   placeholder:text-black
+    "
+                        aria-label=""
                     />
-                </div>
+                </section>
+
 
                 <div className="mt-6">
-                    <h2 className="text-center text-black text-base font-medium mb-1">
-                        Datum
-                    </h2>
+
                     <DatePickerInput
                         value={date}
                         onChange={setDate}
                         label
                         minDate={new Date(2020, 0, 1)}
                         maxDate={new Date(2030, 11, 31)}
-                        placeholder="Tag/Monat/Jahr"
+                        placeholder=""
                         displayFormat="dd.MM.yyyy"
                     />
 
@@ -190,9 +199,9 @@ export default function IncomeTransactionEditPage() {
                     </div>
                 </div>
 
-                <div className="mt-6">
+                <section className="flex-1" ref={comboboxRef}>
                     <Combobox<IncomeSourceOption>
-                        label="Quelle"
+                        label=""
                         options={sources}
                         value={quelleId}
                         onChange={onSourceChange}
@@ -209,9 +218,7 @@ export default function IncomeTransactionEditPage() {
                             if (quelleId === id) setQuelleId("");
                         }}
                     />
-                </div>
 
-                <div className="mt-2">
                     <Combobox<IncomeCategoryOption>
                         label="Kategorie"
                         options={categories}
@@ -230,42 +237,46 @@ export default function IncomeTransactionEditPage() {
                             if (incomeKategorieId === id) setIncomeKategorieId("");
                         }}
                     />
-                </div>
 
-                <div className="mt-6">
-                    <div className="flex justify-center items-center text-black text-base gap-2 font-medium mb-1">
-                        <span>Bemerkung</span>
-                        <Edit3 className="w-4 h-4" />
-                    </div>
-                    <div className="relative">
-                        <textarea
-                            value={remark}
-                            onChange={(e) => {
-                                if (e.target.value.length <= 100) {
-                                    setRemark(e.target.value);
-                                }
-                            }}
-                            placeholder="Optionale Notiz…"
-                            className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none outline-none placeholder-gray-400"
-                            maxLength={100}
-                        />
-                        <span className="absolute bottom-1 right-3 text-xs text-gray-500">
-                            {remark.length}/100
-                        </span>
-                    </div>
-                </div>
 
-                <div className="mt-6">
-                    <Button
-                        variant="primary"
-                        icon={Save}
-                        disabled={!canSave || saving}
-                        onClick={handleSave}
-                    >
-                        {saving ? "Speichern…" : "Speichern"}
-                    </Button>
-                </div>
+                    <div className="flex gap-3 mt-6" />
+
+                    {!showNotiz ? (
+                        <button onClick={() => setShowNotiz(true)}>
+                            + Notiz hinzufügen
+                        </button>
+                    ) : (
+
+                        <div className="relative">
+                            <textarea
+                                value={remark}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 100) {
+                                        setRemark(e.target.value);
+                                    }
+                                }}
+                                placeholder="Optionale Notiz…"
+                                className="w-full h-24 border pl-3 pr-3 py-2 shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none outline-none placeholder-gray-400"
+                                maxLength={100}
+                            />
+                            <span className="absolute bottom-1 right-3 text-xs text-gray-500">
+                                {remark.length}/100
+                            </span>
+                        </div>
+                    )}
+
+                    <div className="mt-6">
+                        <Button
+                            variant="primary"
+                            icon={Save}
+                            disabled={!canSave || saving}
+                            onClick={handleSave}
+                        >
+                            {saving ? "Speichern…" : "Speichern"}
+                        </Button>
+                    </div>
+                </section>
             </main>
-        </div>
+        </div >
     );
 } import IncomeTransactionOne from "../pages/IncomeTransactionOne.tsx"

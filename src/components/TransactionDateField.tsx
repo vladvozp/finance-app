@@ -23,33 +23,20 @@ function getAutoStatus(date: Date | null): "booked" | "planned" {
 }
 
 export default function TransactionDateField({ value, status, onChange }: Props) {
-    const [statusOverride, setStatusOverride] = useState<"booked" | "planned" | null>(null);
+
 
     const autoStatus = useMemo(() => getAutoStatus(value), [value]);
-    const effectiveStatus = statusOverride ?? status ?? autoStatus;
+    const effectiveStatus = autoStatus;
     const isPlanned = effectiveStatus === "planned";
 
     function handleDateChange(next: Date | null) {
-        const nextStatus = getAutoStatus(next);
-        setStatusOverride(null);
-
         onChange({
             date: next,
-            status: nextStatus,
+            status: getAutoStatus(next),
         });
     }
 
-    function toggleStatus() {
-        const current = statusOverride ?? status ?? autoStatus;
-        const nextStatus = current === "planned" ? "booked" : "planned";
 
-        setStatusOverride(nextStatus);
-
-        onChange({
-            date: value,
-            status: nextStatus,
-        });
-    }
 
     return (
         <div className="space-y-2">
@@ -66,26 +53,12 @@ export default function TransactionDateField({ value, status, onChange }: Props)
                     />
                 </div>
 
-                <button
-                    type="button"
-                    onClick={toggleStatus}
-                    className={[
-                        "h-10 rounded-full border px-4 text-sm font-medium transition whitespace-nowrap",
-                        isPlanned
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : "border-gray-300 bg-white text-gray-700",
-                    ].join(" ")}
-                >
-                    {isPlanned ? "Geplant" : "Heute"}
-                </button>
             </div>
 
             <p className="text-xs text-gray-500">
-                {statusOverride
-                    ? `Manuell gesetzt: ${isPlanned ? "Geplant" : "Heute"}`
-                    : autoStatus === "planned"
-                        ? "Automatisch als geplant erkannt"
-                        : "Wird sofort verbucht"}
+                {autoStatus === "planned"
+                    ? "Automatisch als geplant erkannt"
+                    : "Wird sofort verbucht"}
             </p>
         </div>
     );

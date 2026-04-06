@@ -139,7 +139,6 @@ export default function DatePickerInput({
           </div>
         )}
       </div>
-      <p className="mt-1 text-xs text-gray-400">{placeholder}</p>
     </div>
   );
 }

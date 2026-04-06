@@ -45,7 +45,7 @@ export default function TransactionDateField({ value, status, onChange }: Props)
                     <DatePickerInput
                         value={value}
                         onChange={handleDateChange}
-                        label="Datum"
+                        label=""
                         placeholder="Tag/Monat/Jahr"
                         displayFormat="dd.MM.yyyy"
                         minDate={new Date(2020, 0, 1)}

@@ -362,8 +362,8 @@ const GuestTransactionOne: React.FC = () => {
                     <div className="flex gap-3 mt-6" />
                     <TransactionDateField
                         value={date}
+                        status={isPlanned ? "planned" : "booked"}
                         onChange={({ date, status }) => {
-                            console.log("TransactionDateField onChange:", date, status);
                             setDate(date);
                             setIsPlanned(status === "planned");
                         }}

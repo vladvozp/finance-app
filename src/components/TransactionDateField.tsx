@@ -3,6 +3,7 @@ import DatePickerInput from "../components/DatePickerInput";
 
 type Props = {
     value: Date | null;
+    status: "booked" | "planned";
     onChange: (data: { date: Date | null; status: "booked" | "planned" }) => void;
 };
 
@@ -21,34 +22,32 @@ function getAutoStatus(date: Date | null): "booked" | "planned" {
     return selected > today ? "planned" : "booked";
 }
 
-export default function TransactionDateField({ value, onChange }: Props) {
-    const [date, setDate] = useState<Date | null>(value);
+export default function TransactionDateField({ value, status, onChange }: Props) {
     const [statusOverride, setStatusOverride] = useState<"booked" | "planned" | null>(null);
 
-    const autoStatus = useMemo(() => getAutoStatus(date), [date]);
-    const effectiveStatus = statusOverride ?? autoStatus;
+    const autoStatus = useMemo(() => getAutoStatus(value), [value]);
+    const effectiveStatus = statusOverride ?? status ?? autoStatus;
     const isPlanned = effectiveStatus === "planned";
 
     function handleDateChange(next: Date | null) {
-        setDate(next);
+        const nextStatus = getAutoStatus(next);
         setStatusOverride(null);
 
         onChange({
             date: next,
-            status: getAutoStatus(next),
+            status: nextStatus,
         });
     }
+
     function toggleStatus() {
-        setStatusOverride((prev) => {
-            const current = prev ?? autoStatus;
-            const next = current === "planned" ? "booked" : "planned";
+        const current = statusOverride ?? status ?? autoStatus;
+        const nextStatus = current === "planned" ? "booked" : "planned";
 
-            onChange({
-                date,
-                status: next,
-            });
+        setStatusOverride(nextStatus);
 
-            return next;
+        onChange({
+            date: value,
+            status: nextStatus,
         });
     }
 
@@ -57,9 +56,9 @@ export default function TransactionDateField({ value, onChange }: Props) {
             <div className="flex items-center gap-2">
                 <div className="flex-1">
                     <DatePickerInput
-                        value={date}
+                        value={value}
                         onChange={handleDateChange}
-                        label
+                        label="Datum"
                         placeholder="Tag/Monat/Jahr"
                         displayFormat="dd.MM.yyyy"
                         minDate={new Date(2020, 0, 1)}
@@ -74,7 +73,7 @@ export default function TransactionDateField({ value, onChange }: Props) {
                         "h-10 rounded-full border px-4 text-sm font-medium transition whitespace-nowrap",
                         isPlanned
                             ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : "border-gray-300 bg-white text-gray-700"
+                            : "border-gray-300 bg-white text-gray-700",
                     ].join(" ")}
                 >
                     {isPlanned ? "Geplant" : "Heute"}

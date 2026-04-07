@@ -24,10 +24,10 @@ export default function Layout() {
           <a href="/impressum" className="underline hover:text-gray-800">Impressum</a>
           <span> · </span>
           <a href="/datenschutz" className="underline hover:text-gray-800">Datenschutz</a>
-          <span> · </span>
-          <Link to="/settings" className="underline hover:text-gray-800">
+          {/*  <span> · </span> */}
+          {/*  <Link to="/settings" className="underline hover:text-gray-800">
             Privatsphäre-Einstellungen
-          </Link>
+          </Link> */}
         </footer>
       </div>
     </>

@@ -18,8 +18,8 @@ export default function Login() {
   }
 
   return (
-    <main className="flex flex-col">
-      <div className="bg-white py-30 mx-auto">
+    <main className="py-10 flex flex-col">
+      <div className="bg-white py-15 mx-auto">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-gray-900 leading-tight">
             Wie viel kannst du heute wirklich ausgeben?

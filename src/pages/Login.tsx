@@ -45,11 +45,11 @@ export default function Login() {
 
         </div>
 
-        <div className="group relative bg-gray-100/60 rounded-2xl p-3 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden">
+        <div className="group relative cursor-zoom-in bg-gray-100/60 rounded-2xl p-3 border border-gray-200/50 shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden">
           <img
             src="/preview.png"
             alt="Klarsio App Vorschau"
-            className="w-full rounded-xl cursor-zoom-in transition-transform duration-300 group-hover:scale-[1.01]"
+            className="w-full rounded-xl transition-transform duration-200 group-hover:scale-[1.02]"
             onClick={() => setLightbox(true)}
           />
         </div>

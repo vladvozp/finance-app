@@ -126,6 +126,17 @@ export default function DatePickerInput({
                   txDraft.set("repeat_interval", r.interval);
                   txDraft.set("repeat_byweekday", r.byweekday);
                   txDraft.set("repeat_until", r.until ? r.until.toISOString() : "");
+
+                  console.log("RepeatPanel changed:", {
+                    repeat: r.enabled,
+                    repeat_freq: r.freq,
+                    repeat_interval: r.interval,
+                    repeat_byweekday: r.byweekday,
+                    repeat_until: r.until ? r.until.toISOString() : "",
+                    anchorDate: value ?? null,
+                  });
+
+
                 } catch { }
               }}
             />

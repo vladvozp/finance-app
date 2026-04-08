@@ -19,9 +19,9 @@ export default function Login() {
 
   return (
     <main className="py-10 flex flex-col">
-      <div className="bg-white py-15 mx-auto">
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 leading-tight">
+      <div className="bg-white py-10 mx-auto">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 leading-tight">
             Wie viel kannst du heute wirklich ausgeben?
           </h1>
           <p className="mt-4 text-base text-gray-600">
@@ -32,16 +32,13 @@ export default function Login() {
       </div>
       {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-      <p className="text-sm text-gray-500 mb-3 text-center">
-        Ohne komplizierte Tabellen. Einfach verstehen, was dir wirklich bleibt.
-      </p>
 
-      <div className="mx-auto w-full max-w-md">
+
+      <div className="mt-6 mx-auto w-full max-w-md">
         <div className="flex items-center gap-3 mb-6">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400">So sieht deine Realität aus 👇</span>
 
-          <div className="flex-1 h-px bg-gray-200" />
+
+
 
         </div>
 

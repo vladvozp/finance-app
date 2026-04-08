@@ -9,6 +9,7 @@ import { CalendarPlus2 } from 'lucide-react';
 import { txDraft } from "../store/transactionDraft";
 
 
+
 function classNames(...xs) { return xs.filter(Boolean).join(" "); }
 
 export default function DatePickerInput({
@@ -125,7 +126,7 @@ export default function DatePickerInput({
                   txDraft.set("repeat_freq", r.freq);
                   txDraft.set("repeat_interval", r.interval);
                   txDraft.set("repeat_byweekday", r.byweekday);
-                  txDraft.set("repeat_until", r.until ? r.until.toISOString() : "");
+                  txDraft.set("repeat_until", r.until ? toLocalDateOnly(r.until) : "");
 
                   console.log("RepeatPanel changed:", {
                     repeat: r.enabled,

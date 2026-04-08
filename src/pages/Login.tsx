@@ -18,7 +18,7 @@ export default function Login() {
   }
 
   return (
-    <main className="py-6 flex flex-col">
+    <main className="flex flex-col">
       <div className="bg-white py-30 mx-auto">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-gray-900 leading-tight">

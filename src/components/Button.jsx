@@ -20,9 +20,9 @@ export default function Button({
   const baseStyle =
     "relative h-12 w-full border shadow-sm px-5 text-base flex items-center";
   const variants = {
-    primary: baseStyle + " border-gray-400 bg-blue-400 text-white hover:opacity-95",
-    secondary: baseStyle + " border-gray-400 bg-white text-blue-500 hover:bg-gray-50",
-    ghostDim: baseStyle + " border-gray-300 bg-gray-100 text-gray-500 hover:bg-gray-200",
+    primary: baseStyle + " border-gray-400 bg-blue-400 rounded-md text-white hover:opacity-95",
+    secondary: baseStyle + " border-gray-400 bg-white rounded-md text-blue-500 hover:shadow-md transition",
+    ghostDim: baseStyle + " border-gray-300 bg-gray-100 rounded-md text-gray-500 hover:bg-gray-200",
   };
 
   const disabledStyle = "opacity-50 cursor-not-allowed pointer-events-none";

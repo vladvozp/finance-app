@@ -1,3 +1,17 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/inter-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter/inter-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
 @import "tailwindcss";
 
 /* Tockens (Tailwind 4) */
@@ -9,5 +23,10 @@
 }
 
 /* Base Styles */
-body { @apply bg-white text-gray-900 font-sans antialiased; }
-a { @apply text-[--color-brand] hover:underline; }
+body {
+  @apply bg-white text-gray-900 font-sans antialiased;
+}
+
+a {
+  @apply text-[--color-brand] hover:underline;
+}

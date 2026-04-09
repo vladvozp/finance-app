@@ -93,7 +93,7 @@ export default function ImpressumPage() {
                                 href="https://ec.europa.eu/consumers/odr/"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="ml-1 text-slate-900 underline underline-offset-4"
+                                className="ml-1 text-slate-900 underline underline-offset-4 break-all"
                             >
                                 https://ec.europa.eu/consumers/odr/
                             </a>

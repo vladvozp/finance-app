@@ -16,7 +16,27 @@ function formatLocalDate(date: Date): string {
     return `${y}-${m}-${d}`;
 }
 
+function generateMonthlyDates(start: string, until: string, interval: number): string[] {
+    const dates: string[] = [];
 
+    let current = new Date(start);
+    const end = new Date(until);
+
+    while (current <= end) {
+        dates.push(formatLocalDate(current));
+
+        const next = new Date(current);
+        next.setMonth(next.getMonth() + interval);
+
+        if (next.getDate() !== current.getDate()) {
+            next.setDate(0);
+        }
+
+        current = next;
+    }
+
+    return dates;
+}
 
 
 export function useTransactionForm(
@@ -136,7 +156,13 @@ export function useTransactionForm(
                 alert("Saved ✅");
                 navigate("/MonthPage");
             } else {
-                console.log("REPEAT MODE Test");
+                const dates = generateMonthlyDates(
+                    isoDate,
+                    String(repeatUntil),
+                    Number(repeatInterval) || 1
+                );
+
+                console.log("REPEAT DATES:", dates);
                 return;
             }
         } finally {

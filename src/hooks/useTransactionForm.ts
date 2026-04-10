@@ -87,6 +87,20 @@ export function useTransactionForm(
             const isoDate = formatLocalDate(effectiveDate);
             const status: TxStatus = isPlanned ? "planned" : "booked";
 
+            const isRepeat = txDraft.getField("repeat");
+            const repeatFreq = txDraft.getField("repeat_freq");
+            const repeatInterval = txDraft.getField("repeat_interval");
+            const repeatByweekday = txDraft.getField("repeat_byweekday");
+            const repeatUntil = txDraft.getField("repeat_until");
+
+            console.log("SAVE DEBUG:", {
+                isRepeat,
+                repeatFreq,
+                repeatInterval,
+                repeatByweekday,
+                repeatUntil,
+            });
+
             const tx: Tx = {
                 id: crypto.randomUUID(),
                 kind: "expense",

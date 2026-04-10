@@ -179,7 +179,19 @@ export function useTransactionForm(
                     Number(repeatInterval) || 1
                 );
 
-                console.log("REPEAT DATES:", dates);
+                const repeatTxs = dates.map((d, index) => ({
+                    id: crypto.randomUUID(),
+                    kind: "expense",
+                    kontoId: selectedAccountId,
+                    amount: -(cents / 100),
+                    date: d,
+                    createdAt: nowISO,
+                    status: index === 0 ? status : "planned",
+                    gruppeId: gruppeId || undefined,
+                    anbieterId: anbieterId || undefined,
+                }));
+
+                console.log("REPEAT TXS:", repeatTxs);
                 return;
             }
         } finally {

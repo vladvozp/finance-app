@@ -186,10 +186,6 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
   const [byweekday, setByweekday] = useState(initial.byweekday);
   const [until, setUntil] = useState(initial.until);
 
-  // Уведомляем родителя при каждом изменении — но теперь это только локальный драфт
-  useEffect(() => {
-    onChange?.({ enabled, freq, interval, byweekday, until });
-  }, [enabled, freq, interval, byweekday, until]);
 
   function toggleWd(n) {
     setByweekday((arr) => arr.includes(n) ? arr.filter(x => x !== n) : [...arr, n].sort());

@@ -4,7 +4,6 @@ import "react-day-picker/dist/style.css";
 import { format as fmt, parse } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarPlus2 } from 'lucide-react';
-// import Kalender from "../assets/Kalender.svg?react";
 
 import { txDraft } from "../store/transactionDraft";
 
@@ -15,45 +14,79 @@ function toLocalDateOnly(date) {
   return `${y}-${m}-${d}`;
 }
 
-
 function classNames(...xs) { return xs.filter(Boolean).join(" "); }
 
-
-
+function getRepeatFromDraft() {
+  return {
+    enabled: txDraft.getField("repeat") ?? false,
+    freq: txDraft.getField("repeat_freq") ?? "WEEKLY",
+    interval: txDraft.getField("repeat_interval") ?? 1,
+    byweekday: txDraft.getField("repeat_byweekday") ?? [],
+    until: txDraft.getField("repeat_until") ? new Date(txDraft.getField("repeat_until")) : null,
+  };
+}
 
 export default function DatePickerInput({
-  value,                 // Date | null
-  onChange,              // (Date|null)=>void
+  value,
+  onChange,
   label,
   placeholder = "MM/DD/YYYY",
   displayFormat = "dd.MM.yyyy",
-  locale = de,           // DE local for Calender
-  minDate,               // Date | undefined
-  maxDate,               // Date | undefined
+  locale = de,
+  minDate,
+  maxDate,
   required = false,
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(value ? fmt(value, displayFormat) : "");
   const ref = useRef(null);
 
-  // close with click
+  // Локальный драфт RepeatPanel — применяется только по OK
+  const [repeatDraft, setRepeatDraft] = useState(null);
+
+  // Сбрасываем драфт и читаем актуальные данные из txDraft при каждом открытии
+  function handleOpen() {
+    setRepeatDraft(getRepeatFromDraft());
+    setOpen(true);
+  }
+
+  function handleConfirm() {
+    if (repeatDraft) {
+      try {
+        txDraft.set("repeat", repeatDraft.enabled);
+        txDraft.set("repeat_freq", repeatDraft.freq);
+        txDraft.set("repeat_interval", repeatDraft.interval);
+        txDraft.set("repeat_byweekday", repeatDraft.byweekday);
+        txDraft.set("repeat_until", repeatDraft.until ? toLocalDateOnly(repeatDraft.until) : "");
+      } catch (err) {
+        console.error("RepeatPanel confirm failed:", err);
+      }
+    }
+    setOpen(false);
+  }
+
+  function handleCancel() {
+    // Выбрасываем драфт — txDraft не трогаем
+    setRepeatDraft(null);
+    setOpen(false);
+  }
+
+  // Закрытие кликом вне компонента
   useEffect(() => {
     function onDoc(e) {
       if (!ref.current) return;
-      if (!ref.current.contains(e.target)) setOpen(false);
+      if (!ref.current.contains(e.target)) handleCancel();
     }
     document.addEventListener("mousedown", onDoc);
-
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  // Sinchronization value -> text
+  // Синхронизация value -> text
   useEffect(() => {
     if (value) setText(fmt(value, displayFormat));
     else setText("");
   }, [value, displayFormat]);
 
-  // parsing hand input
   function commitText(t) {
     setText(t);
     const d = parse(t, displayFormat, new Date());
@@ -87,27 +120,26 @@ export default function DatePickerInput({
           )}
           value={text}
           onChange={(e) => commitText(e.target.value)}
-          onFocus={() => setOpen(true)}
+          onFocus={handleOpen}
           placeholder={placeholder}
           inputMode="numeric"
           aria-required={required}
         />
         <button
           type="button"
-          onClick={() => setOpen(o => !o)}
+          onClick={() => open ? handleCancel() : handleOpen()}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-600"
           aria-label="Kalender öffnen"
         >
-          {/* Icon calend */}
           <CalendarPlus2 className="w-5 h-5" />
         </button>
 
-        {open && (
+        {open && repeatDraft && (
           <div className="absolute z-20 mt-2 w-[320px] border border-gray-400 bg-white shadow-sm">
             <DayPicker
               mode="single"
               selected={value ?? undefined}
-              onSelect={(d) => { onChange?.(d ?? null); setOpen(false); }}
+              onSelect={(d) => { onChange?.(d ?? null); }}
               locale={locale}
               weekStartsOn={1}
               fromDate={minDate}
@@ -120,41 +152,24 @@ export default function DatePickerInput({
               }}
             />
             <RepeatPanel
-              initial={{
-                enabled: txDraft.getField("repeat") ?? false,
-                freq: txDraft.getField("repeat_freq") ?? "WEEKLY",    // DAILY | WEEKLY | MONTHLY | YEARLY
-                interval: txDraft.getField("repeat_interval") ?? 1,   // Evry N
-                byweekday: txDraft.getField("repeat_byweekday") ?? [],// [1,2,3] (Mon=1..Son=7)
-                until: txDraft.getField("repeat_until") ? new Date(txDraft.getField("repeat_until")) : null,
-              }}
+              initial={repeatDraft}
+              onChange={setRepeatDraft}
               anchorDate={value ?? null}
-              onChange={(r) => {
-                try {
-                  txDraft.set("repeat", r.enabled);
-                  txDraft.set("repeat_freq", r.freq);
-                  txDraft.set("repeat_interval", r.interval);
-                  txDraft.set("repeat_byweekday", r.byweekday);
-                  txDraft.set("repeat_until", r.until ? toLocalDateOnly(r.until) : "");
-
-                  console.log("RepeatPanel changed:", {
-                    repeat: r.enabled,
-                    repeat_freq: r.freq,
-                    repeat_interval: r.interval,
-                    repeat_byweekday: r.byweekday,
-                    repeat_until: r.until ? toLocalDateOnly(r.until) : "",
-                    anchorDate: value ?? null,
-                  });
-                } catch (err) {
-                  console.error("RepeatPanel onChange failed:", err);
-                }
-              }}
             />
             {footer}
             <div className="sticky bottom-0 flex justify-end gap-2 border bg-white px-3 py-2">
-              <button className="px-3 py-1 text-sm hover:bg-gray-100"
-                onClick={() => setOpen(false)}>Cancel</button>
-              <button className="bg-blue-400 px-3 py-1 text-sm text-white hover:bg-blue-400"
-                onClick={() => setOpen(false)}>OK</button>
+              <button
+                className="px-3 py-1 text-sm hover:bg-gray-100"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-400 px-3 py-1 text-sm text-white hover:bg-blue-400"
+                onClick={handleConfirm}
+              >
+                OK
+              </button>
             </div>
           </div>
         )}
@@ -171,24 +186,18 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
   const [byweekday, setByweekday] = useState(initial.byweekday);
   const [until, setUntil] = useState(initial.until);
 
+  // Уведомляем родителя при каждом изменении — но теперь это только локальный драфт
   useEffect(() => {
     onChange?.({ enabled, freq, interval, byweekday, until });
   }, [enabled, freq, interval, byweekday, until]);
-
-  useEffect(() => {
-    setUntil(initial.until);
-  }, [initial.until]);
-
 
   function toggleWd(n) {
     setByweekday((arr) => arr.includes(n) ? arr.filter(x => x !== n) : [...arr, n].sort());
   }
 
-  // Preview
   const preview = useMemo(() => {
     if (!enabled || !anchorDate) return "";
-    const d = new Date(anchorDate);
-    const copy = new Date(d);
+    const copy = new Date(anchorDate);
     if (freq === "DAILY") copy.setDate(copy.getDate() + interval);
     if (freq === "WEEKLY") copy.setDate(copy.getDate() + 7 * interval);
     if (freq === "MONTHLY") copy.setMonth(copy.getMonth() + interval);
@@ -196,7 +205,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
     return `Nächstes: ${copy.toLocaleDateString("de-DE")}`;
   }, [enabled, anchorDate, freq, interval]);
 
-  const WDS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]; // 1..7
+  const WDS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
   return (
     <div className="border-t p-3 space-y-3">
@@ -205,9 +214,11 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
         <button
           type="button"
           onClick={() => setEnabled(v => !v)}
-          className={`h-6 w-11 rounded-full transition ${enabled ? "bg-blue-400" : "bg-gray-300"}`}
+          className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? "bg-blue-400" : "bg-gray-300"}`}
         >
-          <span className={`block h-6 w-6 rounded-full bg-white transition ${enabled ? "translate-x-5" : "translate-x-0"}`} />
+          <span
+            className={`absolute top-0 left-0 block h-6 w-6 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-0"}`}
+          />
         </button>
       </div>
 
@@ -225,13 +236,13 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                 <option value="WEEKLY">Wöchentlich</option>
                 <option value="MONTHLY">Monatlich</option>
                 <option value="YEARLY">Jährlich</option>
-
               </select>
             </label>
             <label className="text-sm">
               <span className="block text-gray-600 mb-1">Intervall</span>
               <input
-                type="number" min={1}
+                type="number"
+                min={1}
                 className="w-full rounded-lg border px-3 py-2"
                 value={interval}
                 onChange={(e) => setInterval(Math.max(1, Number(e.target.value) || 1))}
@@ -244,15 +255,14 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
               <div className="text-sm text-gray-600">Wochentage</div>
               <div className="grid grid-cols-7 gap-1">
                 {WDS.map((label, idx) => {
-                  const n = idx + 1; // Mo=1..So=7
+                  const n = idx + 1;
                   const on = byweekday.includes(n);
                   return (
                     <button
                       key={n}
                       type="button"
                       onClick={() => toggleWd(n)}
-                      className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-blue-400 text-white border-blue-400" : "bg-white hover:bg-gray-50"
-                        }`}
+                      className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-blue-400 text-white border-blue-400" : "bg-white hover:bg-gray-50"}`}
                     >
                       {label}
                     </button>

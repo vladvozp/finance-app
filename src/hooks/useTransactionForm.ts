@@ -156,6 +156,18 @@ export function useTransactionForm(
                 alert("Saved ✅");
                 navigate("/MonthPage");
             } else {
+                console.log("REPEAT INPUTS:", {
+                    isoDate,
+                    repeatUntil,
+                    repeatInterval,
+                    repeatFreq,
+                });
+
+                if (!repeatUntil) {
+                    console.log("REPEAT ERROR: repeatUntil fehlt");
+                    return;
+                }
+
                 const dates = generateMonthlyDates(
                     isoDate,
                     String(repeatUntil),

@@ -67,7 +67,7 @@ export default function DatePickerInput({
     setOpen(false);
   }
 
-  // Стабильный ref — чтобы onDoc не захватывал stale closure
+
   const handleCancelRef = useRef(handleCancel);
   useEffect(() => { handleCancelRef.current = handleCancel; });
 
@@ -184,7 +184,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
   const [byweekday, setByweekday] = useState(initial.byweekday);
   const [until, setUntil] = useState(initial.until);
 
-  // Без useEffect — onChange вызывается прямо в обработчиках
+
   function notify(patch) {
     onChange?.({ enabled, freq, interval, byweekday, until, ...patch });
   }
@@ -302,7 +302,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
             <input
               type="date"
               className="w-full rounded-lg border px-3 py-2"
-              value={until ? new Date(until).toISOString().slice(0, 10) : ""}
+              value={until ? toLocalDateOnly(new Date(until)) : ""}
               onChange={(e) => handleUntil(e.target.value)}
             />
           </label>

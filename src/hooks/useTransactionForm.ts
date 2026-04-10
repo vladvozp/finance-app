@@ -168,6 +168,11 @@ export function useTransactionForm(
                     return;
                 }
 
+                if (repeatFreq !== "MONTHLY") {
+                    console.log("REPEAT ERROR: only MONTHLY supported now");
+                    return;
+                }
+
                 const dates = generateMonthlyDates(
                     isoDate,
                     String(repeatUntil),

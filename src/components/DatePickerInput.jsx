@@ -8,9 +8,18 @@ import { CalendarPlus2 } from 'lucide-react';
 
 import { txDraft } from "../store/transactionDraft";
 
+function toLocalDateOnly(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 
 function classNames(...xs) { return xs.filter(Boolean).join(" "); }
+
+
+
 
 export default function DatePickerInput({
   value,                 // Date | null

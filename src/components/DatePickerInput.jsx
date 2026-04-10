@@ -40,11 +40,8 @@ export default function DatePickerInput({
   const [open, setOpen] = useState(false);
   const [text, setText] = useState(value ? fmt(value, displayFormat) : "");
   const ref = useRef(null);
-
-  // Локальный драфт RepeatPanel — применяется только по OK
   const [repeatDraft, setRepeatDraft] = useState(null);
 
-  // Сбрасываем драфт и читаем актуальные данные из txDraft при каждом открытии
   function handleOpen() {
     setRepeatDraft(getRepeatFromDraft());
     setOpen(true);
@@ -66,22 +63,23 @@ export default function DatePickerInput({
   }
 
   function handleCancel() {
-    // Выбрасываем драфт — txDraft не трогаем
     setRepeatDraft(null);
     setOpen(false);
   }
 
-  // Закрытие кликом вне компонента
+  // Стабильный ref — чтобы onDoc не захватывал stale closure
+  const handleCancelRef = useRef(handleCancel);
+  useEffect(() => { handleCancelRef.current = handleCancel; });
+
   useEffect(() => {
     function onDoc(e) {
       if (!ref.current) return;
-      if (!ref.current.contains(e.target)) handleCancel();
+      if (!ref.current.contains(e.target)) handleCancelRef.current();
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  // Синхронизация value -> text
   useEffect(() => {
     if (value) setText(fmt(value, displayFormat));
     else setText("");
@@ -186,9 +184,40 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
   const [byweekday, setByweekday] = useState(initial.byweekday);
   const [until, setUntil] = useState(initial.until);
 
+  // Без useEffect — onChange вызывается прямо в обработчиках
+  function notify(patch) {
+    onChange?.({ enabled, freq, interval, byweekday, until, ...patch });
+  }
+
+  function handleToggle() {
+    const next = !enabled;
+    setEnabled(next);
+    notify({ enabled: next });
+  }
+
+  function handleFreq(val) {
+    setFreq(val);
+    notify({ freq: val });
+  }
+
+  function handleInterval(val) {
+    const next = Math.max(1, Number(val) || 1);
+    setInterval(next);
+    notify({ interval: next });
+  }
+
+  function handleUntil(val) {
+    const next = val ? new Date(val + "T00:00:00") : null;
+    setUntil(next);
+    notify({ until: next });
+  }
 
   function toggleWd(n) {
-    setByweekday((arr) => arr.includes(n) ? arr.filter(x => x !== n) : [...arr, n].sort());
+    const next = byweekday.includes(n)
+      ? byweekday.filter(x => x !== n)
+      : [...byweekday, n].sort();
+    setByweekday(next);
+    notify({ byweekday: next });
   }
 
   const preview = useMemo(() => {
@@ -209,7 +238,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
         <span className="text-sm font-medium">Wiederholen</span>
         <button
           type="button"
-          onClick={() => setEnabled(v => !v)}
+          onClick={handleToggle}
           className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? "bg-blue-400" : "bg-gray-300"}`}
         >
           <span
@@ -226,7 +255,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
               <select
                 className="w-full rounded-lg border px-3 py-2"
                 value={freq}
-                onChange={(e) => setFreq(e.target.value)}
+                onChange={(e) => handleFreq(e.target.value)}
               >
                 <option value="DAILY">Täglich</option>
                 <option value="WEEKLY">Wöchentlich</option>
@@ -241,7 +270,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                 min={1}
                 className="w-full rounded-lg border px-3 py-2"
                 value={interval}
-                onChange={(e) => setInterval(Math.max(1, Number(e.target.value) || 1))}
+                onChange={(e) => handleInterval(e.target.value)}
               />
             </label>
           </div>
@@ -274,7 +303,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
               type="date"
               className="w-full rounded-lg border px-3 py-2"
               value={until ? new Date(until).toISOString().slice(0, 10) : ""}
-              onChange={(e) => setUntil(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
+              onChange={(e) => handleUntil(e.target.value)}
             />
           </label>
 

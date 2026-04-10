@@ -167,6 +167,11 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
     onChange?.({ enabled, freq, interval, byweekday, until });
   }, [enabled, freq, interval, byweekday, until]);
 
+  useEffect(() => {
+    setUntil(initial.until);
+  }, [initial.until]);
+
+
   function toggleWd(n) {
     setByweekday((arr) => arr.includes(n) ? arr.filter(x => x !== n) : [...arr, n].sort());
   }

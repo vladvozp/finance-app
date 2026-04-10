@@ -101,39 +101,44 @@ export function useTransactionForm(
                 repeatUntil,
             });
 
-            const tx: Tx = {
-                id: crypto.randomUUID(),
-                kind: "expense",
-                kontoId: selectedAccountId,
-                amount: -(cents / 100),
-                date: isoDate,
-                createdAt: nowISO,
-                status,
-                gruppeId: gruppeId || undefined,
-                anbieterId: anbieterId || undefined,
-            };
+            if (!isRepeat) {
+                const tx: Tx = {
+                    id: crypto.randomUUID(),
+                    kind: "expense",
+                    kontoId: selectedAccountId,
+                    amount: -(cents / 100),
+                    date: isoDate,
+                    createdAt: nowISO,
+                    status,
+                    gruppeId: gruppeId || undefined,
+                    anbieterId: anbieterId || undefined,
+                };
 
-            addTransaction(tx);
+                addTransaction(tx);
 
-            txDraft.setMany({
-                kind: "expense",
-                kontoId: selectedAccountId,
-                amount: tx.amount,
-                date: isoDate,
-                createdAt: nowISO,
-                status,
-                accountId: selectedAccountId,
-                kontoName: selectedAccountName,
-            });
+                txDraft.setMany({
+                    kind: "expense",
+                    kontoId: selectedAccountId,
+                    amount: tx.amount,
+                    date: isoDate,
+                    createdAt: nowISO,
+                    status,
+                    accountId: selectedAccountId,
+                    kontoName: selectedAccountName,
+                });
 
-            if (anbieterId) {
-                const updated = bumpProviderStats(providerStats, anbieterId, gruppeId || "");
-                setProviderStats(updated);
-                saveProviderStats(updated);
+                if (anbieterId) {
+                    const updated = bumpProviderStats(providerStats, anbieterId, gruppeId || "");
+                    setProviderStats(updated);
+                    saveProviderStats(updated);
+                }
+
+                alert("Saved ✅");
+                navigate("/MonthPage");
+            } else {
+                console.log("REPEAT MODE Test");
+                return;
             }
-
-            alert("Saved ✅");
-            navigate("/MonthPage");
         } finally {
             setSaving(false);
         }

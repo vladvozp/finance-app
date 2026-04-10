@@ -554,6 +554,19 @@ export default function MonthPage() {
                                                             <div className="flex flex-wrap items-center gap-2">
                                                                 <button
                                                                     type="button"
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            tx.kind === "income"
+                                                                                ? `/income-transaction/${tx.id}/edit`
+                                                                                : `/transaction/${tx.id}/edit`
+                                                                        )
+                                                                    }
+                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                >
+                                                                    bearbeiten
+                                                                </button>
+                                                                <button
+                                                                    type="button"
                                                                     onClick={() => markBooked(tx.id)}
                                                                     className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                 >

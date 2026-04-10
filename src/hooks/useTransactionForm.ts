@@ -179,7 +179,7 @@ export function useTransactionForm(
                     Number(repeatInterval) || 1
                 );
 
-                const repeatTxs = dates.map((d, index) => ({
+                const repeatTxs: Tx[] = dates.map((d, index) => ({
                     id: crypto.randomUUID(),
                     kind: "expense",
                     kontoId: selectedAccountId,
@@ -191,7 +191,10 @@ export function useTransactionForm(
                     anbieterId: anbieterId || undefined,
                 }));
 
-                console.log("REPEAT TXS:", repeatTxs);
+                repeatTxs.forEach((tx) => addTransaction(tx));
+
+                alert("Saved ✅");
+                navigate("/MonthPage");
                 return;
             }
         } finally {

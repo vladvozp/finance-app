@@ -120,7 +120,6 @@ export default function DatePickerInput({
               }}
               anchorDate={value ?? null}
               onChange={(r) => {
-                // Save
                 try {
                   txDraft.set("repeat", r.enabled);
                   txDraft.set("repeat_freq", r.freq);
@@ -133,12 +132,12 @@ export default function DatePickerInput({
                     repeat_freq: r.freq,
                     repeat_interval: r.interval,
                     repeat_byweekday: r.byweekday,
-                    repeat_until: r.until ? r.until.toISOString() : "",
+                    repeat_until: r.until ? toLocalDateOnly(r.until) : "",
                     anchorDate: value ?? null,
                   });
-
-
-                } catch { }
+                } catch (err) {
+                  console.error("RepeatPanel onChange failed:", err);
+                }
               }}
             />
             {footer}

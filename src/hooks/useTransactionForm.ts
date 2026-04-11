@@ -113,8 +113,7 @@ export function useTransactionForm(
             const repeatByweekday = txDraft.getField("repeat_byweekday");
             const repeatUntil = txDraft.getField("repeat_until");
 
-            const txKind = txDraft.getField("kind") ?? "expense";
-            const signedAmount = txKind === "income" ? cents / 100 : -(cents / 100);
+
 
 
 
@@ -177,6 +176,8 @@ export function useTransactionForm(
                     console.log("REPEAT ERROR: only MONTHLY supported now");
                     return;
                 }
+                const txKind = txDraft.getField("kind") ?? "expense";
+                const signedAmount = txKind === "income" ? cents / 100 : -(cents / 100);
 
                 const dates = generateMonthlyDates(
                     isoDate,

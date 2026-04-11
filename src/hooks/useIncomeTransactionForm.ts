@@ -6,6 +6,35 @@ import { toCents } from "../utils/currency";
 import type { Tx, TxStatus } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
 
+function formatLocalDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+function generateMonthlyDates(start: string, until: string, interval: number): string[] {
+    const dates: string[] = [];
+
+    let current = new Date(start);
+    const end = new Date(until);
+
+    while (current <= end) {
+        dates.push(formatLocalDate(current));
+
+        const next = new Date(current);
+        next.setMonth(next.getMonth() + interval);
+
+        if (next.getDate() !== current.getDate()) {
+            next.setDate(0);
+        }
+
+        current = next;
+    }
+
+    return dates;
+}
+
 export function useIncomeTransactionForm(
     amount: number,
     selectedAccountId: string,
@@ -83,40 +112,82 @@ export function useIncomeTransactionForm(
             const cents = toCents(amountStr);
             const effectiveDate = date ?? new Date();
             const nowISO = new Date().toISOString();
-            const isoDate = effectiveDate.toISOString().slice(0, 10);
+            const isoDate = formatLocalDate(effectiveDate);
             const status: TxStatus = isPlanned ? "planned" : "booked";
 
-            const tx: Tx = {
-                id: crypto.randomUUID(),
-                kind: "income",
-                kontoId: selectedAccountId,
-                amount: cents / 100,
-                date: isoDate,
-                createdAt: nowISO,
-                status,
-                quelleId: quelleId || null,
-                incomeKategorieId: incomeKategorieId || null,
-                remark: remark?.trim() || null,
-            };
+            const isRepeat = txDraft.getField("repeat");
+            const repeatFreq = txDraft.getField("repeat_freq");
+            const repeatInterval = txDraft.getField("repeat_interval");
+            const repeatUntil = txDraft.getField("repeat_until");
 
-            addTransaction(tx);
+            if (!isRepeat) {
+                const tx: Tx = {
+                    id: crypto.randomUUID(),
+                    kind: "income",
+                    kontoId: selectedAccountId,
+                    amount: cents / 100,
+                    date: isoDate,
+                    createdAt: nowISO,
+                    status,
+                    quelleId: quelleId || null,
+                    incomeKategorieId: incomeKategorieId || null,
+                    remark: remark?.trim() || null,
+                };
 
-            txDraft.setMany({
-                kind: "income",
-                kontoId: selectedAccountId,
-                amount: tx.amount,
-                date: isoDate,
-                createdAt: nowISO,
-                status,
-                accountId: selectedAccountId,
-                kontoName: selectedAccountName,
-                quelleId,
-                incomeKategorieId,
-                remark,
-            });
+                addTransaction(tx);
 
-            alert("Saved ✅");
-            navigate("/MonthPage");
+                txDraft.setMany({
+                    kind: "income",
+                    kontoId: selectedAccountId,
+                    amount: tx.amount,
+                    date: isoDate,
+                    createdAt: nowISO,
+                    status,
+                    accountId: selectedAccountId,
+                    kontoName: selectedAccountName,
+                    quelleId,
+                    incomeKategorieId,
+                    remark,
+                });
+
+                alert("Saved ✅");
+                navigate("/MonthPage");
+            } else {
+                if (!repeatUntil) {
+                    console.log("REPEAT ERROR: repeatUntil fehlt");
+                    return;
+                }
+
+                if (repeatFreq !== "MONTHLY") {
+                    console.log("REPEAT ERROR: only MONTHLY supported now");
+                    return;
+                }
+
+                const dates = generateMonthlyDates(
+                    isoDate,
+                    String(repeatUntil),
+                    Number(repeatInterval) || 1
+                );
+
+                const repeatTxs: Tx[] = dates.map((d, index) => ({
+                    id: crypto.randomUUID(),
+                    kind: "income",
+                    kontoId: selectedAccountId,
+                    amount: cents / 100,
+                    date: d,
+                    createdAt: nowISO,
+                    status: index === 0 ? status : "planned",
+                    quelleId: quelleId || null,
+                    incomeKategorieId: incomeKategorieId || null,
+                    remark: remark?.trim() || null,
+                }));
+
+                repeatTxs.forEach((tx) => addTransaction(tx));
+
+                alert("Saved ✅");
+                navigate("/MonthPage");
+                return;
+            }
         } finally {
             setSaving(false);
         }

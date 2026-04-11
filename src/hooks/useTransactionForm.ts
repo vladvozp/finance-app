@@ -113,6 +113,11 @@ export function useTransactionForm(
             const repeatByweekday = txDraft.getField("repeat_byweekday");
             const repeatUntil = txDraft.getField("repeat_until");
 
+            const txKind = txDraft.getField("kind") ?? "expense";
+            const signedAmount = txKind === "income" ? cents / 100 : -(cents / 100);
+
+
+
             console.log("SAVE DEBUG:", {
                 isRepeat,
                 repeatFreq,
@@ -181,9 +186,9 @@ export function useTransactionForm(
 
                 const repeatTxs: Tx[] = dates.map((d, index) => ({
                     id: crypto.randomUUID(),
-                    kind: "expense",
+                    kind: txKind,
                     kontoId: selectedAccountId,
-                    amount: -(cents / 100),
+                    amount: signedAmount,
                     date: d,
                     createdAt: nowISO,
                     status: index === 0 ? status : "planned",

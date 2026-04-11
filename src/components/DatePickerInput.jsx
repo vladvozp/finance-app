@@ -257,11 +257,11 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                 value={freq}
                 onChange={(e) => handleFreq(e.target.value)}
               >
-                <option value="MONTHLY">Monatlich</option>
-                {/* <option value="DAILY">Täglich</option> 
+
+                <option value="DAILY">Täglich</option>
                 <option value="WEEKLY">Wöchentlich</option>
                 <option value="MONTHLY">Monatlich</option>
-                <option value="YEARLY">Jährlich</option> */}
+                <option value="YEARLY">Jährlich</option>
               </select>
             </label>
             {/*   <label className="text-sm">
@@ -276,7 +276,7 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
             </label> */}
           </div>
 
-          {/*   {freq === "WEEKLY" && (
+          {freq === "WEEKLY" && (
             <div className="space-y-1">
               <div className="text-sm text-gray-600">Wochentage</div>
               <div className="grid grid-cols-7 gap-1">
@@ -291,12 +291,12 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                       className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-blue-400 text-white border-blue-400" : "bg-white hover:bg-gray-50"}`}
                     >
                       {label}
-                    </button> 
+                    </button>
                   );
-                })} 
+                })}
               </div>
             </div>
-          )} */}
+          )}
 
           <label className="text-sm block">
             <span className="block text-gray-600 mb-1">Bis (inkl.)</span>

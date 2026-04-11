@@ -168,7 +168,22 @@ export function useTransactionForm(
                 });
 
                 if (!repeatUntil) {
-                    console.log("REPEAT ERROR: repeatUntil fehlt");
+                    const tx: Tx = {
+                        id: crypto.randomUUID(),
+                        kind: "expense",
+                        kontoId: selectedAccountId,
+                        amount: -(cents / 100),
+                        date: isoDate,
+                        createdAt: nowISO,
+                        status,
+                        gruppeId: gruppeId || undefined,
+                        anbieterId: anbieterId || undefined,
+                    };
+
+                    addTransaction(tx);
+
+                    alert("Saved ✅");
+                    navigate("/MonthPage");
                     return;
                 }
 

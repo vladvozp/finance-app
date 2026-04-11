@@ -251,19 +251,20 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <label className="text-sm">
-              <span className="block text-gray-600 mb-1">Frequenz</span>
+              {/*    <span className="block text-gray-600 mb-1">Frequenz</span> */}
               <select
                 className="w-full rounded-lg border px-3 py-2"
                 value={freq}
                 onChange={(e) => handleFreq(e.target.value)}
               >
-                <option value="DAILY">Täglich</option>
+                <option value="MONTHLY">Monatlich</option>
+                {/* <option value="DAILY">Täglich</option> 
                 <option value="WEEKLY">Wöchentlich</option>
                 <option value="MONTHLY">Monatlich</option>
-                <option value="YEARLY">Jährlich</option>
+                <option value="YEARLY">Jährlich</option> */}
               </select>
             </label>
-            <label className="text-sm">
+            {/*   <label className="text-sm">
               <span className="block text-gray-600 mb-1">Intervall</span>
               <input
                 type="number"
@@ -272,10 +273,10 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                 value={interval}
                 onChange={(e) => handleInterval(e.target.value)}
               />
-            </label>
+            </label> */}
           </div>
 
-          {freq === "WEEKLY" && (
+          {/*   {freq === "WEEKLY" && (
             <div className="space-y-1">
               <div className="text-sm text-gray-600">Wochentage</div>
               <div className="grid grid-cols-7 gap-1">
@@ -290,15 +291,15 @@ function RepeatPanel({ initial, onChange, anchorDate }) {
                       className={`rounded-md px-2 py-1 text-sm border ${on ? "bg-blue-400 text-white border-blue-400" : "bg-white hover:bg-gray-50"}`}
                     >
                       {label}
-                    </button>
+                    </button> 
                   );
-                })}
+                })} 
               </div>
             </div>
-          )}
+          )} */}
 
           <label className="text-sm block">
-            <span className="block text-gray-600 mb-1">Ende (optional)</span>
+            <span className="block text-gray-600 mb-1">Bis (inkl.)</span>
             <input
               type="date"
               className="w-full rounded-lg border px-3 py-2"

@@ -154,7 +154,24 @@ export function useIncomeTransactionForm(
                 navigate("/MonthPage");
             } else {
                 if (!repeatUntil) {
-                    console.log("REPEAT ERROR: repeatUntil fehlt");
+
+                    const tx: Tx = {
+                        id: crypto.randomUUID(),
+                        kind: "income",
+                        kontoId: selectedAccountId,
+                        amount: cents / 100,
+                        date: isoDate,
+                        createdAt: nowISO,
+                        status,
+                        quelleId: quelleId || null,
+                        incomeKategorieId: incomeKategorieId || null,
+                        remark: remark?.trim() || null,
+                    };
+
+                    addTransaction(tx);
+
+                    alert("Saved ✅");
+                    navigate("/MonthPage");
                     return;
                 }
 

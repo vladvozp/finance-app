@@ -176,8 +176,7 @@ export function useTransactionForm(
                     console.log("REPEAT ERROR: only MONTHLY supported now");
                     return;
                 }
-                const txKind = txDraft.getField("kind") ?? "expense";
-                const signedAmount = txKind === "income" ? cents / 100 : -(cents / 100);
+
 
                 const dates = generateMonthlyDates(
                     isoDate,
@@ -187,9 +186,9 @@ export function useTransactionForm(
 
                 const repeatTxs: Tx[] = dates.map((d, index) => ({
                     id: crypto.randomUUID(),
-                    kind: txKind,
+                    kind: "expense",
                     kontoId: selectedAccountId,
-                    amount: signedAmount,
+                    amount: -(cents / 100),
                     date: d,
                     createdAt: nowISO,
                     status: index === 0 ? status : "planned",

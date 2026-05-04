@@ -53,7 +53,7 @@ export function calculateMonthMetrics<T extends MonthTxLike>(
         return sum + safeAmount(tx.amount);
     }, 0);
 
-    const monthEndForecast = totalBalance - plannedExpenseTotal + plannedIncomeTotal;
+    const monthEndForecast = totalBalance - plannedExpenseTotal; //+ plannedIncomeTotal;
 
     return {
         monthTx,

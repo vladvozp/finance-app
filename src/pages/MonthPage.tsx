@@ -50,76 +50,6 @@ function monthLabelDE(d: Date) {
     }).format(d);
 }
 
-/* type MetricCardProps = {
-    title: string;
-    value: string;
-    hint?: string;
-    tone?: "neutral" | "red" | "yellow" | "green";
-    featured?: boolean;
-};
-
-function MetricCard({
-    title,
-    value,
-    hint,
-    tone = "neutral",
-    featured = false,
-}: MetricCardProps) {
-    const toneMap = {
-        neutral: {
-            wrap: "border-gray-300 bg-white",
-            title: "text-gray-700",
-            value: "text-gray-900",
-            hint: "text-gray-500",
-        },
-        red: {
-            wrap: "border-gray-300 bg-white",
-            title: "text-gray-700",
-            value: "text-red-700",
-            hint: "text-gray-500",
-        },
-        yellow: {
-            wrap: "border-gray-300 bg-white",
-            title: "text-gray-700",
-            value: "text-yellow-700",
-            hint: "text-gray-500",
-        },
-        green: {
-            wrap: "border-gray-300 bg-white",
-            title: "text-gray-700",
-            value: "text-green-700",
-            hint: "text-gray-500",
-        },
-    };
-
-    const c = toneMap[tone];
-
-    return (
-        <section className={`min-w-0 border px-4 py-4 ${c.wrap}`}>
-            <div className={`text-[11px] font-medium uppercase tracking-wide ${c.title}`}>
-                {title}
-            </div>
-
-            <div
-                className={[
-                    "mt-2 min-w-0 truncate font-semibold tabular-nums tracking-tight",
-                    featured
-                        ? `text-3xl sm:text-4xl ${c.value}`
-                        : `text-2xl ${c.value}`,
-                ].join(" ")}
-                title={value}
-            >
-                {value}
-            </div>
-
-            {hint ? (
-                <p className={`mt-2 text-sm leading-6 ${c.hint}`}>
-                    {hint}
-                </p>
-            ) : null}
-        </section>
-    );
-} */
 
 export default function MonthPage() {
     const navigate = useNavigate();
@@ -207,62 +137,7 @@ export default function MonthPage() {
     const markCancelled = (id: string) =>
         updateTransaction(id, { status: "cancelled" });
 
-    /*  const monthTx = useMemo(
-          () =>
-              transactions.filter((tx) =>
-                  (tx.date ?? "").startsWith(selectedMonthPrefix)
-              ),
-          [transactions, selectedMonthPrefix]
-      );
-  
-      const monthBookedTx = useMemo(
-          () =>
-              monthTx.filter(
-                  (tx) => tx.status !== "planned" && tx.status !== "cancelled"
-              ),
-          [monthTx]
-      );
-  
-      const monthPlannedTx = useMemo(
-          () => monthTx.filter((tx) => tx.status === "planned"),
-          [monthTx]
-      );
-  
-      const tableTx = useMemo(
-          () => (onlyPlanned ? monthPlannedTx : monthTx),
-          [onlyPlanned, monthPlannedTx, monthTx]
-      );
-  
-      const expenseTotal = useMemo(
-          () =>
-              monthBookedTx.reduce((sum, tx) => {
-                  if (tx.kind !== "expense") return sum;
-                  return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-              }, 0),
-          [monthBookedTx]
-      );
-  
-      const plannedExpenseTotal = useMemo(
-          () =>
-              monthPlannedTx.reduce((sum, tx) => {
-                  if (tx.kind !== "expense") return sum;
-                  return sum + Math.abs(Number.isFinite(tx.amount) ? tx.amount : 0);
-              }, 0),
-          [monthPlannedTx]
-      );
-  
-      const plannedIncomeTotal = useMemo(
-          () =>
-              monthPlannedTx.reduce((sum, tx) => {
-                  if (tx.kind !== "income") return sum;
-                  return sum + (Number.isFinite(tx.amount) ? tx.amount : 0);
-              }, 0),
-          [monthPlannedTx]
-      ); 
-  
-      const available = totalBalance - plannedExpenseTotal + plannedIncomeTotal;
-      
-      */
+
     const {
         monthTx,
         monthBookedTx,
@@ -344,7 +219,7 @@ export default function MonthPage() {
                     <MetricCard
                         title="Was dir bleibt"
                         value={fmtMoney(monthEndForecast)}
-                        hint="Mit geplanten Einnahmen und Ausgaben"
+                        hint="Mit geplanten Ausgaben"
                         tone="green"
                         featured
                     />

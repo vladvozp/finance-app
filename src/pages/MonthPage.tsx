@@ -168,6 +168,7 @@ export default function MonthPage() {
         category: true,
         amount: true,
         actions: true,
+        status: true,
     });
 
 
@@ -412,6 +413,7 @@ export default function MonthPage() {
                                         ["category", "Gruppe / Kategorie"],
                                         ["amount", "Betrag"],
                                         ["actions", "Aktion"],
+                                        ["status", "Status"],
                                     ].map(([key, label]) => (
                                         <label key={key} className="flex items-center gap-2 text-sm text-gray-700">
                                             <input
@@ -435,6 +437,12 @@ export default function MonthPage() {
                                             {visibleCols.date && (<th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Datum
                                             </th>)}
+
+                                            {visibleCols.status && (
+                                                <th className="w-[110px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                    Status
+                                                </th>
+                                            )}
 
                                             {visibleCols.konto && (<th className="w-[120px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Konto
@@ -482,17 +490,22 @@ export default function MonthPage() {
 
                                             return (
                                                 <tr key={tx.id} className={rowClass}>
-                                                    {visibleCols.date && (<td className="border-b border-gray-200 px-3 py-3 align-middle">
-                                                        <div className="flex min-w-0 items-center gap-2">
-                                                            <span className="truncate">{fmtDate(tx.date)}</span>
 
+                                                    {visibleCols.date && (
+                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                            {fmtDate(tx.date)}
+                                                        </td>
+                                                    )}
+
+                                                    {visibleCols.status && (
+                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
                                                             {isCancelled ? (
-                                                                <span className="shrink-0 border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
+                                                                <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
                                                                     storniert
                                                                 </span>
                                                             ) : isPlanned ? (
                                                                 <span
-                                                                    className={`shrink-0 border px-2 py-[1px] text-[10px] ${isOverdue
+                                                                    className={`border px-2 py-[1px] text-[10px] ${isOverdue
                                                                         ? "border-red-300 text-red-700"
                                                                         : isDueToday
                                                                             ? "border-yellow-400 text-yellow-700"
@@ -501,116 +514,127 @@ export default function MonthPage() {
                                                                 >
                                                                     geplant
                                                                 </span>
-                                                            ) : null}
-                                                        </div>
-                                                    </td>)}
+                                                            ) : (
+                                                                <span className="text-[10px] text-green-700">
+                                                                    gebucht
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    )}
 
-                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
-                                                        <span
-                                                            className="block truncate"
-                                                            title={getKontoName((tx as any).kontoId)}
-                                                        >
-                                                            {getKontoName((tx as any).kontoId)}
-                                                        </span>
-                                                    </td>
+                                                    {visibleCols.konto && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={getKontoName((tx as any).kontoId)}
+                                                            >
+                                                                {getKontoName((tx as any).kontoId)}
+                                                            </span>
+                                                        </td>
+                                                    )}
 
-                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
-                                                        <span
-                                                            className="block truncate"
-                                                            title={
-                                                                tx.kind === "expense"
+                                                    {visibleCols.source && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={
+                                                                    tx.kind === "expense"
+                                                                        ? getAnbieterName((tx as any).anbieterId)
+                                                                        : getIncomeSourceName((tx as any).quelleId)
+                                                                }
+                                                            >
+                                                                {tx.kind === "expense"
                                                                     ? getAnbieterName((tx as any).anbieterId)
-                                                                    : getIncomeSourceName((tx as any).quelleId)
-                                                            }
-                                                        >
-                                                            {tx.kind === "expense"
-                                                                ? getAnbieterName((tx as any).anbieterId)
-                                                                : getIncomeSourceName((tx as any).quelleId)}
-                                                        </span>
-                                                    </td>
+                                                                    : getIncomeSourceName((tx as any).quelleId)}
+                                                            </span>
+                                                        </td>)}
 
-                                                    <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
-                                                        <span
-                                                            className="block truncate"
-                                                            title={
-                                                                tx.kind === "expense"
+                                                    {visibleCols.category && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={
+                                                                    tx.kind === "expense"
+                                                                        ? getGruppeName((tx as any).gruppeId)
+                                                                        : getIncomeCategoryName((tx as any).incomeKategorieId)
+                                                                }
+                                                            >
+                                                                {tx.kind === "expense"
                                                                     ? getGruppeName((tx as any).gruppeId)
-                                                                    : getIncomeCategoryName((tx as any).incomeKategorieId)
-                                                            }
+                                                                    : getIncomeCategoryName((tx as any).incomeKategorieId)}
+                                                            </span>
+                                                        </td>)}
+
+                                                    {visibleCols.amount && (
+                                                        <td
+                                                            className={`border-b border-gray-200 px-3 py-3 text-right tabular-nums align-middle ${amountClass}`}
+                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
                                                         >
-                                                            {tx.kind === "expense"
-                                                                ? getGruppeName((tx as any).gruppeId)
-                                                                : getIncomeCategoryName((tx as any).incomeKategorieId)}
-                                                        </span>
-                                                    </td>
+                                                            {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                        </td>)}
 
-                                                    <td
-                                                        className={`border-b border-gray-200 px-3 py-3 text-right tabular-nums align-middle ${amountClass}`}
-                                                        title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
-                                                    >
-                                                        {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
-                                                    </td>
 
-                                                    <td className="border-b border-gray-200 px-3 py-3 align-middle">
-                                                        {isPlanned ? (
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        navigate(
-                                                                            tx.kind === "income"
-                                                                                ? `/income-transaction/${tx.id}/edit`
-                                                                                : `/transaction/${tx.id}/edit`
-                                                                        )
-                                                                    }
-                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                >
-                                                                    bearbeiten
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => markBooked(tx.id)}
-                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                >
-                                                                    durchführen
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => markCancelled(tx.id)}
-                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                >
-                                                                    stornieren
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex flex-wrap items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        navigate(
-                                                                            tx.kind === "income"
-                                                                                ? `/income-transaction/${tx.id}/edit`
-                                                                                : `/transaction/${tx.id}/edit`
-                                                                        )
-                                                                    }
-                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                >
-                                                                    bearbeiten
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (window.confirm("Transaktion wirklich löschen?")) {
-                                                                            removeTransaction(tx.id);
+                                                    {visibleCols.actions && (
+                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                            {isPlanned ? (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
                                                                         }
-                                                                    }}
-                                                                    className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                >
-                                                                    löschen
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </td>
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => markBooked(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        durchführen
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => markCancelled(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        stornieren
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
+                                                                        }
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (window.confirm("Transaktion wirklich löschen?")) {
+                                                                                removeTransaction(tx.id);
+                                                                            }
+                                                                        }}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        löschen
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </td>)}
                                                 </tr>
                                             );
                                         })}
@@ -620,7 +644,7 @@ export default function MonthPage() {
                         </>
                     )}
                 </section>
-            </main>
+            </main >
         </div >
     );
 }

@@ -160,6 +160,19 @@ export default function MonthPage() {
         [transactions, selectedMonthPrefix, totalBalance]
     );
 
+
+    const [visibleCols, setVisibleCols] = useState({
+        date: true,
+        konto: true,
+        source: true,
+        category: true,
+        amount: true,
+        actions: true,
+    });
+
+
+
+
     const tableTx = useMemo(() => {
         let list = onlyPlanned ? monthPlannedTx : monthTx;
 
@@ -189,7 +202,12 @@ export default function MonthPage() {
     }, [onlyPlanned, monthPlannedTx, monthTx, statusFilter, sortMode]);
 
 
-
+    function toggleCol(key: keyof typeof visibleCols) {
+        setVisibleCols((prev) => ({
+            ...prev,
+            [key]: !prev[key],
+        }));
+    }
 
     return (
         <div className="min-h-screen bg-white">
@@ -381,28 +399,62 @@ export default function MonthPage() {
                             </div>
 
 
+                            <details className="border border-gray-300 bg-white p-3">
+                                <summary className="cursor-pointer text-sm font-medium text-gray-700">
+                                    Anzeigeoptionen
+                                </summary>
+
+                                <div className="mt-3 flex flex-wrap gap-3">
+                                    {[
+                                        ["date", "Datum"],
+                                        ["konto", "Konto"],
+                                        ["source", "Anbieter / Quelle"],
+                                        ["category", "Gruppe / Kategorie"],
+                                        ["amount", "Betrag"],
+                                        ["actions", "Aktion"],
+                                    ].map(([key, label]) => (
+                                        <label key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={visibleCols[key as keyof typeof visibleCols]}
+                                                onChange={() => toggleCol(key as keyof typeof visibleCols)}
+                                                className="h-4 w-4"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </details>
+
+
+
                             <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">
                                 <table className="w-full table-fixed border-collapse text-sm">
                                     <thead className="sticky top-0 z-10 bg-gray-50">
                                         <tr>
-                                            <th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.date && (<th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Datum
-                                            </th>
-                                            <th className="w-[120px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            </th>)}
+
+                                            {visibleCols.konto && (<th className="w-[120px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Konto
-                                            </th>
-                                            <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            </th>)}
+
+                                            {visibleCols.source && (<th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Anbieter / Quelle
-                                            </th>
-                                            <th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            </th>)}
+
+                                            {visibleCols.category && (<th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Gruppe / Kategorie
-                                            </th>
-                                            <th className="w-[120px] border-b border-gray-300 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            </th>)}
+
+                                            {visibleCols.amount && (<th className="w-[120px] border-b border-gray-300 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Betrag
-                                            </th>
-                                            <th className="w-[220px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            </th>)}
+
+                                            {visibleCols.actions && (<th className="w-[220px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Aktion
-                                            </th>
+                                            </th>)}
                                         </tr>
                                     </thead>
 
@@ -430,7 +482,7 @@ export default function MonthPage() {
 
                                             return (
                                                 <tr key={tx.id} className={rowClass}>
-                                                    <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                    {visibleCols.date && (<td className="border-b border-gray-200 px-3 py-3 align-middle">
                                                         <div className="flex min-w-0 items-center gap-2">
                                                             <span className="truncate">{fmtDate(tx.date)}</span>
 
@@ -451,7 +503,7 @@ export default function MonthPage() {
                                                                 </span>
                                                             ) : null}
                                                         </div>
-                                                    </td>
+                                                    </td>)}
 
                                                     <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
                                                         <span

@@ -161,18 +161,17 @@ export default function MonthPage() {
     );
 
 
-    const [visibleCols, setVisibleCols] = useState({
+    const DEFAULT_VISIBLE_COLS = {
         date: true,
-        konto: true,
+        konto: false,
         source: true,
-        category: true,
+        category: false,
         amount: true,
         actions: true,
         status: true,
-    });
+    };
 
-
-
+    const [visibleCols, setVisibleCols] = useState(DEFAULT_VISIBLE_COLS);
 
     const tableTx = useMemo(() => {
         let list = onlyPlanned ? monthPlannedTx : monthTx;

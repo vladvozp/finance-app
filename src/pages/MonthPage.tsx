@@ -99,6 +99,15 @@ export default function MonthPage() {
 
     const [onlyPlanned, setOnlyPlanned] = useState(false);
 
+
+    const [statusFilter, setStatusFilter] = useState<
+        "all" | "planned" | "booked" | "cancelled"
+    >("all");
+
+    const [sortMode, setSortMode] = useState<
+        "date-desc" | "date-asc" | "amount-desc" | "amount-asc"
+    >("date-desc");
+
     const totalBalance = getTotalBalance();
 
     const selectedMonthPrefix = useMemo(
@@ -151,10 +160,37 @@ export default function MonthPage() {
         [transactions, selectedMonthPrefix, totalBalance]
     );
 
-    const tableTx = useMemo(
-        () => (onlyPlanned ? monthPlannedTx : monthTx),
-        [onlyPlanned, monthPlannedTx, monthTx]
-    );
+    const tableTx = useMemo(() => {
+        let list = onlyPlanned ? monthPlannedTx : monthTx;
+
+        if (statusFilter !== "all") {
+            list = list.filter((tx) => tx.status === statusFilter);
+        }
+
+        return [...list].sort((a, b) => {
+            if (sortMode === "date-desc") {
+                return String(b.date ?? "").localeCompare(String(a.date ?? ""));
+            }
+
+            if (sortMode === "date-asc") {
+                return String(a.date ?? "").localeCompare(String(b.date ?? ""));
+            }
+
+            if (sortMode === "amount-desc") {
+                return (b.amount ?? 0) - (a.amount ?? 0);
+            }
+
+            if (sortMode === "amount-asc") {
+                return (a.amount ?? 0) - (b.amount ?? 0);
+            }
+
+            return 0;
+        });
+    }, [onlyPlanned, monthPlannedTx, monthTx, statusFilter, sortMode]);
+
+
+
+
     return (
         <div className="min-h-screen bg-white">
             <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6">
@@ -294,21 +330,60 @@ export default function MonthPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="flex min-w-0 items-center gap-2">
-                                <input
-                                    id="only-planned"
-                                    type="checkbox"
-                                    checked={onlyPlanned}
-                                    onChange={(e) => setOnlyPlanned(e.target.checked)}
-                                    className="h-4 w-4"
-                                />
-                                <label htmlFor="only-planned" className="text-sm text-gray-700">
-                                    Nur geplant
-                                </label>
+
+                            <div className="flex flex-col gap-3 border border-gray-300 bg-white p-3 sm:flex-row sm:items-end sm:justify-between">
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <input
+                                        id="only-planned"
+                                        type="checkbox"
+                                        checked={onlyPlanned}
+                                        onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                        className="h-4 w-4"
+                                    />
+                                    <label htmlFor="only-planned" className="text-sm text-gray-700">
+                                        Nur geplant
+                                    </label>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div className="flex flex-col">
+                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
+                                            Status
+                                        </label>
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value as any)}
+                                            className="border border-gray-300 bg-white px-3 py-2 text-sm"
+                                        >
+                                            <option value="all">Alle</option>
+                                            <option value="planned">Geplant</option>
+                                            <option value="booked">Gebucht</option>
+                                            <option value="cancelled">Storniert</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
+                                            Sortierung
+                                        </label>
+                                        <select
+                                            value={sortMode}
+                                            onChange={(e) => setSortMode(e.target.value as any)}
+                                            className="border border-gray-300 bg-white px-3 py-2 text-sm"
+                                        >
+                                            <option value="date-desc">Datum: neu zuerst</option>
+                                            <option value="date-asc">Datum: alt zuerst</option>
+                                            <option value="amount-desc">Betrag: hoch zuerst</option>
+                                            <option value="amount-asc">Betrag: niedrig zuerst</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="overflow-x-auto border border-gray-300 bg-white">
+
+
+                            <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">
                                 <table className="w-full table-fixed border-collapse text-sm">
-                                    <thead className="bg-gray-50">
+                                    <thead className="sticky top-0 z-10 bg-gray-50">
                                         <tr>
                                             <th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Datum

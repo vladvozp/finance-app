@@ -651,14 +651,18 @@ export default function MonthPage() {
 
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
-                                                                            if (window.confirm("Transaktion wirklich löschen?")) {
-                                                                                removeTransaction(tx.id);
-                                                                            }
-                                                                        }}
+                                                                        /*    onClick={() => {
+                                                                                if (window.confirm("Transaktion wirklich löschen?")) {
+                                                                                    removeTransaction(tx.id);
+                                                                                } 
+                                                                            }} */
+
+                                                                        onClick={() => markCancelled(tx.id)}
+
+
                                                                         className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                     >
-                                                                        löschen
+                                                                        stornieren
                                                                     </button>
                                                                 </div>
                                                             )}

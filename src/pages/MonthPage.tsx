@@ -434,7 +434,7 @@ export default function MonthPage() {
 
 
                             <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">
-                                <table className="w-full table-fixed border-collapse text-sm">
+                                <table className="w-full table-fixed border-collapse text-xs">
                                     <thead className="sticky top-0 z-10 bg-gray-50">
                                         <tr>
                                             {visibleCols.date && (<th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
@@ -495,13 +495,13 @@ export default function MonthPage() {
                                                 <tr key={tx.id} className={rowClass}>
 
                                                     {visibleCols.date && (
-                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
                                                             {fmtDate(tx.date)}
                                                         </td>
                                                     )}
 
                                                     {visibleCols.status && (
-                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
                                                             {isCancelled ? (
                                                                 <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
                                                                     storniert
@@ -526,7 +526,7 @@ export default function MonthPage() {
                                                     )}
 
                                                     {visibleCols.konto && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={getKontoName((tx as any).kontoId)}
@@ -537,7 +537,7 @@ export default function MonthPage() {
                                                     )}
 
                                                     {visibleCols.source && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={
@@ -553,7 +553,7 @@ export default function MonthPage() {
                                                         </td>)}
 
                                                     {visibleCols.category && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={
@@ -570,7 +570,7 @@ export default function MonthPage() {
 
                                                     {visibleCols.amount && (
                                                         <td
-                                                            className={`border-b border-gray-200 px-3 py-3 text-right tabular-nums align-middle ${amountClass}`}
+                                                            className={`border-b border-gray-200 px-3 py-2 text-right tabular-nums align-middle ${amountClass}`}
                                                             title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
                                                         >
                                                             {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
@@ -578,7 +578,7 @@ export default function MonthPage() {
 
 
                                                     {visibleCols.actions && (
-                                                        <td className="border-b border-gray-200 px-3 py-3 align-middle">
+                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
                                                             {isPlanned ? (
                                                                 <div className="flex flex-wrap items-center gap-2">
                                                                     <button

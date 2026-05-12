@@ -143,8 +143,12 @@ export default function MonthPage() {
         incomeCategories.find((c) => c.id === id)?.name ?? id ?? "—";
 
     const markBooked = (id: string) => updateTransaction(id, { status: "booked" });
+
     const markCancelled = (id: string) =>
         updateTransaction(id, { status: "cancelled" });
+
+    const restoreTransaction = (id: string) =>
+        updateTransaction(id, { status: "planned" });
 
 
     const {
@@ -605,6 +609,30 @@ export default function MonthPage() {
                                                                         stornieren
                                                                     </button>
                                                                 </div>
+                                                            ) : isCancelled ? (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => restoreTransaction(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        wiederherstellen
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
+                                                                        }
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+                                                                </div>
                                                             ) : (
                                                                 <div className="flex flex-wrap items-center gap-2">
                                                                     <button
@@ -620,6 +648,7 @@ export default function MonthPage() {
                                                                     >
                                                                         bearbeiten
                                                                     </button>
+
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {

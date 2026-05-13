@@ -375,7 +375,7 @@ export default function MonthPage() {
                                         <select
                                             value={statusFilter}
                                             onChange={(e) => setStatusFilter(e.target.value as any)}
-                                            className="border border-gray-300 bg-white px-3 py-2 text-sm"
+                                            className="border border-gray-300 bg-white px-2 py-2 sm:px-3 sm:py-3 text-sm"
                                         >
                                             <option value="all">Alle</option>
                                             <option value="planned">Geplant</option>
@@ -391,7 +391,7 @@ export default function MonthPage() {
                                         <select
                                             value={sortMode}
                                             onChange={(e) => setSortMode(e.target.value as any)}
-                                            className="border border-gray-300 bg-white px-3 py-2 text-sm"
+                                            className="border border-gray-300 bg-white px-2 py-2 sm:px-3 sm:py-3 text-sm"
                                         >
                                             <option value="date-desc">Datum: neu zuerst</option>
                                             <option value="date-asc">Datum: alt zuerst</option>
@@ -434,36 +434,36 @@ export default function MonthPage() {
 
 
                             <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">
-                                <table className="w-full table-fixed border-collapse text-xs">
+                                <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                     <thead className="sticky top-0 z-10 bg-gray-50">
                                         <tr>
-                                            {visibleCols.date && (<th className="w-[92px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.date && (<th className="w-[92px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Datum
                                             </th>)}
 
                                             {visibleCols.status && (
-                                                <th className="w-[110px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                     Status
                                                 </th>
                                             )}
 
-                                            {visibleCols.konto && (<th className="w-[120px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.konto && (<th className="w-[120px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Konto
                                             </th>)}
 
-                                            {visibleCols.source && (<th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.source && (<th className="w-[150px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Anbieter / Quelle
                                             </th>)}
 
-                                            {visibleCols.category && (<th className="w-[150px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.category && (<th className="w-[150px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Gruppe / Kategorie
                                             </th>)}
 
-                                            {visibleCols.amount && (<th className="w-[120px] border-b border-gray-300 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.amount && (<th className="w-[120px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Betrag
                                             </th>)}
 
-                                            {visibleCols.actions && (<th className="w-[220px] border-b border-gray-300 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            {visibleCols.actions && (<th className="w-[220px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Aktion
                                             </th>)}
                                         </tr>
@@ -495,13 +495,13 @@ export default function MonthPage() {
                                                 <tr key={tx.id} className={rowClass}>
 
                                                     {visibleCols.date && (
-                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             {fmtDate(tx.date)}
                                                         </td>
                                                     )}
 
                                                     {visibleCols.status && (
-                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             {isCancelled ? (
                                                                 <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
                                                                     storniert
@@ -526,7 +526,7 @@ export default function MonthPage() {
                                                     )}
 
                                                     {visibleCols.konto && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={getKontoName((tx as any).kontoId)}
@@ -537,7 +537,7 @@ export default function MonthPage() {
                                                     )}
 
                                                     {visibleCols.source && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={
@@ -553,7 +553,7 @@ export default function MonthPage() {
                                                         </td>)}
 
                                                     {visibleCols.category && (
-                                                        <td className="min-w-0 border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             <span
                                                                 className="block truncate"
                                                                 title={
@@ -570,15 +570,16 @@ export default function MonthPage() {
 
                                                     {visibleCols.amount && (
                                                         <td
-                                                            className={`border-b border-gray-200 px-3 py-2 text-right tabular-nums align-middle ${amountClass}`}
-                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                            className={`border-b border-gray-200 px-2 py-2 text-right text-[11px] sm:text-xs tabular-nums align-middle ${amountClass}`}
                                                         >
+                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+
                                                             {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
                                                         </td>)}
 
 
                                                     {visibleCols.actions && (
-                                                        <td className="border-b border-gray-200 px-3 py-2 align-middle">
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             {isPlanned ? (
                                                                 <div className="flex flex-wrap items-center gap-2">
                                                                     <button
@@ -590,21 +591,21 @@ export default function MonthPage() {
                                                                                     : `/transaction/${tx.id}/edit`
                                                                             )
                                                                         }
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         bearbeiten
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => markBooked(tx.id)}
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         durchführen
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => markCancelled(tx.id)}
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         stornieren
                                                                     </button>
@@ -614,7 +615,7 @@ export default function MonthPage() {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => restoreTransaction(tx.id)}
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         wiederherstellen
                                                                     </button>
@@ -628,7 +629,7 @@ export default function MonthPage() {
                                                                                     : `/transaction/${tx.id}/edit`
                                                                             )
                                                                         }
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         bearbeiten
                                                                     </button>
@@ -644,7 +645,7 @@ export default function MonthPage() {
                                                                                     : `/transaction/${tx.id}/edit`
                                                                             )
                                                                         }
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         bearbeiten
                                                                     </button>
@@ -660,7 +661,7 @@ export default function MonthPage() {
                                                                         onClick={() => markCancelled(tx.id)}
 
 
-                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
                                                                     >
                                                                         stornieren
                                                                     </button>

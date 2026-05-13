@@ -571,9 +571,9 @@ export default function MonthPage() {
                                                     {visibleCols.amount && (
                                                         <td
                                                             className={`border-b border-gray-200 px-2 py-2 text-right text-[11px] sm:text-xs tabular-nums align-middle ${amountClass}`}
-                                                        >
-                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
 
+                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                        >
                                                             {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
                                                         </td>)}
 

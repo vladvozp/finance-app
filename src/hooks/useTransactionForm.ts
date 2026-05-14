@@ -16,7 +16,12 @@ function formatLocalDate(date: Date): string {
     return `${y}-${m}-${d}`;
 }
 
-function generateMonthlyDates(start: string, until: string, interval: number): string[] {
+function generateRepeatDates(
+    start: string,
+    until: string,
+    interval: number,
+    freq: "MONTHLY" | "YEARLY"
+): string[] {
     const dates: string[] = [];
 
     let current = new Date(start);
@@ -26,10 +31,17 @@ function generateMonthlyDates(start: string, until: string, interval: number): s
         dates.push(formatLocalDate(current));
 
         const next = new Date(current);
-        next.setMonth(next.getMonth() + interval);
 
-        if (next.getDate() !== current.getDate()) {
-            next.setDate(0);
+        if (freq === "MONTHLY") {
+            next.setMonth(next.getMonth() + interval);
+
+            if (next.getDate() !== current.getDate()) {
+                next.setDate(0);
+            }
+        }
+
+        if (freq === "YEARLY") {
+            next.setFullYear(next.getFullYear() + interval);
         }
 
         current = next;
@@ -187,16 +199,16 @@ export function useTransactionForm(
                     return;
                 }
 
-                if (repeatFreq !== "MONTHLY") {
-                    console.log("REPEAT ERROR: only MONTHLY supported now");
+                if (repeatFreq !== "MONTHLY" && repeatFreq !== "YEARLY") {
+                    console.log("REPEAT ERROR: only MONTHLY and YEARLY supported now");
                     return;
                 }
 
-
-                const dates = generateMonthlyDates(
+                const dates = generateRepeatDates(
                     isoDate,
                     String(repeatUntil),
-                    Number(repeatInterval) || 1
+                    Number(repeatInterval) || 1,
+                    repeatFreq
                 );
 
                 const repeatTxs: Tx[] = dates.map((d, index) => ({

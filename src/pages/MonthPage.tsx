@@ -180,7 +180,11 @@ export default function MonthPage() {
     const [visibleCols, setVisibleCols] = useState(DEFAULT_VISIBLE_COLS);
 
     const tableTx = useMemo(() => {
-        let list = onlyPlanned ? monthPlannedTx : monthTx;
+        let list = [...monthTx];
+
+        if (onlyPlanned) {
+            list = list.filter((tx) => tx.status === "planned");
+        }
 
         if (!showCancelled && statusFilter !== "cancelled") {
             list = list.filter((tx) => tx.status !== "cancelled");
@@ -209,11 +213,7 @@ export default function MonthPage() {
 
             return 0;
         });
-    }, [onlyPlanned,
-        monthPlannedTx,
-        monthTx,
-        statusFilter,
-        sortMode]);
+    }, [monthTx, onlyPlanned, showCancelled, statusFilter, sortMode]);
 
 
     function toggleCol(key: keyof typeof visibleCols) {

@@ -363,7 +363,8 @@ export default function MonthPage() {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-3 border border-gray-300 bg-white p-3 sm:flex-row sm:items-end sm:justify-between">
+
+                            {/*      <div className="flex flex-col gap-3 border border-gray-300 bg-white p-3 sm:flex-row sm:items-end sm:justify-between">
                                 <div className="flex min-w-0 items-center gap-2">
                                     <input
                                         id="only-planned"
@@ -424,7 +425,7 @@ export default function MonthPage() {
                                         </select>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
 
                             <details className="border border-gray-300 bg-white p-3">
@@ -432,29 +433,93 @@ export default function MonthPage() {
                                     Anzeigeoptionen
                                 </summary>
 
-                                <div className="mt-3 flex flex-wrap gap-3">
-                                    {[
-                                        ["date", "Datum"],
-                                        ["konto", "Konto"],
-                                        ["source", "Anbieter / Quelle"],
-                                        ["category", "Gruppe / Kategorie"],
-                                        ["amount", "Betrag"],
-                                        ["actions", "Aktion"],
-                                        ["status", "Status"],
-                                    ].map(([key, label]) => (
-                                        <label key={key} className="flex items-center gap-2 text-sm text-gray-700">
-                                            <input
-                                                type="checkbox"
-                                                checked={visibleCols[key as keyof typeof visibleCols]}
-                                                onChange={() => toggleCol(key as keyof typeof visibleCols)}
-                                                className="h-4 w-4"
-                                            />
-                                            {label}
+                                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                                        <input
+                                            id="only-planned"
+                                            type="checkbox"
+                                            checked={onlyPlanned}
+                                            onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                            className="h-4 w-4"
+                                        />
+                                        Nur geplant
+                                    </label>
+
+                                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                                        <input
+                                            id="show-cancelled"
+                                            type="checkbox"
+                                            checked={showCancelled}
+                                            onChange={(e) => setShowCancelled(e.target.checked)}
+                                            className="h-4 w-4"
+                                        />
+                                        Stornierte anzeigen
+                                    </label>
+
+                                    <div className="flex flex-col">
+                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
+                                            Status
                                         </label>
-                                    ))}
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value as any)}
+                                            className="border border-gray-300 bg-white px-2 py-2 text-sm"
+                                        >
+                                            <option value="all">Alle</option>
+                                            <option value="planned">Geplant</option>
+                                            <option value="booked">Gebucht</option>
+                                            <option value="cancelled">Storniert</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex flex-col">
+                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
+                                            Sortierung
+                                        </label>
+                                        <select
+                                            value={sortMode}
+                                            onChange={(e) => setSortMode(e.target.value as any)}
+                                            className="border border-gray-300 bg-white px-2 py-2 text-sm"
+                                        >
+                                            <option value="date-desc">Datum: neu zuerst</option>
+                                            <option value="date-asc">Datum: alt zuerst</option>
+                                            <option value="amount-desc">Betrag: hoch zuerst</option>
+                                            <option value="amount-asc">Betrag: niedrig zuerst</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4 border-t border-gray-200 pt-3">
+                                    <div className="mb-2 text-[11px] uppercase tracking-wide text-gray-500">
+                                        Spalten
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-3">
+                                        {[
+                                            ["date", "Datum"],
+                                            ["konto", "Konto"],
+                                            ["source", "Anbieter / Quelle"],
+                                            ["category", "Gruppe / Kategorie"],
+                                            ["amount", "Betrag"],
+                                            ["actions", "Aktion"],
+                                            ["status", "Status"],
+                                        ].map(([key, label]) => (
+                                            <label
+                                                key={key}
+                                                className="flex items-center gap-2 text-sm text-gray-700"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={visibleCols[key as keyof typeof visibleCols]}
+                                                    onChange={() => toggleCol(key as keyof typeof visibleCols)}
+                                                    className="h-4 w-4"
+                                                />
+                                                {label}
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
                             </details>
-
 
 
                             <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">

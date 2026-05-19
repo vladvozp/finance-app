@@ -422,7 +422,7 @@ export default function MonthPage() {
                             </div> */}
 
 
-                            <details className="border border-gray-300 bg-white p-3">
+                            <div className="border border-gray-300 bg-white p-3">
                                 <summary className="cursor-pointer text-sm font-medium text-gray-700">
                                     Anzeigeoptionen
                                 </summary>
@@ -516,7 +516,7 @@ export default function MonthPage() {
                                         ))}
                                     </div>
                                 </div>
-                            </details>
+                            </div>
 
 
                             <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">

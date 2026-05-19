@@ -574,6 +574,19 @@ export default function MonthPage() {
                                                     ? "text-green-700 font-semibold"
                                                     : "text-red-700 font-semibold";
 
+                                            const cancelSeries = (seriesId: string) => {
+                                                transactions
+                                                    .filter((tx) => tx.recurringSeriesId === seriesId)
+                                                    .forEach((tx) => updateTransaction(tx.id, { status: "cancelled" }));
+                                            };
+
+                                            const restoreSeries = (seriesId: string) => {
+                                                transactions
+                                                    .filter((tx) => tx.recurringSeriesId === seriesId)
+                                                    .forEach((tx) => updateTransaction(tx.id, { status: "planned" }));
+                                            };
+
+
                                             return (
                                                 <tr key={tx.id} className={rowClass}>
 
@@ -692,6 +705,27 @@ export default function MonthPage() {
                                                                     >
                                                                         stornieren
                                                                     </button>
+                                                                    {tx.recurringSeriesId && !isCancelled && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => cancelSeries(tx.recurringSeriesId!)}
+                                                                            className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        >
+                                                                            Serie stornieren
+                                                                        </button>
+                                                                    )}
+                                                                    {tx.recurringSeriesId && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => restoreSeries(tx.recurringSeriesId!)}
+                                                                            className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                        >
+                                                                            Serie wiederherstellen
+                                                                        </button>
+                                                                    )}
+
+
+
                                                                 </div>
                                                             ) : isCancelled ? (
                                                                 <div className="flex flex-wrap items-center gap-2">

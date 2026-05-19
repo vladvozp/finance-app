@@ -23,4 +23,9 @@ export type Tx = {
     // common
     remark?: string | null;
     repeat?: boolean;
+
+    // repeat pattern
+    recurringSeriesId?: string;
+
+
 };

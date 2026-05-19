@@ -211,8 +211,11 @@ export function useTransactionForm(
                     repeatFreq
                 );
 
+                const seriesId = crypto.randomUUID();
+
                 const repeatTxs: Tx[] = dates.map((d, index) => ({
                     id: crypto.randomUUID(),
+                    recurringSeriesId: seriesId,
                     kind: "expense",
                     kontoId: selectedAccountId,
                     amount: -(cents / 100),

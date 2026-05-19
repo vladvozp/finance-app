@@ -98,7 +98,7 @@ export default function MonthPage() {
     });
 
     const [onlyPlanned, setOnlyPlanned] = useState(false);
-    const [showCancelled, setShowCancelled] = useState(false);
+    const [onlyCancelled, setOnlyCancelled] = useState(false);
 
 
     const [sortMode, setSortMode] = useState<
@@ -175,12 +175,17 @@ export default function MonthPage() {
     const tableTx = useMemo(() => {
         let list = [...monthTx];
 
-        if (!showCancelled) {
+        // only cancelled
+        if (onlyCancelled) {
+            list = list.filter((tx) => tx.status === "cancelled");
+        } else {
+            // hide cancelled by default
             list = list.filter((tx) => tx.status !== "cancelled");
-        }
 
-        if (onlyPlanned) {
-            list = list.filter((tx) => tx.status === "planned");
+            // only planned
+            if (onlyPlanned) {
+                list = list.filter((tx) => tx.status === "planned");
+            }
         }
 
         return list.sort((a, b) => {
@@ -202,7 +207,7 @@ export default function MonthPage() {
 
             return 0;
         });
-    }, [monthTx, onlyPlanned, showCancelled, sortMode]);
+    }, [monthTx, onlyPlanned, onlyCancelled, sortMode]);
 
 
     function toggleCol(key: keyof typeof visibleCols) {
@@ -431,19 +436,19 @@ export default function MonthPage() {
                                             onChange={(e) => setOnlyPlanned(e.target.checked)}
                                             className="h-4 w-4"
                                         />
-                                        Nur geplant
+                                        Geplante
                                     </label>
 
                                     <label className="flex items-center gap-2 text-sm text-gray-700">
                                         <input
-                                            id="show-cancelled"
                                             type="checkbox"
-                                            checked={showCancelled}
-                                            onChange={(e) => setShowCancelled(e.target.checked)}
+                                            checked={onlyCancelled}
+                                            onChange={(e) => setOnlyCancelled(e.target.checked)}
                                             className="h-4 w-4"
                                         />
-                                        Stornierte anzeigen
+                                        Stornierte
                                     </label>
+
                                     {/*
                                     <div className="flex flex-col">
                                         <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">

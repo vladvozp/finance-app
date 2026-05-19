@@ -101,11 +101,6 @@ export default function MonthPage() {
     const [showCancelled, setShowCancelled] = useState(false);
 
 
-
-    const [statusFilter, setStatusFilter] = useState<
-        "all" | "planned" | "booked" | "cancelled"
-    >("all");
-
     const [sortMode, setSortMode] = useState<
         "date-desc" | "date-asc" | "amount-desc" | "amount-asc"
     >("date-desc");
@@ -155,8 +150,6 @@ export default function MonthPage() {
 
     const {
         monthTx,
-        monthBookedTx,
-        monthPlannedTx,
         expenseTotal,
         plannedExpenseTotal,
         plannedIncomeTotal,
@@ -182,19 +175,15 @@ export default function MonthPage() {
     const tableTx = useMemo(() => {
         let list = [...monthTx];
 
+        if (!showCancelled) {
+            list = list.filter((tx) => tx.status !== "cancelled");
+        }
+
         if (onlyPlanned) {
             list = list.filter((tx) => tx.status === "planned");
         }
 
-        if (!showCancelled && statusFilter !== "cancelled") {
-            list = list.filter((tx) => tx.status !== "cancelled");
-        }
-
-        if (statusFilter !== "all") {
-            list = list.filter((tx) => tx.status === statusFilter);
-        }
-
-        return [...list].sort((a, b) => {
+        return list.sort((a, b) => {
             if (sortMode === "date-desc") {
                 return String(b.date ?? "").localeCompare(String(a.date ?? ""));
             }
@@ -213,7 +202,7 @@ export default function MonthPage() {
 
             return 0;
         });
-    }, [monthTx, onlyPlanned, showCancelled, statusFilter, sortMode]);
+    }, [monthTx, onlyPlanned, showCancelled, sortMode]);
 
 
     function toggleCol(key: keyof typeof visibleCols) {
@@ -455,7 +444,7 @@ export default function MonthPage() {
                                         />
                                         Stornierte anzeigen
                                     </label>
-
+                                    {/*
                                     <div className="flex flex-col">
                                         <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
                                             Status
@@ -471,7 +460,7 @@ export default function MonthPage() {
                                             <option value="cancelled">Storniert</option>
                                         </select>
                                     </div>
-
+*/}
                                     <div className="flex flex-col">
                                         <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
                                             Sortierung

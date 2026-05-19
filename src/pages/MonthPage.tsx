@@ -516,7 +516,7 @@ export default function MonthPage() {
                             </details>
 
 
-                            <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white">
+                            <div className="max-h-[620px] overflow-auto border border-gray-300 bg-white touch-pan-x touch-pan-y">
                                 <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                     <thead className="sticky top-0 z-10 bg-gray-50">
                                         <tr>

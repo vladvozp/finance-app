@@ -98,6 +98,8 @@ export default function MonthPage() {
     });
 
     const [onlyPlanned, setOnlyPlanned] = useState(false);
+    const [showCancelled, setShowCancelled] = useState(false);
+
 
 
     const [statusFilter, setStatusFilter] = useState<
@@ -180,6 +182,10 @@ export default function MonthPage() {
     const tableTx = useMemo(() => {
         let list = onlyPlanned ? monthPlannedTx : monthTx;
 
+        if (!showCancelled && statusFilter !== "cancelled") {
+            list = list.filter((tx) => tx.status !== "cancelled");
+        }
+
         if (statusFilter !== "all") {
             list = list.filter((tx) => tx.status === statusFilter);
         }
@@ -203,7 +209,11 @@ export default function MonthPage() {
 
             return 0;
         });
-    }, [onlyPlanned, monthPlannedTx, monthTx, statusFilter, sortMode]);
+    }, [onlyPlanned,
+        monthPlannedTx,
+        monthTx,
+        statusFilter,
+        sortMode]);
 
 
     function toggleCol(key: keyof typeof visibleCols) {
@@ -366,7 +376,21 @@ export default function MonthPage() {
                                         Nur geplant
                                     </label>
                                 </div>
-
+                                <div className="flex min-w-0 items-center gap-2">
+                                    <input
+                                        id="show-cancelled"
+                                        type="checkbox"
+                                        checked={showCancelled}
+                                        onChange={(e) => setShowCancelled(e.target.checked)}
+                                        className="h-4 w-4"
+                                    />
+                                    <label
+                                        htmlFor="show-cancelled"
+                                        className="text-sm text-gray-700"
+                                    >
+                                        Stornierte anzeigen
+                                    </label>
+                                </div>
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="flex flex-col">
                                         <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">

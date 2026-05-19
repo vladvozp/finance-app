@@ -430,6 +430,7 @@ export default function MonthPage() {
                                 <div className="mt-3 grid gap-4 sm:grid-cols-2">
                                     <label className="flex items-center gap-2 text-sm text-gray-700">
                                         <input
+                                            autoComplete="off"
                                             id="only-planned"
                                             type="checkbox"
                                             checked={onlyPlanned}
@@ -441,6 +442,8 @@ export default function MonthPage() {
 
                                     <label className="flex items-center gap-2 text-sm text-gray-700">
                                         <input
+                                            autoComplete="off"
+                                            id="only-cancelled"
                                             type="checkbox"
                                             checked={onlyCancelled}
                                             onChange={(e) => setOnlyCancelled(e.target.checked)}

@@ -97,8 +97,8 @@ export default function MonthPage() {
         return new Date(d.getFullYear(), d.getMonth(), 1);
     });
 
-    const [onlyPlanned, setOnlyPlanned] = useState(false);
-    const [onlyCancelled, setOnlyCancelled] = useState(false);
+    const [showPlannedOnly, setShowPlannedOnly] = useState(false);
+    const [showCancelledOnly, setShowCancelledOnly] = useState(false);
 
 
     const [sortMode, setSortMode] = useState<
@@ -175,15 +175,12 @@ export default function MonthPage() {
     const tableTx = useMemo(() => {
         let list = [...monthTx];
 
-        // only cancelled
-        if (onlyCancelled) {
+        if (showCancelledOnly) {
             list = list.filter((tx) => tx.status === "cancelled");
         } else {
-            // hide cancelled by default
             list = list.filter((tx) => tx.status !== "cancelled");
 
-            // only planned
-            if (onlyPlanned) {
+            if (showPlannedOnly) {
                 list = list.filter((tx) => tx.status === "planned");
             }
         }
@@ -207,7 +204,7 @@ export default function MonthPage() {
 
             return 0;
         });
-    }, [monthTx, onlyPlanned, onlyCancelled, sortMode]);
+    }, [monthTx, showPlannedOnly, showCancelledOnly, sortMode]);
 
 
     function toggleCol(key: keyof typeof visibleCols) {
@@ -433,8 +430,8 @@ export default function MonthPage() {
                                             autoComplete="off"
                                             id="only-planned"
                                             type="checkbox"
-                                            checked={onlyPlanned}
-                                            onChange={(e) => setOnlyPlanned(e.target.checked)}
+                                            checked={showPlannedOnly}
+                                            onChange={(e) => setShowPlannedOnly(e.target.checked)}
                                             className="h-4 w-4"
                                         />
                                         Geplante
@@ -445,8 +442,8 @@ export default function MonthPage() {
                                             autoComplete="off"
                                             id="only-cancelled"
                                             type="checkbox"
-                                            checked={onlyCancelled}
-                                            onChange={(e) => setOnlyCancelled(e.target.checked)}
+                                            checked={showCancelledOnly}
+                                            onChange={(e) => setShowCancelledOnly(e.target.checked)}
                                             className="h-4 w-4"
                                         />
                                         Stornierte

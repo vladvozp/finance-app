@@ -60,6 +60,7 @@ export default function MonthPage() {
         getTotalBalance,
         updateTransaction,
         removeTransaction,
+        addTransaction,
         accounts,
         loaded,
         loadFromSupabase,
@@ -146,6 +147,22 @@ export default function MonthPage() {
 
     const restoreTransaction = (id: string) =>
         updateTransaction(id, { status: "planned" });
+
+    const planNextMonth = (tx: any) => {
+        const nextDate = new Date(tx.date);
+
+        nextDate.setMonth(nextDate.getMonth() + 1);
+
+        addTransaction({
+            ...tx,
+            id: crypto.randomUUID(),
+            date: nextDate.toISOString().slice(0, 10),
+            status: "planned",
+            createdAt: new Date().toISOString(),
+        });
+    };
+
+
 
 
     const {
@@ -723,7 +740,13 @@ export default function MonthPage() {
                                                                             Serie wiederherstellen
                                                                         </button>
                                                                     )}
-
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => planNextMonth(tx)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        nächster Monat
+                                                                    </button>
 
 
                                                                 </div>

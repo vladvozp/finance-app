@@ -7,6 +7,6 @@ export const impressum = {
     phone: "+49 174 8753037",
     TikTok: "@vadym.hol",
     YouTube: "https://www.youtube.com/@vadymholiak",
-    Instagram: "https://www.instagram.com/vadymgoliak",
+    Instagram: "https://www.instagram.com/vadymonwheels",
 
 };

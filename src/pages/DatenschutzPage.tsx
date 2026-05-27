@@ -236,7 +236,7 @@ export default function DatenschutzPage() {
 
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900">
-                            Social Media
+                            13. Social Media
                         </h2>
 
                         <p className="mt-2 text-slate-700">
@@ -256,7 +256,7 @@ export default function DatenschutzPage() {
 
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900">
-                            Affiliate-Links / TikTok Shop
+                            14. Affiliate-Links / TikTok Shop
                         </h2>
 
                         <p className="mt-2 text-slate-700">
@@ -280,42 +280,6 @@ export default function DatenschutzPage() {
                             Beiträge mit kommerziellem Bezug werden als Werbung oder Anzeige gekennzeichnet.
                         </p>
                     </section>
-
-                    <section>
-                        <h2 className="text-lg font-semibold text-slate-900">
-                            Affiliate-Links / TikTok Shop
-                        </h2>
-
-                        <p className="mt-2 text-slate-700">
-                            Auf meinen Social-Media-Profilen können Affiliate-Links, Produktlinks oder
-                            TikTok-Shop-Links eingebunden sein.
-                        </p>
-
-                        <p className="mt-2 text-slate-700">
-                            Wenn Nutzer über einen solchen Link ein Produkt kaufen, kann ich eine
-                            Provision erhalten. Für Nutzer entstehen dadurch keine zusätzlichen Kosten.
-                        </p>
-
-                        <p className="mt-2 text-slate-700">
-                            Die Abwicklung des Kaufs erfolgt über die jeweilige Plattform bzw. den
-                            jeweiligen Anbieter. Ich selbst bin nicht Verkäufer der Produkte und habe
-                            keinen Einfluss auf Zahlungsabwicklung, Versand, Rückgabe oder die weitere
-                            Datenverarbeitung durch die Plattform oder den Verkäufer.
-                        </p>
-
-                        <p className="mt-2 text-slate-700">
-                            Beiträge mit kommerziellem Bezug werden als Werbung oder Anzeige gekennzeichnet.
-                        </p>
-                    </section>
-
-
-
-
-
-
-
-
-
 
                 </div>
             </div>

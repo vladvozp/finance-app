@@ -113,14 +113,53 @@ export default function ImpressumPage() {
                             Dieses Impressum gilt auch für folgende Social-Media-Profile:
                         </p>
 
-                        <div className="mt-3 space-y-1 text-slate-700">
-                            {impressum.TikTok && <p>TikTok: {impressum.TikTok}</p>}
-                            {impressum.YouTube && <p>YouTube: {impressum.YouTube}</p>}
-                            {impressum.Instagram && <p>Instagram: {impressum.Instagram}</p>}
+                        <div className="mt-3 space-y-2 text-slate-700">
+                            {impressum.TikTok && (
+                                <p>
+                                    TikTok:{" "}
+                                    <a
+                                        href={impressum.TikTok}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="break-all text-blue-600 hover:underline"
+                                    >
+                                        {impressum.TikTok}
+                                    </a>
+                                </p>
+                            )}
+
+                            {impressum.YouTube && (
+                                <p>
+                                    YouTube:{" "}
+                                    <a
+                                        href={impressum.YouTube}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="break-all text-blue-600 hover:underline"
+                                    >
+                                        {impressum.YouTube}
+                                    </a>
+                                </p>
+                            )}
+
+                            {impressum.Instagram && (
+                                <p>
+                                    Instagram:{" "}
+                                    <a
+                                        href={impressum.Instagram}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="break-all text-blue-600 hover:underline"
+                                    >
+                                        {impressum.Instagram}
+                                    </a>
+                                </p>
+                            )}
                         </div>
 
-                        <p className="mt-3 text-slate-700">
-                            Auf diesen Profilen können Produktlinks, Affiliate-Links oder TikTok-Shop-Links eingebunden sein.
+                        <p className="mt-4 text-slate-700">
+                            Auf diesen Profilen können Produktlinks, Affiliate-Links oder
+                            TikTok-Shop-Links eingebunden sein.
                         </p>
                     </section>
 

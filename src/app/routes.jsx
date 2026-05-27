@@ -14,6 +14,8 @@ import RootGate from "../app/RootGate.tsx"
 import IncomeTransactionOne from "../pages/IncomeTransactionOne.tsx"
 import ImpressumPage from "../pages/ImpressumPage.tsx";
 import DatenschutzPage from "../pages/DatenschutzPage.tsx";
+import LegalPage from "../pages/LegalPage.tsx";
+
 
 export const router = createBrowserRouter([
   {
@@ -32,7 +34,8 @@ export const router = createBrowserRouter([
       { path: "/income-transaction/:id/edit", element: <IncomeTransactionEditPage /> },
       { path: "/income-transaction", element: <IncomeTransactionOne /> },
       { path: "/impressum", element: <ImpressumPage /> },
-      { path: "/datenschutz", element: <DatenschutzPage /> }
+      { path: "/datenschutz", element: <DatenschutzPage /> },
+      { path: "/legal", element: <LegalPage /> }
     ],
   },
 ]);

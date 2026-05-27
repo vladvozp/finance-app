@@ -67,7 +67,7 @@ export default function ImpressumPage() {
                         </div>
                     </section>
 
-                    {/* 🔽 ДОБАВИЛ ЭТО */}
+
                     <section>
                         <h2 className="text-lg font-semibold text-slate-900">
                             Haftung für Inhalte
@@ -104,6 +104,26 @@ export default function ImpressumPage() {
                             Verbraucherschlichtungsstelle teilzunehmen.
                         </p>
                     </section>
+                    <section>
+                        <h2 className="text-lg font-semibold text-slate-900">
+                            Social Media
+                        </h2>
+
+                        <p className="mt-2 text-slate-700">
+                            Dieses Impressum gilt auch für folgende Social-Media-Profile:
+                        </p>
+
+                        <div className="mt-3 space-y-1 text-slate-700">
+                            {impressum.TikTok && <p>TikTok: {impressum.TikTok}</p>}
+                            {impressum.YouTube && <p>YouTube: {impressum.YouTube}</p>}
+                            {impressum.Instagram && <p>Instagram: {impressum.Instagram}</p>}
+                        </div>
+
+                        <p className="mt-3 text-slate-700">
+                            Auf diesen Profilen können Produktlinks, Affiliate-Links oder TikTok-Shop-Links eingebunden sein.
+                        </p>
+                    </section>
+
                 </div>
             </div>
         </main>

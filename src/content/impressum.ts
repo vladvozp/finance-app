@@ -5,4 +5,8 @@ export const impressum = {
     country: "Deutschland",
     email: "vladvozp@gmail.com",
     phone: "+49 174 8753037",
+    TikTok: "@vadym.hol",
+    YouTube: "https://www.youtube.com/@vadymholiak",
+    Instagram: "https://www.instagram.com/vadymgoliak",
+
 };

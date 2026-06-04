@@ -8,6 +8,8 @@ import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 
+type AnalyticsView = "booked" | "planned" | "active";
+
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
         style: "currency",
@@ -28,6 +30,26 @@ function monthLabelDE(d: Date) {
         month: "long",
         year: "numeric",
     }).format(d);
+}
+
+function DetailsTable({
+    title,
+    children,
+}: {
+    title: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <details className="border border-gray-300 bg-white p-4">
+            <summary className="cursor-pointer select-none text-base font-semibold text-gray-900">
+                {title}
+            </summary>
+
+            <div className="mt-4 overflow-x-auto">
+                {children}
+            </div>
+        </details>
+    );
 }
 
 export default function Analytics() {
@@ -65,6 +87,9 @@ export default function Analytics() {
         const d = new Date();
         return new Date(d.getFullYear(), d.getMonth(), 1);
     });
+
+    const [analyticsView, setAnalyticsView] =
+        useState<AnalyticsView>("active");
 
     const selectedMonthPrefix = useMemo(
         () => monthPrefix(selectedMonth),
@@ -130,17 +155,25 @@ export default function Analytics() {
         );
     }, [transactions, selectedMonthPrefix]);
 
-    const activeTx = useMemo(() => {
+    const analyticsTx = useMemo(() => {
+        if (analyticsView === "booked") {
+            return monthTx.filter((tx: any) => tx.status === "booked");
+        }
+
+        if (analyticsView === "planned") {
+            return monthTx.filter((tx: any) => tx.status === "planned");
+        }
+
         return monthTx.filter((tx: any) => tx.status !== "cancelled");
-    }, [monthTx]);
+    }, [monthTx, analyticsView]);
 
     const expenses = useMemo(() => {
-        return activeTx.filter((tx: any) => tx.kind === "expense");
-    }, [activeTx]);
+        return analyticsTx.filter((tx: any) => tx.kind === "expense");
+    }, [analyticsTx]);
 
     const incomes = useMemo(() => {
-        return activeTx.filter((tx: any) => tx.kind === "income");
-    }, [activeTx]);
+        return analyticsTx.filter((tx: any) => tx.kind === "income");
+    }, [analyticsTx]);
 
     const byGroup = useMemo(() => {
         const map = new Map<string, number>();
@@ -163,7 +196,26 @@ export default function Analytics() {
             .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [expenses, gruppen]);
 
+    const byCategory = useMemo(() => {
+        const map = new Map<string, number>();
 
+        for (const category of expenseCategories as any[]) {
+            map.set(category.id, 0);
+        }
+
+        for (const tx of expenses as any[]) {
+            const key = tx.kategorieId ?? "unknown";
+            map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
+        }
+
+        return [...map.entries()]
+            .map(([id, amount]) => ({
+                id,
+                name: getKategorieName(id),
+                amount,
+            }))
+            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+    }, [expenses, expenseCategories]);
 
     const byAnbieter = useMemo(() => {
         const map = new Map<string, number>();
@@ -204,7 +256,7 @@ export default function Analytics() {
                 name: getIncomeSourceName(id),
                 amount,
             }))
-            .sort((a, b) => b.amount - a.amount);
+            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [incomes, incomeSources]);
 
     const byIncomeCategory = useMemo(() => {
@@ -225,7 +277,7 @@ export default function Analytics() {
                 name: getIncomeCategoryName(id),
                 amount,
             }))
-            .sort((a, b) => b.amount - a.amount);
+            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [incomes, incomeCategories]);
 
     return (
@@ -286,6 +338,56 @@ export default function Analytics() {
                     }
                 />
 
+                <section className="border border-gray-300 bg-white p-4">
+                    <div className="mb-3 text-[11px] uppercase tracking-wide text-gray-500">
+                        Ansicht
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setAnalyticsView("booked")}
+                            className={`border px-3 py-2 text-sm ${analyticsView === "booked"
+                                    ? "border-gray-900 bg-gray-900 text-white"
+                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                }`}
+                        >
+                            Gebucht
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setAnalyticsView("planned")}
+                            className={`border px-3 py-2 text-sm ${analyticsView === "planned"
+                                    ? "border-gray-900 bg-gray-900 text-white"
+                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                }`}
+                        >
+                            Geplant
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setAnalyticsView("active")}
+                            className={`border px-3 py-2 text-sm ${analyticsView === "active"
+                                    ? "border-gray-900 bg-gray-900 text-white"
+                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                }`}
+                        >
+                            Alle aktiv
+                        </button>
+                    </div>
+
+                    <p className="mt-3 text-sm text-gray-500">
+                        {analyticsView === "booked" &&
+                            "Analyse der bereits gebuchten Transaktionen."}
+                        {analyticsView === "planned" &&
+                            "Analyse der geplanten Transaktionen."}
+                        {analyticsView === "active" &&
+                            "Analyse aller aktiven Transaktionen ohne stornierte."}
+                    </p>
+                </section>
+
                 <section className="flex flex-col gap-8">
                     <section className="space-y-4">
                         <div>
@@ -297,11 +399,7 @@ export default function Analytics() {
                             </p>
                         </div>
 
-                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                                Ausgaben nach Gruppen
-                            </h3>
-
+                        <DetailsTable title="Ausgaben nach Gruppen">
                             <table className="w-full min-w-[500px] text-sm">
                                 <tbody>
                                     {byGroup.map((row) => (
@@ -314,14 +412,24 @@ export default function Analytics() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </DetailsTable>
 
+                        <DetailsTable title="Ausgaben nach Kategorien">
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byCategory.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </DetailsTable>
 
-                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                                Größte Anbieter
-                            </h3>
-
+                        <DetailsTable title="Größte Anbieter">
                             <table className="w-full min-w-[500px] text-sm">
                                 <tbody>
                                     {byAnbieter.map((row) => (
@@ -334,7 +442,7 @@ export default function Analytics() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </DetailsTable>
                     </section>
 
                     <section className="space-y-4">
@@ -347,11 +455,7 @@ export default function Analytics() {
                             </p>
                         </div>
 
-                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                                Einnahmequellen
-                            </h3>
-
+                        <DetailsTable title="Einnahmequellen">
                             <table className="w-full min-w-[500px] text-sm">
                                 <tbody>
                                     {byIncomeSource.map((row) => (
@@ -364,13 +468,9 @@ export default function Analytics() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </DetailsTable>
 
-                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                                Einnahmekategorien
-                            </h3>
-
+                        <DetailsTable title="Einnahmekategorien">
                             <table className="w-full min-w-[500px] text-sm">
                                 <tbody>
                                     {byIncomeCategory.map((row) => (
@@ -383,7 +483,7 @@ export default function Analytics() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </DetailsTable>
                     </section>
                 </section>
             </main>

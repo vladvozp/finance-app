@@ -274,129 +274,168 @@ export default function Analytics() {
                     }
                 />
 
-                <section className="flex flex-col gap-2">
-                    <MetricCard
-                        title="Ergebnis"
-                        value={fmtMoney(result)}
-                        hint="Einnahmen minus Ausgaben"
-                        tone={result >= 0 ? "green" : "red"}
-                        featured
-                    />
+                <section className="flex flex-col gap-8">
+                    <section className="space-y-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Ausgabenanalyse
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                Analyse der Ausgaben im ausgewählten Monat.
+                            </p>
+                        </div>
 
-                    <MetricCard
-                        title="Einnahmen"
-                        value={fmtMoney(incomeTotal)}
-                        hint="Aktive Einnahmen im Monat"
-                        tone="green"
-                    />
+                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
+                            <h3 className="mb-3 text-base font-semibold text-gray-900">
+                                Ausgaben nach Kategorien
+                            </h3>
 
-                    <MetricCard
-                        title="Ausgaben"
-                        value={fmtMoney(expenseTotal)}
-                        hint="Aktive Ausgaben im Monat"
-                        tone="red"
-                    />
+                            {byGroup.length === 0 ? (
+                                <p className="text-sm text-gray-500">Keine Ausgaben.</p>
+                            ) : (
+                                <table className="w-full min-w-[500px] text-sm">
+                                    <tbody>
+                                        {byGroup.map((row) => (
+                                            <tr key={row.id} className="border-b border-gray-100">
+                                                <td className="py-2 text-gray-700">{row.name}</td>
+                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                    {fmtMoney(row.amount)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
 
-                    <MetricCard
-                        title="Geplant / Gebucht"
-                        value={`${fmtMoney(plannedExpenses)} / ${fmtMoney(bookedExpenses)}`}
-                        hint="Offene und bereits gebuchte Ausgaben"
-                        tone="yellow"
-                    />
-                </section>
+                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
+                            <h3 className="mb-3 text-base font-semibold text-gray-900">
+                                Größte Anbieter
+                            </h3>
 
-                <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="border border-gray-300 bg-white p-4">
+                            {byAnbieter.length === 0 ? (
+                                <p className="text-sm text-gray-500">Keine Ausgaben.</p>
+                            ) : (
+                                <table className="w-full min-w-[500px] text-sm">
+                                    <tbody>
+                                        {byAnbieter.map((row) => (
+                                            <tr key={row.id} className="border-b border-gray-100">
+                                                <td className="py-2 text-gray-700">{row.name}</td>
+                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                    {fmtMoney(row.amount)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Einnahmenanalyse
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                Analyse der Einnahmen im ausgewählten Monat.
+                            </p>
+                        </div>
+
+                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
+                            <h3 className="mb-3 text-base font-semibold text-gray-900">
+                                Einnahmequellen
+                            </h3>
+
+                            {byIncomeSource.length === 0 ? (
+                                <p className="text-sm text-gray-500">Keine Einnahmen.</p>
+                            ) : (
+                                <table className="w-full min-w-[500px] text-sm">
+                                    <tbody>
+                                        {byIncomeSource.map((row) => (
+                                            <tr key={row.id} className="border-b border-gray-100">
+                                                <td className="py-2 text-gray-700">{row.name}</td>
+                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                                    {fmtMoney(row.amount)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
+                            <h3 className="mb-3 text-base font-semibold text-gray-900">
+                                Einnahmekategorien
+                            </h3>
+
+                            {byIncomeCategory.length === 0 ? (
+                                <p className="text-sm text-gray-500">Keine Einnahmen.</p>
+                            ) : (
+                                <table className="w-full min-w-[500px] text-sm">
+                                    <tbody>
+                                        {byIncomeCategory.map((row) => (
+                                            <tr key={row.id} className="border-b border-gray-100">
+                                                <td className="py-2 text-gray-700">{row.name}</td>
+                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                                    {fmtMoney(row.amount)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </section>
+
+                    <section className="border border-gray-300 bg-white p-4 overflow-x-auto">
                         <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            Ausgaben nach Gruppen
+                            Top 10 Ausgaben
                         </h2>
 
-                        {byGroup.length === 0 ? (
+                        {topExpenses.length === 0 ? (
                             <p className="text-sm text-gray-500">Keine Ausgaben.</p>
                         ) : (
-                            <table className="w-full text-sm">
+                            <table className="w-full min-w-[600px] table-fixed border-collapse text-[11px] sm:text-xs">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="w-[100px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
+                                            Datum
+                                        </th>
+                                        <th className="w-[180px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
+                                            Anbieter
+                                        </th>
+                                        <th className="w-[180px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
+                                            Kategorie
+                                        </th>
+                                        <th className="w-[140px] border-b border-gray-300 px-2 py-2 text-right uppercase tracking-wide text-gray-600">
+                                            Betrag
+                                        </th>
+                                    </tr>
+                                </thead>
+
                                 <tbody>
-                                    {byGroup.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(row.amount)}
+                                    {topExpenses.map((tx) => (
+                                        <tr key={tx.id} className="hover:bg-gray-50">
+                                            <td className="border-b border-gray-200 px-2 py-2">
+                                                {String(tx.date ?? "").slice(0, 10)}
+                                            </td>
+                                            <td className="border-b border-gray-200 px-2 py-2">
+                                                {getAnbieterName((tx as any).anbieterId)}
+                                            </td>
+                                            <td className="border-b border-gray-200 px-2 py-2">
+                                                {getGruppeName((tx as any).gruppeId)}
+                                            </td>
+                                            <td className="whitespace-nowrap border-b border-gray-200 px-2 py-2 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(tx.amount ?? 0)}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         )}
-                    </div>
-
-                    <div className="border border-gray-300 bg-white p-4">
-                        <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            Ausgaben nach Anbieter
-                        </h2>
-
-                        {byAnbieter.length === 0 ? (
-                            <p className="text-sm text-gray-500">Keine Ausgaben.</p>
-                        ) : (
-                            <table className="w-full text-sm">
-                                <tbody>
-                                    {byAnbieter.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(row.amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-
-                    <div className="border border-gray-300 bg-white p-4">
-                        <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            Einnahmen nach Quelle
-                        </h2>
-
-                        {byIncomeSource.length === 0 ? (
-                            <p className="text-sm text-gray-500">Keine Einnahmen.</p>
-                        ) : (
-                            <table className="w-full text-sm">
-                                <tbody>
-                                    {byIncomeSource.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="py-2 text-right font-semibold tabular-nums text-green-700">
-                                                {fmtMoney(row.amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-
-                    <div className="border border-gray-300 bg-white p-4">
-                        <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            Einnahmen nach Kategorie
-                        </h2>
-
-                        {byIncomeCategory.length === 0 ? (
-                            <p className="text-sm text-gray-500">Keine Einnahmen.</p>
-                        ) : (
-                            <table className="w-full text-sm">
-                                <tbody>
-                                    {byIncomeCategory.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="py-2 text-right font-semibold tabular-nums text-green-700">
-                                                {fmtMoney(row.amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
+                    </section>
                 </section>
 
                 <section className="border border-gray-300 bg-white p-4">

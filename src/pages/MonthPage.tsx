@@ -321,7 +321,9 @@ export default function MonthPage() {
                         tone="red"
                     />
                 </section>
-
+                <Link to="/analytics" className="btn btn-outline">
+                    Analytik öffnen
+                </Link>
                 <section className="flex flex-1 flex-col gap-2">
                     {monthTx.length === 0 ? (
                         <div className="w-full space-y-4 border border-gray-300 bg-white p-4">

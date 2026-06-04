@@ -45,10 +45,8 @@ function DetailsTable({
                 {title}
             </summary>
 
-            <div className="max-h-[430px] overflow-auto border-t border-gray-200">
-                <div className="min-w-[420px]">
-                    {children}
-                </div>
+            <div className="max-h-[430px] overflow-y-auto border-t border-gray-200">
+                {children}
             </div>
         </details>
     );
@@ -382,14 +380,14 @@ export default function Analytics() {
                         </div>
 
                         <DetailsTable title="Ausgaben nach Gruppen">
-                            <table className="w-full border-collapse text-[11px] sm:text-xs">
+                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byGroup.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
                                             <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
                                                 {row.name}
                                             </td>
-                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="w-[35%] whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -399,14 +397,14 @@ export default function Analytics() {
                         </DetailsTable>
 
                         <DetailsTable title="Größte Anbieter">
-                            <table className="w-full border-collapse text-[11px] sm:text-xs">
+                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byAnbieter.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
                                             <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
                                                 {row.name}
                                             </td>
-                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="w-[35%] whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -427,14 +425,14 @@ export default function Analytics() {
                         </div>
 
                         <DetailsTable title="Einnahmequellen">
-                            <table className="w-full border-collapse text-[11px] sm:text-xs">
+                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byIncomeSource.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
                                             <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
                                                 {row.name}
                                             </td>
-                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="w-[35%] whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-green-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -444,14 +442,14 @@ export default function Analytics() {
                         </DetailsTable>
 
                         <DetailsTable title="Einnahmekategorien">
-                            <table className="w-full border-collapse text-[11px] sm:text-xs">
+                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byIncomeCategory.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
                                             <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
                                                 {row.name}
                                             </td>
-                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="w-[35%] whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-green-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>

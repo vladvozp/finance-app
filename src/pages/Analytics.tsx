@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Settings } from "lucide-react";
 
 import PageHeader from "../components/PageHeader";
-import MetricCard from "../components/MetricCard";
 
 import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
@@ -32,12 +31,8 @@ function monthLabelDE(d: Date) {
 }
 
 export default function Analytics() {
-    const {
-        transactions,
-        getTotalBalance,
-        loaded,
-        loadFromSupabase,
-    } = useAccountsStore();
+    const { transactions, getTotalBalance, loaded, loadFromSupabase } =
+        useAccountsStore();
 
     const {
         loadFromSupabase: loadDicts,
@@ -81,6 +76,8 @@ export default function Analytics() {
         [selectedMonth]
     );
 
+    const totalBalance = getTotalBalance();
+
     const goPrevMonth = () => setSelectedMonth((m) => addMonths(m, -1));
     const goNextMonth = () => setSelectedMonth((m) => addMonths(m, 1));
 
@@ -89,65 +86,71 @@ export default function Analytics() {
         setSelectedMonth(new Date(d.getFullYear(), d.getMonth(), 1));
     };
 
-    const totalBalance = getTotalBalance();
-
     const getAnbieterName = (id?: string | null) =>
-        anbieter.find((a) => a.id === id)?.name ?? id ?? "—";
+        anbieter.find((a: any) => a.id === id)?.name ?? id ?? "—";
 
     const getGruppeName = (id?: string | null) =>
-        gruppen.find((g) => g.id === id)?.name ?? id ?? "—";
+        gruppen.find((g: any) => g.id === id)?.name ?? id ?? "—";
 
     const getIncomeSourceName = (id?: string | null) =>
-        incomeSources.find((s) => s.id === id)?.name ?? id ?? "—";
+        incomeSources.find((s: any) => s.id === id)?.name ?? id ?? "—";
 
     const getIncomeCategoryName = (id?: string | null) =>
-        incomeCategories.find((c) => c.id === id)?.name ?? id ?? "—";
+        incomeCategories.find((c: any) => c.id === id)?.name ?? id ?? "—";
+
+    const expenseCategories = useMemo(() => {
+        const result: any[] = [];
+
+        for (const group of gruppen as any[]) {
+            const list =
+                group.categories ??
+                group.kategorien ??
+                group.children ??
+                group.items ??
+                [];
+
+            for (const category of list) {
+                result.push({
+                    ...category,
+                    gruppeId: category.gruppeId ?? category.groupId ?? group.id,
+                    gruppeName: group.name,
+                });
+            }
+        }
+
+        return result;
+    }, [gruppen]);
+
+    const getKategorieName = (id?: string | null) =>
+        expenseCategories.find((c: any) => c.id === id)?.name ?? id ?? "—";
 
     const monthTx = useMemo(() => {
-        return transactions.filter((tx) =>
+        return transactions.filter((tx: any) =>
             String(tx.date ?? "").startsWith(selectedMonthPrefix)
         );
     }, [transactions, selectedMonthPrefix]);
 
     const activeTx = useMemo(() => {
-        return monthTx.filter((tx) => tx.status !== "cancelled");
+        return monthTx.filter((tx: any) => tx.status !== "cancelled");
     }, [monthTx]);
 
     const expenses = useMemo(() => {
-        return activeTx.filter((tx) => tx.kind === "expense");
+        return activeTx.filter((tx: any) => tx.kind === "expense");
     }, [activeTx]);
 
     const incomes = useMemo(() => {
-        return activeTx.filter((tx) => tx.kind === "income");
+        return activeTx.filter((tx: any) => tx.kind === "income");
     }, [activeTx]);
-
-    const expenseTotal = useMemo(() => {
-        return expenses.reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
-    }, [expenses]);
-
-    const incomeTotal = useMemo(() => {
-        return incomes.reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
-    }, [incomes]);
-
-    const result = incomeTotal - expenseTotal;
-
-    const plannedExpenses = useMemo(() => {
-        return expenses
-            .filter((tx) => tx.status === "planned")
-            .reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
-    }, [expenses]);
-
-    const bookedExpenses = useMemo(() => {
-        return expenses
-            .filter((tx) => tx.status === "booked")
-            .reduce((sum, tx) => sum + (tx.amount ?? 0), 0);
-    }, [expenses]);
 
     const byGroup = useMemo(() => {
         const map = new Map<string, number>();
 
-        for (const tx of expenses) {
-            const key = (tx as any).gruppeId ?? "unknown";
+        for (const group of gruppen as any[]) {
+            map.set(group.id, 0);
+        }
+
+        for (const tx of expenses as any[]) {
+            const key = tx.gruppeId ?? "unknown";
             map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
         }
 
@@ -160,11 +163,36 @@ export default function Analytics() {
             .sort((a, b) => b.amount - a.amount);
     }, [expenses, gruppen]);
 
+    const byCategory = useMemo(() => {
+        const map = new Map<string, number>();
+
+        for (const category of expenseCategories as any[]) {
+            map.set(category.id, 0);
+        }
+
+        for (const tx of expenses as any[]) {
+            const key = tx.kategorieId ?? "unknown";
+            map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
+        }
+
+        return [...map.entries()]
+            .map(([id, amount]) => ({
+                id,
+                name: getKategorieName(id),
+                amount,
+            }))
+            .sort((a, b) => b.amount - a.amount);
+    }, [expenses, expenseCategories]);
+
     const byAnbieter = useMemo(() => {
         const map = new Map<string, number>();
 
-        for (const tx of expenses) {
-            const key = (tx as any).anbieterId ?? "unknown";
+        for (const item of anbieter as any[]) {
+            map.set(item.id, 0);
+        }
+
+        for (const tx of expenses as any[]) {
+            const key = tx.anbieterId ?? "unknown";
             map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
         }
 
@@ -180,8 +208,12 @@ export default function Analytics() {
     const byIncomeSource = useMemo(() => {
         const map = new Map<string, number>();
 
-        for (const tx of incomes) {
-            const key = (tx as any).quelleId ?? "unknown";
+        for (const item of incomeSources as any[]) {
+            map.set(item.id, 0);
+        }
+
+        for (const tx of incomes as any[]) {
+            const key = tx.quelleId ?? "unknown";
             map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
         }
 
@@ -197,8 +229,12 @@ export default function Analytics() {
     const byIncomeCategory = useMemo(() => {
         const map = new Map<string, number>();
 
-        for (const tx of incomes) {
-            const key = (tx as any).incomeKategorieId ?? "unknown";
+        for (const item of incomeCategories as any[]) {
+            map.set(item.id, 0);
+        }
+
+        for (const tx of incomes as any[]) {
+            const key = tx.incomeKategorieId ?? "unknown";
             map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
         }
 
@@ -213,13 +249,13 @@ export default function Analytics() {
 
     const topExpenses = useMemo(() => {
         return [...expenses]
-            .sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0))
+            .sort((a: any, b: any) => (b.amount ?? 0) - (a.amount ?? 0))
             .slice(0, 10);
     }, [expenses]);
 
     return (
         <div className="min-h-screen bg-white">
-            <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6">
+            <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-5 sm:px-6">
                 <PageHeader
                     left={
                         <div className="min-w-0">
@@ -245,6 +281,7 @@ export default function Analytics() {
                                 <h1 className="text-sm font-semibold tracking-tight text-gray-800 whitespace-nowrap">
                                     Analytik · {selectedMonthLabel}
                                 </h1>
+
                                 <button
                                     type="button"
                                     onClick={goThisMonth}
@@ -287,25 +324,40 @@ export default function Analytics() {
 
                         <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
                             <h3 className="mb-3 text-base font-semibold text-gray-900">
+                                Ausgaben nach Gruppen
+                            </h3>
+
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byGroup.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
+                            <h3 className="mb-3 text-base font-semibold text-gray-900">
                                 Ausgaben nach Kategorien
                             </h3>
 
-                            {byGroup.length === 0 ? (
-                                <p className="text-sm text-gray-500">Keine Ausgaben.</p>
-                            ) : (
-                                <table className="w-full min-w-[500px] text-sm">
-                                    <tbody>
-                                        {byGroup.map((row) => (
-                                            <tr key={row.id} className="border-b border-gray-100">
-                                                <td className="py-2 text-gray-700">{row.name}</td>
-                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
-                                                    {fmtMoney(row.amount)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byCategory.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
                         <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
@@ -313,22 +365,18 @@ export default function Analytics() {
                                 Größte Anbieter
                             </h3>
 
-                            {byAnbieter.length === 0 ? (
-                                <p className="text-sm text-gray-500">Keine Ausgaben.</p>
-                            ) : (
-                                <table className="w-full min-w-[500px] text-sm">
-                                    <tbody>
-                                        {byAnbieter.map((row) => (
-                                            <tr key={row.id} className="border-b border-gray-100">
-                                                <td className="py-2 text-gray-700">{row.name}</td>
-                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
-                                                    {fmtMoney(row.amount)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byAnbieter.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </section>
 
@@ -347,22 +395,18 @@ export default function Analytics() {
                                 Einnahmequellen
                             </h3>
 
-                            {byIncomeSource.length === 0 ? (
-                                <p className="text-sm text-gray-500">Keine Einnahmen.</p>
-                            ) : (
-                                <table className="w-full min-w-[500px] text-sm">
-                                    <tbody>
-                                        {byIncomeSource.map((row) => (
-                                            <tr key={row.id} className="border-b border-gray-100">
-                                                <td className="py-2 text-gray-700">{row.name}</td>
-                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
-                                                    {fmtMoney(row.amount)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byIncomeSource.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
                         <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
@@ -370,22 +414,18 @@ export default function Analytics() {
                                 Einnahmekategorien
                             </h3>
 
-                            {byIncomeCategory.length === 0 ? (
-                                <p className="text-sm text-gray-500">Keine Einnahmen.</p>
-                            ) : (
-                                <table className="w-full min-w-[500px] text-sm">
-                                    <tbody>
-                                        {byIncomeCategory.map((row) => (
-                                            <tr key={row.id} className="border-b border-gray-100">
-                                                <td className="py-2 text-gray-700">{row.name}</td>
-                                                <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
-                                                    {fmtMoney(row.amount)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                            <table className="w-full min-w-[500px] text-sm">
+                                <tbody>
+                                    {byIncomeCategory.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="py-2 text-gray-700">{row.name}</td>
+                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </section>
 
@@ -407,7 +447,7 @@ export default function Analytics() {
                                             Anbieter
                                         </th>
                                         <th className="w-[180px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Kategorie
+                                            Gruppe
                                         </th>
                                         <th className="w-[140px] border-b border-gray-300 px-2 py-2 text-right uppercase tracking-wide text-gray-600">
                                             Betrag
@@ -416,16 +456,16 @@ export default function Analytics() {
                                 </thead>
 
                                 <tbody>
-                                    {topExpenses.map((tx) => (
+                                    {topExpenses.map((tx: any) => (
                                         <tr key={tx.id} className="hover:bg-gray-50">
                                             <td className="border-b border-gray-200 px-2 py-2">
                                                 {String(tx.date ?? "").slice(0, 10)}
                                             </td>
                                             <td className="border-b border-gray-200 px-2 py-2">
-                                                {getAnbieterName((tx as any).anbieterId)}
+                                                {getAnbieterName(tx.anbieterId)}
                                             </td>
                                             <td className="border-b border-gray-200 px-2 py-2">
-                                                {getGruppeName((tx as any).gruppeId)}
+                                                {getGruppeName(tx.gruppeId)}
                                             </td>
                                             <td className="whitespace-nowrap border-b border-gray-200 px-2 py-2 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(tx.amount ?? 0)}
@@ -436,56 +476,6 @@ export default function Analytics() {
                             </table>
                         )}
                     </section>
-                </section>
-
-                <section className="border border-gray-300 bg-white p-4">
-                    <h2 className="mb-3 text-base font-semibold text-gray-900">
-                        Top 10 Ausgaben
-                    </h2>
-
-                    {topExpenses.length === 0 ? (
-                        <p className="text-sm text-gray-500">Keine Ausgaben.</p>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="w-[100px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Datum
-                                        </th>
-                                        <th className="w-[160px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Anbieter
-                                        </th>
-                                        <th className="w-[160px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Gruppe
-                                        </th>
-                                        <th className="w-[120px] border-b border-gray-300 px-2 py-2 text-right uppercase tracking-wide text-gray-600">
-                                            Betrag
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {topExpenses.map((tx) => (
-                                        <tr key={tx.id} className="hover:bg-gray-50">
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {String(tx.date ?? "").slice(0, 10)}
-                                            </td>
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {getAnbieterName((tx as any).anbieterId)}
-                                            </td>
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {getGruppeName((tx as any).gruppeId)}
-                                            </td>
-                                            <td className="border-b border-gray-200 px-2 py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(tx.amount ?? 0)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
                 </section>
             </main>
         </div>

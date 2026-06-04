@@ -40,13 +40,15 @@ function DetailsTable({
     children: React.ReactNode;
 }) {
     return (
-        <details className="border border-gray-300 bg-white p-4">
-            <summary className="cursor-pointer select-none text-base font-semibold text-gray-900">
+        <details className="border border-gray-300 bg-white">
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
                 {title}
             </summary>
 
-            <div className="mt-4 overflow-x-auto">
-                {children}
+            <div className="max-h-[430px] overflow-auto border-t border-gray-200">
+                <div className="min-w-[420px]">
+                    {children}
+                </div>
             </div>
         </details>
     );
@@ -196,26 +198,6 @@ export default function Analytics() {
             .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [expenses, gruppen]);
 
-    const byCategory = useMemo(() => {
-        const map = new Map<string, number>();
-
-        for (const category of expenseCategories as any[]) {
-            map.set(category.id, 0);
-        }
-
-        for (const tx of expenses as any[]) {
-            const key = tx.kategorieId ?? "unknown";
-            map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
-        }
-
-        return [...map.entries()]
-            .map(([id, amount]) => ({
-                id,
-                name: getKategorieName(id),
-                amount,
-            }))
-            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
-    }, [expenses, expenseCategories]);
 
     const byAnbieter = useMemo(() => {
         const map = new Map<string, number>();
@@ -348,8 +330,8 @@ export default function Analytics() {
                             type="button"
                             onClick={() => setAnalyticsView("booked")}
                             className={`border px-3 py-2 text-sm ${analyticsView === "booked"
-                                    ? "border-gray-900 bg-gray-900 text-white"
-                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                 }`}
                         >
                             Gebucht
@@ -359,8 +341,8 @@ export default function Analytics() {
                             type="button"
                             onClick={() => setAnalyticsView("planned")}
                             className={`border px-3 py-2 text-sm ${analyticsView === "planned"
-                                    ? "border-gray-900 bg-gray-900 text-white"
-                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                 }`}
                         >
                             Geplant
@@ -370,8 +352,8 @@ export default function Analytics() {
                             type="button"
                             onClick={() => setAnalyticsView("active")}
                             className={`border px-3 py-2 text-sm ${analyticsView === "active"
-                                    ? "border-gray-900 bg-gray-900 text-white"
-                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                 }`}
                         >
                             Alle aktiv
@@ -400,27 +382,14 @@ export default function Analytics() {
                         </div>
 
                         <DetailsTable title="Ausgaben nach Gruppen">
-                            <table className="w-full min-w-[500px] text-sm">
+                            <table className="w-full border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byGroup.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(row.amount)}
+                                            <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
+                                                {row.name}
                                             </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </DetailsTable>
-
-                        <DetailsTable title="Ausgaben nach Kategorien">
-                            <table className="w-full min-w-[500px] text-sm">
-                                <tbody>
-                                    {byCategory.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -430,12 +399,14 @@ export default function Analytics() {
                         </DetailsTable>
 
                         <DetailsTable title="Größte Anbieter">
-                            <table className="w-full min-w-[500px] text-sm">
+                            <table className="w-full border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byAnbieter.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
+                                            <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
+                                                {row.name}
+                                            </td>
+                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -456,12 +427,14 @@ export default function Analytics() {
                         </div>
 
                         <DetailsTable title="Einnahmequellen">
-                            <table className="w-full min-w-[500px] text-sm">
+                            <table className="w-full border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byIncomeSource.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                            <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
+                                                {row.name}
+                                            </td>
+                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>
@@ -471,12 +444,14 @@ export default function Analytics() {
                         </DetailsTable>
 
                         <DetailsTable title="Einnahmekategorien">
-                            <table className="w-full min-w-[500px] text-sm">
+                            <table className="w-full border-collapse text-[11px] sm:text-xs">
                                 <tbody>
                                     {byIncomeCategory.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-green-700">
+                                            <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
+                                                {row.name}
+                                            </td>
+                                            <td className="whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
                                                 {fmtMoney(row.amount)}
                                             </td>
                                         </tr>

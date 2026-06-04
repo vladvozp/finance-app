@@ -15,7 +15,7 @@ import IncomeTransactionOne from "../pages/IncomeTransactionOne.tsx"
 import ImpressumPage from "../pages/ImpressumPage.tsx";
 import DatenschutzPage from "../pages/DatenschutzPage.tsx";
 import LegalPage from "../pages/LegalPage.tsx";
-import Analitics from "../pages/Analitics.tsx";
+import Analytics from "../pages/Analytics.tsx";
 
 
 export const router = createBrowserRouter([
@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
       { path: "/impressum", element: <ImpressumPage /> },
       { path: "/datenschutz", element: <DatenschutzPage /> },
       { path: "/legal", element: <LegalPage /> },
-      { path: "/analytics", element: <Analitics /> }
+      { path: "/analytics", element: <Analytics /> }
     ],
   },
 ]);

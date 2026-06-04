@@ -160,29 +160,10 @@ export default function Analytics() {
                 name: getGruppeName(id),
                 amount,
             }))
-            .sort((a, b) => b.amount - a.amount);
+            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [expenses, gruppen]);
 
-    const byCategory = useMemo(() => {
-        const map = new Map<string, number>();
 
-        for (const category of expenseCategories as any[]) {
-            map.set(category.id, 0);
-        }
-
-        for (const tx of expenses as any[]) {
-            const key = tx.kategorieId ?? "unknown";
-            map.set(key, (map.get(key) ?? 0) + (tx.amount ?? 0));
-        }
-
-        return [...map.entries()]
-            .map(([id, amount]) => ({
-                id,
-                name: getKategorieName(id),
-                amount,
-            }))
-            .sort((a, b) => b.amount - a.amount);
-    }, [expenses, expenseCategories]);
 
     const byAnbieter = useMemo(() => {
         const map = new Map<string, number>();
@@ -202,7 +183,7 @@ export default function Analytics() {
                 name: getAnbieterName(id),
                 amount,
             }))
-            .sort((a, b) => b.amount - a.amount);
+            .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
     }, [expenses, anbieter]);
 
     const byIncomeSource = useMemo(() => {
@@ -246,12 +227,6 @@ export default function Analytics() {
             }))
             .sort((a, b) => b.amount - a.amount);
     }, [incomes, incomeCategories]);
-
-    const topExpenses = useMemo(() => {
-        return [...expenses]
-            .sort((a: any, b: any) => (b.amount ?? 0) - (a.amount ?? 0))
-            .slice(0, 10);
-    }, [expenses]);
 
     return (
         <div className="min-h-screen bg-white">
@@ -341,24 +316,6 @@ export default function Analytics() {
                             </table>
                         </div>
 
-                        <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                            <h3 className="mb-3 text-base font-semibold text-gray-900">
-                                Ausgaben nach Kategorien
-                            </h3>
-
-                            <table className="w-full min-w-[500px] text-sm">
-                                <tbody>
-                                    {byCategory.map((row) => (
-                                        <tr key={row.id} className="border-b border-gray-100">
-                                            <td className="py-2 text-gray-700">{row.name}</td>
-                                            <td className="whitespace-nowrap py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(row.amount)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
 
                         <div className="border border-gray-300 bg-white p-4 overflow-x-auto">
                             <h3 className="mb-3 text-base font-semibold text-gray-900">
@@ -427,54 +384,6 @@ export default function Analytics() {
                                 </tbody>
                             </table>
                         </div>
-                    </section>
-
-                    <section className="border border-gray-300 bg-white p-4 overflow-x-auto">
-                        <h2 className="mb-3 text-base font-semibold text-gray-900">
-                            Top 10 Ausgaben
-                        </h2>
-
-                        {topExpenses.length === 0 ? (
-                            <p className="text-sm text-gray-500">Keine Ausgaben.</p>
-                        ) : (
-                            <table className="w-full min-w-[600px] table-fixed border-collapse text-[11px] sm:text-xs">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="w-[100px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Datum
-                                        </th>
-                                        <th className="w-[180px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Anbieter
-                                        </th>
-                                        <th className="w-[180px] border-b border-gray-300 px-2 py-2 text-left uppercase tracking-wide text-gray-600">
-                                            Gruppe
-                                        </th>
-                                        <th className="w-[140px] border-b border-gray-300 px-2 py-2 text-right uppercase tracking-wide text-gray-600">
-                                            Betrag
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {topExpenses.map((tx: any) => (
-                                        <tr key={tx.id} className="hover:bg-gray-50">
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {String(tx.date ?? "").slice(0, 10)}
-                                            </td>
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {getAnbieterName(tx.anbieterId)}
-                                            </td>
-                                            <td className="border-b border-gray-200 px-2 py-2">
-                                                {getGruppeName(tx.gruppeId)}
-                                            </td>
-                                            <td className="whitespace-nowrap border-b border-gray-200 px-2 py-2 text-right font-semibold tabular-nums text-red-700">
-                                                {fmtMoney(tx.amount ?? 0)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
                     </section>
                 </section>
             </main>

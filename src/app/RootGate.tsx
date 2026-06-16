@@ -7,20 +7,63 @@ import { useDicts } from "../store/dicts";
 export default function RootGate() {
     const loadFromSupabase = useAccountsStore((s) => s.loadFromSupabase);
     const accounts = useAccountsStore((s) => s.accounts);
+    const loadDicts = useDicts((s) => s.loadFromSupabase);
 
     const [loading, setLoading] = useState(true);
     const [hasUser, setHasUser] = useState(false);
 
-    const loadDicts = useDicts((s) => s.loadFromSupabase);
-
-
     useEffect(() => {
         let mounted = true;
 
-        const checkUserAndAccounts = async () => {
+        const loadAppData = async () => {
+            try {
+                await loadFromSupabase();
+                await loadDicts();
+            } catch (e) {
+                console.error("Load error:", e);
+            }
+        };
+
+        const init = async () => {
             setLoading(true);
 
-            const { data: { session } } = await supabase.auth.getSession();
+            try {
+                const {
+                    data: { session },
+                    error,
+                } = await supabase.auth.getSession();
+
+                if (error) {
+                    console.error("Session error:", error);
+                }
+
+                if (!mounted) return;
+
+                if (!session) {
+                    setHasUser(false);
+                    return;
+                }
+
+                setHasUser(true);
+                await loadAppData();
+            } catch (e) {
+                console.error("RootGate init error:", e);
+                if (mounted) {
+                    setHasUser(false);
+                }
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        init();
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log("Auth event:", event);
 
             if (!mounted) return;
 
@@ -32,33 +75,21 @@ export default function RootGate() {
 
             setHasUser(true);
 
-            try {
-                await loadFromSupabase();
-                await loadDicts();
-            } catch (e) {
-                console.error("Load error:", e);
-            }
-
-            if (!mounted) return;
-            setLoading(false);
-
-        };
-
-        checkUserAndAccounts();
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event) => {
-            if (event === "SIGNED_OUT") {
+            setTimeout(async () => {
                 if (!mounted) return;
-                setHasUser(false);
-                setLoading(false);
-                return;
-            }
 
-            if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-                await checkUserAndAccounts();
-            }
+                setLoading(true);
+
+                try {
+                    await loadAppData();
+                } catch (e) {
+                    console.error("Auth reload error:", e);
+                } finally {
+                    if (mounted) {
+                        setLoading(false);
+                    }
+                }
+            }, 0);
         });
 
         return () => {

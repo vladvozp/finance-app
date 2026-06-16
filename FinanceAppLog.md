@@ -2,20 +2,20 @@
 
 ## CURRENT / AKTUELL
 
-**Stand:** 14.06.2026
-**Aktueller Fokus:** Routing-Bug beheben
+**Stand:** 16.06.2026  
+**Aktueller Fokus:** Private Routen absichern
 
 ### Aktuelles Problem
 
-Wenn der Benutzer bereits autorisiert ist und nur die Hauptdomain öffnet:
+Der Routing-Bug für die Hauptdomain `/` wurde behoben.
 
-```text
-/
-```
+Wenn ein Benutzer bereits mit Google autorisiert ist und nur die Hauptdomain öffnet, bleibt die Anwendung nicht mehr bei `Loading...` hängen. `RootGate` prüft die Session korrekt und leitet weiter.
 
-wird er nicht automatisch auf die Arbeitsseite weitergeleitet.
+Neues Problem:
 
-Aktuell muss man manuell eine Seite eingeben, zum Beispiel:
+Wenn ein Benutzer **nicht eingeloggt** ist und eine private Seite direkt öffnet, zeigt die Anwendung teilweise eine leere Seite.
+
+Beispiel:
 
 ```text
 /MonthPage
@@ -24,39 +24,44 @@ Aktuell muss man manuell eine Seite eingeben, zum Beispiel:
 ### Gewünschtes Verhalten
 
 ```text
-Nicht eingeloggt + /        → LoginPage
-Eingeloggt + /              → MonthPage
-Eingeloggt + /MonthPage     → MonthPage
+Nicht eingeloggt + /            → LoginPage
+Nicht eingeloggt + /MonthPage   → LoginPage
+Nicht eingeloggt + /setup       → LoginPage
+
+Eingeloggt + /                  → MonthPage
+Eingeloggt + /MonthPage         → MonthPage
+Eingeloggt ohne Accounts + /    → Setup
 ```
 
 ### Nächster konkreter Schritt
 
-1. Projekt öffnen.
-2. App starten.
-3. Routing-Datei finden.
-4. Prüfen, ob es eine Route für `/` gibt.
-5. Auth-State finden: `user`, `session`, `loading`.
-6. Redirect für `/` einbauen.
-7. Testen.
-8. Commit machen.
+1. Prüfen, welche Routen privat sind.
+2. `ProtectedRoute` erstellen.
+3. `/MonthPage` mit `ProtectedRoute` schützen.
+4. `/setup` mit `ProtectedRoute` schützen.
+5. Weitere private Seiten prüfen: Analytics, Settings, Accounts.
+6. Ohne Login direkte URLs testen.
+7. Mit Login normale Weiterleitung testen.
+8. Danach Commit machen.
 
 ### Suchbegriffe im Projekt
 
 ```text
-BrowserRouter
 Routes
 Route
 Navigate
+ProtectedRoute
 MonthPage
+Setup
 LoginPage
-supabase.auth
-session
-user
+supabase.auth.getSession
+onAuthStateChange
 ```
 
 ### Entscheidung
 
-Vor neuen Analytics-Features zuerst den Routing-Bug schließen.
+RootGate ist repariert.  
+Vor neuen Analytics-Features zuerst private Routen absichern, damit nicht eingeloggte Benutzer nicht auf leere oder interne Seiten gelangen.
 
 ---
 
@@ -64,7 +69,7 @@ Vor neuen Analytics-Features zuerst den Routing-Bug schließen.
 
 ### Analytics
 
-Erst nach dem Routing-Bug weiter mit Analytics.
+Erst nach RootGate-Fix und ProtectedRoute-Schutz weiter mit Analytics.
 
 Aktueller Ansatz:
 
@@ -99,6 +104,80 @@ Business
 ---
 
 ## LOG HISTORY
+
+### 16.06.2026
+
+#### Kontext
+
+Projekt: **KlarSIO**  
+Bereich: **React / Supabase Auth / Routing**
+
+#### RootGate-Fix abgeschlossen
+
+Die Route für die Hauptdomain `/` ist vorhanden:
+
+```tsx
+{ path: "/", element: <RootGate /> }
+```
+
+Das Problem war nicht die fehlende Route, sondern ein Hängenbleiben im `RootGate`.
+
+Bei aktiver Google-Session blieb die Anwendung auf der Hauptdomain im Zustand:
+
+```text
+Loading...
+```
+
+#### Ursache
+
+Die Ursache lag vermutlich in der Auth-Logik:
+
+```tsx
+supabase.auth.onAuthStateChange(async (event) => {
+  await checkUserAndAccounts();
+});
+```
+
+Innerhalb von `onAuthStateChange` wurde erneut `getSession()` aufgerufen. Nach Google Auth konnte das zu einem dauerhaften Loading-Zustand führen.
+
+#### Fix
+
+Die Logik wurde angepasst:
+
+* `getSession()` wird beim Initialisieren geprüft.
+* In `onAuthStateChange` wird die vorhandene `session` aus dem Event verwendet.
+* `setLoading(false)` wird zuverlässig im `finally`-Block gesetzt.
+* Fehler beim Laden von Accounts oder Dictionaries blockieren die App nicht dauerhaft.
+
+#### Ergebnis
+
+```text
+Eingeloggt + / → RootGate → MonthPage
+```
+
+Die Hauptdomain funktioniert wieder korrekt.
+
+#### Neues Problem erkannt
+
+Ohne Login zeigt eine direkte private Route aktuell teilweise eine leere Seite.
+
+Beispiel:
+
+```text
+/MonthPage
+```
+
+#### Nächster Fix
+
+Eine `ProtectedRoute` für private Seiten erstellen.
+
+Ziel:
+
+```text
+Nicht eingeloggt + private Route → /login
+```
+
+---
 
 ### 14.06.2026
 

@@ -14,7 +14,7 @@ export default function Layout() {
 
         {/* Main Content */}
         <main className="overflow-auto min-h-0">
-          <div className="mx-auto w-full max-w-[360px] px-5">
+          <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>

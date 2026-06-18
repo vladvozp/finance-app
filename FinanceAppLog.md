@@ -1,12 +1,44 @@
 # KlarSIO_LOG.md
 ## Was wurde gemacht?
 
-- RootGate repariert
-- Weiterleitung getestet
+18.06.2026
+
+Protected Routes umgesetzt.
+Geschützte Seiten sind jetzt nur nach Anmeldung erreichbar.
+Ohne Login soll der Nutzer nicht in den internen Bereich der App gelangen.
+Layout überarbeitet.
+Anpassung für große Bildschirme hinzugefügt.
+Die Desktop-Version ist nicht mehr auf eine schmale mobile Breite begrenzt.
+Die mobile Darstellung bleibt weiterhin responsiv.
+Testbereich für Analytics-Diagramme hinzugefügt.
+Recharts eingebunden.
+Ein erstes Testdiagramm erstellt.
+Adaptive Darstellung der Charts/Diagramme auf der Analytics-Seite geprüft.
+
+Aktueller Stand
+Version 0.5 ist fast abgeschlossen. Die wichtigsten Punkte aus der Liste wurden umgesetzt.
+Der nächste wichtige Schritt ist ein konkreter Test der neuen Funktionen und die Sicherung einer stabilen Recharts-Version.
+
 
 ### Nächster Schritt
 
-ProtectedRoute erstellen
+Konkreten App-Test durchführen:
+Login ohne aktive Sitzung prüfen;
+Login mit aktiver Sitzung prüfen;
+Zugriff auf geschützte Seiten testen;
+Layout auf mobilen Geräten prüfen;
+Layout auf großen Bildschirmen prüfen;
+Analytics-Seite öffnen und kontrollieren;
+Recharts-Testdiagramm prüfen.
+Stabile Recharts-Version sichern:
+installierte Version prüfen;
+sicherstellen, dass der Build ohne Fehler läuft;
+Deployment auf Vercel prüfen;
+funktionierende Version als stabile Basis festhalten.
+Nach dem Test:
+gefundene Fehler korrigieren;
+stabile Version committen;
+v0.5 als funktionierende Grundlage für die weitere Entwicklung markieren
 
 ### Stop-Punkt
 

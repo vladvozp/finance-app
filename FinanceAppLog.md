@@ -1,11 +1,63 @@
 # KlarSIO_LOG.md
+## Was wurde gemacht?
 
-## CURRENT / AKTUELL
+- RootGate repariert
+- Weiterleitung getestet
+
+### Nächster Schritt
+
+ProtectedRoute erstellen
+
+### Stop-Punkt
+
+Weiter in der Routing-Datei
+
+## BACKLOG / SPÄTER
+
+### Analytics
+
+Erst nach RootGate-Fix und ProtectedRoute-Schutz weiter mit Analytics.
+
+Aktueller Ansatz:
+
+* Noch kein komplexes `Scope → Group → Category` System.
+* Business-Ausgaben erstmal als eigene Gruppe behandeln.
+* Analytics soll zuerst Summen nach Gruppen zeigen.
+* Danach bei Klick auf Gruppe Kategorien und Summen anzeigen.
+
+Beispiel:
+
+```text
+Gruppe | Summe | Anzahl
+```
+
+Dann:
+
+```text
+Kategorie | Summe | Anzahl
+```
+
+Business-Gruppe:
+
+```text
+Business
+- Software
+- AI Tools
+- Marketing
+- Equipment
+- Reisekosten
+```
+
+---
+
+## LOG HISTORY
+
+
+### 16.06.2026
 
 **Stand:** 16.06.2026  
 **Aktueller Fokus:** Private Routen absichern
 
-### Aktuelles Problem
 
 Der Routing-Bug für die Hauptdomain `/` wurde behoben.
 
@@ -20,8 +72,6 @@ Beispiel:
 ```text
 /MonthPage
 ```
-
-### Gewünschtes Verhalten
 
 ```text
 Nicht eingeloggt + /            → LoginPage
@@ -64,48 +114,6 @@ RootGate ist repariert.
 Vor neuen Analytics-Features zuerst private Routen absichern, damit nicht eingeloggte Benutzer nicht auf leere oder interne Seiten gelangen.
 
 ---
-
-## BACKLOG / SPÄTER
-
-### Analytics
-
-Erst nach RootGate-Fix und ProtectedRoute-Schutz weiter mit Analytics.
-
-Aktueller Ansatz:
-
-* Noch kein komplexes `Scope → Group → Category` System.
-* Business-Ausgaben erstmal als eigene Gruppe behandeln.
-* Analytics soll zuerst Summen nach Gruppen zeigen.
-* Danach bei Klick auf Gruppe Kategorien und Summen anzeigen.
-
-Beispiel:
-
-```text
-Gruppe | Summe | Anzahl
-```
-
-Dann:
-
-```text
-Kategorie | Summe | Anzahl
-```
-
-Business-Gruppe:
-
-```text
-Business
-- Software
-- AI Tools
-- Marketing
-- Equipment
-- Reisekosten
-```
-
----
-
-## LOG HISTORY
-
-### 16.06.2026
 
 #### Kontext
 

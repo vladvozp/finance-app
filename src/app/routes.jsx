@@ -1,5 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
+
 import Layout from "../components/Layout.jsx";
+import ProtectedRoute from "./app/ProtectedRoute.jsx";
+
+
 import Login from "../pages/Login.tsx";
 import Dashboard from "../pages/Dashboard.tsx";
 import SettingsPage from "../pages/SettingsPage.tsx";
@@ -18,26 +22,35 @@ import LegalPage from "../pages/LegalPage.tsx";
 import Analytics from "../pages/Analytics.tsx";
 
 
+
 export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
+      // public
       { path: "/", element: <RootGate /> },
       { path: "/login", element: <Login /> },
-      { path: "/Dashboard", element: <Dashboard /> },
-      { path: "/SettingsPage", element: <SettingsPage /> },
-      { path: "/Berichte", element: <Berichte /> },
-      { path: "/GuestTransactionOne", element: <GuestTransactionOne /> },
-      { path: "/MonthPage", element: <MonthPage /> },
-      { path: "/setup", element: <SetupPage /> },
-      { path: "/account/:id", element: <AccountEditPage /> },
-      { path: "/transaction/:id/edit", element: <TransactionEditPage /> },
-      { path: "/income-transaction/:id/edit", element: <IncomeTransactionEditPage /> },
-      { path: "/income-transaction", element: <IncomeTransactionOne /> },
       { path: "/impressum", element: <ImpressumPage /> },
       { path: "/datenschutz", element: <DatenschutzPage /> },
       { path: "/legal", element: <LegalPage /> },
-      { path: "/analytics", element: <Analytics /> }
+
+      // protected
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: "/Dashboard", element: <Dashboard /> },
+          { path: "/SettingsPage", element: <SettingsPage /> },
+          { path: "/Berichte", element: <Berichte /> },
+          { path: "/GuestTransactionOne", element: <GuestTransactionOne /> },
+          { path: "/MonthPage", element: <MonthPage /> },
+          { path: "/setup", element: <SetupPage /> },
+          { path: "/account/:id", element: <AccountEditPage /> },
+          { path: "/transaction/:id/edit", element: <TransactionEditPage /> },
+          { path: "/income-transaction/:id/edit", element: <IncomeTransactionEditPage /> },
+          { path: "/income-transaction", element: <IncomeTransactionOne /> },
+          { path: "/analytics", element: <Analytics /> },
+        ],
+      },
     ],
   },
 ]);

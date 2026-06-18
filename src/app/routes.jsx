@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 
 import Layout from "../components/Layout.jsx";
-import ProtectedRoute from "./app/ProtectedRoute.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
 
 import Login from "../pages/Login.tsx";

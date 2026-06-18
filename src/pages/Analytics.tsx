@@ -55,16 +55,6 @@ function DetailsTable({
 }
 
 export default function Analytics() {
-    // Testdaten für die Entwicklung des Diagramms 
-    const testChartData = [
-        { name: "Miete", amount: 900 },
-        { name: "Lebensmittel", amount: 420 },
-        { name: "Auto", amount: 180 },
-        { name: "Freizeit", amount: 120 },
-    ];
-
-
-
 
     const { transactions, getTotalBalance, loaded, loadFromSupabase } =
         useAccountsStore();
@@ -331,12 +321,13 @@ export default function Analytics() {
                     }
                 />
 
+
+
                 <section className="border border-gray-300 bg-white p-4">
                     <div className="mb-3 text-[11px] uppercase tracking-wide text-gray-500">
                         Ansicht
                     </div>
 
-                    <CategoryBarChart data={testChartData} />
 
 
                     <div className="grid grid-cols-3 gap-2">
@@ -394,6 +385,15 @@ export default function Analytics() {
                                 Analyse der Ausgaben im ausgewählten Monat.
                             </p>
                         </div>
+
+    // Anzeige des CategoryBarChart mit den gruppierten Ausgaben
+                        <CategoryBarChart data={byGroup
+                            .filter((row) => row.amount !== 0)
+                            .map((row) => ({
+                                name: row.name,
+                                amount: Math.abs(row.amount),
+                            }))} />
+
 
                         <DetailsTable title="Ausgaben nach Gruppen">
                             <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">

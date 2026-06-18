@@ -12,33 +12,35 @@ export default function LegalPage() {
                 </p>
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
+
                     <a
                         href="/impressum"
-                        className="rounded-2xl border border-slate-200 p-5 transition hover:bg-slate-50 hover:shadow-sm"
+                        className="min-w-0 rounded-2xl border border-slate-200 p-5 transition hover:bg-slate-50 hover:shadow-sm"
                     >
-                        <h2 className="text-lg font-semibold text-slate-900">
+                        <h2 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
                             Impressum
                         </h2>
-                        <p className="mt-2 text-sm text-slate-600">
+                        <p className="mt-2 text-sm text-slate-600 break-words">
                             Anbieterkennzeichnung gemäß § 5 DDG.
                         </p>
                     </a>
 
                     <a
                         href="/datenschutz"
-                        className="rounded-2xl border border-slate-200 p-5 transition hover:bg-slate-50 hover:shadow-sm"
+                        className="min-w-0 rounded-2xl border border-slate-200 p-5 transition hover:bg-slate-50 hover:shadow-sm"
                     >
-                        <h2 className="text-lg font-semibold text-slate-900">
+                        <h2 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
                             Datenschutzerklärung
                         </h2>
-                        <p className="mt-2 text-sm text-slate-600">
+                        <p className="mt-2 text-sm text-slate-600 break-words">
                             Informationen zur Verarbeitung personenbezogener Daten.
                         </p>
                     </a>
+
                 </div>
 
                 <section className="mt-8 rounded-2xl border border-slate-200 p-5">
-                    <h2 className="text-lg font-semibold text-slate-900">
+                    <h2 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
                         Social Media / Affiliate
                     </h2>
 

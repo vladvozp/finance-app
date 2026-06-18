@@ -8,6 +8,8 @@ import { useAccountsStore } from "../store/accounts";
 import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 
+import CategoryBarChart from "../components/CategoryBarChart";
+
 type AnalyticsView = "booked" | "planned" | "active";
 
 function fmtMoney(n: number) {
@@ -53,6 +55,17 @@ function DetailsTable({
 }
 
 export default function Analytics() {
+    // Testdaten für die Entwicklung des Diagramms 
+    const testChartData = [
+        { name: "Miete", amount: 900 },
+        { name: "Lebensmittel", amount: 420 },
+        { name: "Auto", amount: 180 },
+        { name: "Freizeit", amount: 120 },
+    ];
+
+
+
+
     const { transactions, getTotalBalance, loaded, loadFromSupabase } =
         useAccountsStore();
 
@@ -322,6 +335,9 @@ export default function Analytics() {
                     <div className="mb-3 text-[11px] uppercase tracking-wide text-gray-500">
                         Ansicht
                     </div>
+
+                    <CategoryBarChart data={testChartData} />
+
 
                     <div className="grid grid-cols-3 gap-2">
                         <button

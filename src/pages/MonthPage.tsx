@@ -573,260 +573,254 @@ export default function MonthPage() {
 
 
                                     <tbody>
-                                        {[...tableTx]
-                                            .sort((a, b) => {
-                                                const dateA = a.date ? new Date(a.date).getTime() : 0;
-                                                const dateB = b.date ? new Date(b.date).getTime() : 0;
-                                                return dateB - dateA;
-                                            })
-                                            .map((tx) => {
-                                                const d = (tx.date ?? "").slice(0, 10);
-                                                const isPlanned = tx.status === "planned";
-                                                const isCancelled = tx.status === "cancelled";
-                                                const isOverdue = isPlanned && d < todayISO;
-                                                const isDueToday = isPlanned && d === todayISO;
+                                        {tableTx.map((tx) => {
+                                            const d = (tx.date ?? "").slice(0, 10);
+                                            const isPlanned = tx.status === "planned";
+                                            const isCancelled = tx.status === "cancelled";
+                                            const isOverdue = isPlanned && d < todayISO;
+                                            const isDueToday = isPlanned && d === todayISO;
 
-                                                const rowClass = isCancelled
-                                                    ? "bg-gray-50 text-gray-500"
-                                                    : isOverdue
-                                                        ? "bg-red-50"
-                                                        : isDueToday
-                                                            ? "bg-yellow-50"
-                                                            : "hover:bg-gray-50";
+                                            const rowClass = isCancelled
+                                                ? "bg-gray-50 text-gray-500"
+                                                : isOverdue
+                                                    ? "bg-red-50"
+                                                    : isDueToday
+                                                        ? "bg-yellow-50"
+                                                        : "hover:bg-gray-50";
 
-                                                const amountClass = isCancelled
-                                                    ? "text-gray-500 font-semibold"
-                                                    : tx.kind === "income"
-                                                        ? "text-green-700 font-semibold"
-                                                        : "text-red-700 font-semibold";
+                                            const amountClass = isCancelled
+                                                ? "text-gray-500 font-semibold"
+                                                : tx.kind === "income"
+                                                    ? "text-green-700 font-semibold"
+                                                    : "text-red-700 font-semibold";
 
-                                                const cancelSeries = (seriesId: string) => {
-                                                    transactions
-                                                        .filter((tx) => tx.recurringSeriesId === seriesId)
-                                                        .forEach((tx) => updateTransaction(tx.id, { status: "cancelled" }));
-                                                };
+                                            const cancelSeries = (seriesId: string) => {
+                                                transactions
+                                                    .filter((tx) => tx.recurringSeriesId === seriesId)
+                                                    .forEach((tx) => updateTransaction(tx.id, { status: "cancelled" }));
+                                            };
 
-                                                const restoreSeries = (seriesId: string) => {
-                                                    transactions
-                                                        .filter((tx) => tx.recurringSeriesId === seriesId)
-                                                        .forEach((tx) => updateTransaction(tx.id, { status: "planned" }));
-                                                };
+                                            const restoreSeries = (seriesId: string) => {
+                                                transactions
+                                                    .filter((tx) => tx.recurringSeriesId === seriesId)
+                                                    .forEach((tx) => updateTransaction(tx.id, { status: "planned" }));
+                                            };
 
 
-                                                return (
-                                                    <tr key={tx.id} className={rowClass}>
+                                            return (
+                                                <tr key={tx.id} className={rowClass}>
 
-                                                        {visibleCols.date && (
-                                                            <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
-                                                                {fmtDate(tx.date)}
-                                                            </td>
-                                                        )}
+                                                    {visibleCols.date && (
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            {fmtDate(tx.date)}
+                                                        </td>
+                                                    )}
 
-                                                        {visibleCols.status && (
-                                                            <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
-                                                                {isCancelled ? (
-                                                                    <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
-                                                                        storniert
-                                                                    </span>
-                                                                ) : isPlanned ? (
-                                                                    <span
-                                                                        className={`border px-2 py-[1px] text-[10px] ${isOverdue
-                                                                            ? "border-red-300 text-red-700"
-                                                                            : isDueToday
-                                                                                ? "border-yellow-400 text-yellow-700"
-                                                                                : "border-gray-300 text-gray-600"
-                                                                            }`}
-                                                                    >
-                                                                        geplant
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-[10px] text-green-700">
-                                                                        gebucht
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                        )}
-
-                                                        {visibleCols.konto && (
-                                                            <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
-                                                                <span
-                                                                    className="block truncate"
-                                                                    title={getKontoName((tx as any).kontoId)}
-                                                                >
-                                                                    {getKontoName((tx as any).kontoId)}
+                                                    {visibleCols.status && (
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            {isCancelled ? (
+                                                                <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
+                                                                    storniert
                                                                 </span>
-                                                            </td>
-                                                        )}
-
-                                                        {visibleCols.source && (
-                                                            <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            ) : isPlanned ? (
                                                                 <span
-                                                                    className="block truncate"
-                                                                    title={
-                                                                        tx.kind === "expense"
-                                                                            ? getAnbieterName((tx as any).anbieterId)
-                                                                            : getIncomeSourceName((tx as any).quelleId)
-                                                                    }
+                                                                    className={`border px-2 py-[1px] text-[10px] ${isOverdue
+                                                                        ? "border-red-300 text-red-700"
+                                                                        : isDueToday
+                                                                            ? "border-yellow-400 text-yellow-700"
+                                                                            : "border-gray-300 text-gray-600"
+                                                                        }`}
                                                                 >
-                                                                    {tx.kind === "expense"
-                                                                        ? getAnbieterName((tx as any).anbieterId)
-                                                                        : getIncomeSourceName((tx as any).quelleId)}
+                                                                    geplant
                                                                 </span>
-                                                            </td>)}
-
-                                                        {visibleCols.category && (
-                                                            <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
-                                                                <span
-                                                                    className="block truncate"
-                                                                    title={
-                                                                        tx.kind === "expense"
-                                                                            ? getGruppeName((tx as any).gruppeId)
-                                                                            : getIncomeCategoryName((tx as any).incomeKategorieId)
-                                                                    }
-                                                                >
-                                                                    {tx.kind === "expense"
-                                                                        ? getGruppeName((tx as any).gruppeId)
-                                                                        : getIncomeCategoryName((tx as any).incomeKategorieId)}
+                                                            ) : (
+                                                                <span className="text-[10px] text-green-700">
+                                                                    gebucht
                                                                 </span>
-                                                            </td>)}
+                                                            )}
+                                                        </td>
+                                                    )}
 
-                                                        {visibleCols.amount && (
-                                                            <td
-                                                                className={`border-b border-gray-200 px-2 py-2 text-right text-[11px] sm:text-xs tabular-nums align-middle ${amountClass}`}
-
-                                                                title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                    {visibleCols.konto && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={getKontoName((tx as any).kontoId)}
                                                             >
-                                                                {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
-                                                            </td>)}
+                                                                {getKontoName((tx as any).kontoId)}
+                                                            </span>
+                                                        </td>
+                                                    )}
+
+                                                    {visibleCols.source && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={
+                                                                    tx.kind === "expense"
+                                                                        ? getAnbieterName((tx as any).anbieterId)
+                                                                        : getIncomeSourceName((tx as any).quelleId)
+                                                                }
+                                                            >
+                                                                {tx.kind === "expense"
+                                                                    ? getAnbieterName((tx as any).anbieterId)
+                                                                    : getIncomeSourceName((tx as any).quelleId)}
+                                                            </span>
+                                                        </td>)}
+
+                                                    {visibleCols.category && (
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            <span
+                                                                className="block truncate"
+                                                                title={
+                                                                    tx.kind === "expense"
+                                                                        ? getGruppeName((tx as any).gruppeId)
+                                                                        : getIncomeCategoryName((tx as any).incomeKategorieId)
+                                                                }
+                                                            >
+                                                                {tx.kind === "expense"
+                                                                    ? getGruppeName((tx as any).gruppeId)
+                                                                    : getIncomeCategoryName((tx as any).incomeKategorieId)}
+                                                            </span>
+                                                        </td>)}
+
+                                                    {visibleCols.amount && (
+                                                        <td
+                                                            className={`border-b border-gray-200 px-2 py-2 text-right text-[11px] sm:text-xs tabular-nums align-middle ${amountClass}`}
+
+                                                            title={fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                        >
+                                                            {fmtMoney(Number.isFinite(tx.amount) ? tx.amount : 0)}
+                                                        </td>)}
 
 
-                                                        {visibleCols.actions && (
-                                                            <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
-                                                                {isPlanned ? (
-                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                    {visibleCols.actions && (
+                                                        <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            {isPlanned ? (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
+                                                                        }
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => markBooked(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        durchführen
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => markCancelled(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        stornieren
+                                                                    </button>
+                                                                    {tx.recurringSeriesId && !isCancelled && (
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() =>
-                                                                                navigate(
-                                                                                    tx.kind === "income"
-                                                                                        ? `/income-transaction/${tx.id}/edit`
-                                                                                        : `/transaction/${tx.id}/edit`
-                                                                                )
-                                                                            }
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            bearbeiten
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => markBooked(tx.id)}
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            durchführen
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => markCancelled(tx.id)}
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            stornieren
-                                                                        </button>
-                                                                        {tx.recurringSeriesId && !isCancelled && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => cancelSeries(tx.recurringSeriesId!)}
-                                                                                className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                            >
-                                                                                Serie stornieren
-                                                                            </button>
-                                                                        )}
-                                                                        {tx.recurringSeriesId && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => restoreSeries(tx.recurringSeriesId!)}
-                                                                                className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
-                                                                            >
-                                                                                Serie wiederherstellen
-                                                                            </button>
-                                                                        )}
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => planNextMonth(tx)}
+                                                                            onClick={() => cancelSeries(tx.recurringSeriesId!)}
                                                                             className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                         >
-                                                                            nächster Monat
+                                                                            Serie stornieren
                                                                         </button>
-
-
-                                                                    </div>
-                                                                ) : isCancelled ? (
-                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                    )}
+                                                                    {tx.recurringSeriesId && (
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => restoreTransaction(tx.id)}
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            wiederherstellen
-                                                                        </button>
-
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                navigate(
-                                                                                    tx.kind === "income"
-                                                                                        ? `/income-transaction/${tx.id}/edit`
-                                                                                        : `/transaction/${tx.id}/edit`
-                                                                                )
-                                                                            }
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            bearbeiten
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="flex flex-wrap items-center gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                navigate(
-                                                                                    tx.kind === "income"
-                                                                                        ? `/income-transaction/${tx.id}/edit`
-                                                                                        : `/transaction/${tx.id}/edit`
-                                                                                )
-                                                                            }
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            bearbeiten
-                                                                        </button>
-
-                                                                        <button
-                                                                            type="button"
-                                                                            /*    onClick={() => {
-                                                                                    if (window.confirm("Transaktion wirklich löschen?")) {
-                                                                                        removeTransaction(tx.id);
-                                                                                    } 
-                                                                                }} */
-
-                                                                            onClick={() => markCancelled(tx.id)}
-
-
-                                                                            className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
-                                                                        >
-                                                                            stornieren
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => planNextMonth(tx)}
+                                                                            onClick={() => restoreSeries(tx.recurringSeriesId!)}
                                                                             className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
                                                                         >
-                                                                            nächster Monat
+                                                                            Serie wiederherstellen
                                                                         </button>
-                                                                    </div>
-                                                                )}
-                                                            </td>)}
-                                                    </tr>
-                                                );
-                                            })}
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => planNextMonth(tx)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        nächster Monat
+                                                                    </button>
+
+
+                                                                </div>
+                                                            ) : isCancelled ? (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => restoreTransaction(tx.id)}
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        wiederherstellen
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
+                                                                        }
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            navigate(
+                                                                                tx.kind === "income"
+                                                                                    ? `/income-transaction/${tx.id}/edit`
+                                                                                    : `/transaction/${tx.id}/edit`
+                                                                            )
+                                                                        }
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        bearbeiten
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        /*    onClick={() => {
+                                                                                if (window.confirm("Transaktion wirklich löschen?")) {
+                                                                                    removeTransaction(tx.id);
+                                                                                } 
+                                                                            }} */
+
+                                                                        onClick={() => markCancelled(tx.id)}
+
+
+                                                                        className="border border-gray-300 px-2 py-1 text-[10px] sm:text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        stornieren
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => planNextMonth(tx)}
+                                                                        className="border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                                                                    >
+                                                                        nächster Monat
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </td>)}
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

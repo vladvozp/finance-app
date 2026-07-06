@@ -187,7 +187,7 @@ export default function MonthPage() {
         amount: true,
         actions: true,
         status: true,
-        paymentType: true,
+        paymentType: false,
     };
 
     const [visibleCols, setVisibleCols] = useState(DEFAULT_VISIBLE_COLS);
@@ -516,9 +516,11 @@ export default function MonthPage() {
                                             ["konto", "Konto"],
                                             ["source", "Anbieter / Quelle"],
                                             ["category", "Gruppe / Kategorie"],
+                                            ["paymentType", "Zahlungsart"],
                                             ["amount", "Betrag"],
                                             ["actions", "Aktion"],
                                             ["status", "Status"],
+
                                         ].map(([key, label]) => (
                                             <label
                                                 key={key}

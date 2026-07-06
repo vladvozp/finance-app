@@ -7,7 +7,7 @@ import { bumpProviderStats } from "../services/providerStatsService";
 import { loadProviderStats, saveProviderStats, type ProviderStats } from "../repositories/providerStatsRepository";
 import type { Tx, TxStatus } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
-
+import type { PaymentType } from "../store/dicts";
 
 function formatLocalDate(date: Date): string {
     const y = date.getFullYear();
@@ -63,7 +63,10 @@ export function useTransactionForm(
 
     const [date, setDate] = useState<Date | null>(new Date());
     const [isPlanned, setIsPlanned] = useState(false);
+    const [paymentType, setPaymentType] = useState<PaymentType>("normal");
     const [saving, setSaving] = useState(false);
+
+
 
     const [amountStr, setAmountStr] = useState<string>(
         typeof amount === "number" && amount > 0
@@ -146,6 +149,7 @@ export function useTransactionForm(
                     date: isoDate,
                     createdAt: nowISO,
                     status,
+                    paymentType,
                     gruppeId: gruppeId || undefined,
                     anbieterId: anbieterId || undefined,
                 };
@@ -159,6 +163,7 @@ export function useTransactionForm(
                     date: isoDate,
                     createdAt: nowISO,
                     status,
+                    paymentType,
                     accountId: selectedAccountId,
                     kontoName: selectedAccountName,
                 });
@@ -188,6 +193,7 @@ export function useTransactionForm(
                         date: isoDate,
                         createdAt: nowISO,
                         status,
+                        paymentType,
                         gruppeId: gruppeId || undefined,
                         anbieterId: anbieterId || undefined,
                     };
@@ -222,6 +228,7 @@ export function useTransactionForm(
                     date: d,
                     createdAt: nowISO,
                     status: index === 0 ? status : "planned",
+                    paymentType,
                     gruppeId: gruppeId || undefined,
                     anbieterId: anbieterId || undefined,
                 }));
@@ -242,6 +249,8 @@ export function useTransactionForm(
         setDate,
         isPlanned,
         setIsPlanned,
+        paymentType,
+        setPaymentType,
         saving,
         amountStr,
         providerStats,

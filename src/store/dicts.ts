@@ -10,6 +10,22 @@ import { supabase } from "../lib/supabase";
 export type Gruppe = { id: string; name: string; createdAt: string };
 export type Anbieter = { id: string; name: string; gruppenId: string };
 
+export type PaymentType =
+    | "normal"
+    | "fixed"
+    | "subscription"
+    | "installment";
+
+export const paymentTypeLabels: Record<PaymentType, string> = {
+    normal: "Normal",
+    fixed: "Fixkosten",
+    subscription: "Abo",
+    installment: "Ratenzahlung",
+};
+
+
+
+
 // ---- Utils ----
 const newId = () =>
     typeof crypto !== "undefined" && crypto.randomUUID

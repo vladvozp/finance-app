@@ -1,10 +1,16 @@
+import type { PaymentType } from "../store/dicts";
+
+
 export type TxStatus = "planned" | "booked" | "cancelled";
+
 
 export type Tx = {
     id: string;
 
     kind: "expense" | "income";
     status: TxStatus;
+
+    paymentType?: PaymentType;
 
     amount: number;
     date: string | null;

@@ -122,6 +122,7 @@ export async function fetchTransactions(): Promise<Tx[]> {
         kontoId: row.konto_id,
         remark: row.remark,
         repeat: row.repeat,
+        paymentType: row.payment_type ?? "normal"
     }));
 }
 
@@ -143,6 +144,7 @@ export async function insertTransaction(tx: Tx): Promise<void> {
         remark: tx.remark,
         repeat: tx.repeat,
         user_id: userId,
+        payment_type: tx.paymentType ?? "normal"
     });
 
     if (error) throw error;
@@ -154,21 +156,30 @@ export async function updateTransactionInDb(
 ): Promise<void> {
     const userId = await getUserId();
 
+    const updateData: Record<string, unknown> = {};
+
+    if (patch.kind !== undefined) updateData.kind = patch.kind;
+    if (patch.amount !== undefined) updateData.amount = patch.amount;
+    if (patch.date !== undefined) updateData.date = patch.date;
+    if (patch.status !== undefined) updateData.status = patch.status;
+
+    if (patch.paymentType !== undefined) {
+        updateData.payment_type = patch.paymentType;
+    }
+
+    if (patch.gruppeId !== undefined) updateData.gruppe_id = patch.gruppeId;
+    if (patch.anbieterId !== undefined) updateData.anbieter_id = patch.anbieterId;
+    if (patch.quelleId !== undefined) updateData.quelle_id = patch.quelleId;
+    if (patch.incomeKategorieId !== undefined) {
+        updateData.income_kategorie_id = patch.incomeKategorieId;
+    }
+    if (patch.kontoId !== undefined) updateData.konto_id = patch.kontoId;
+    if (patch.remark !== undefined) updateData.remark = patch.remark;
+    if (patch.repeat !== undefined) updateData.repeat = patch.repeat;
+
     const { error } = await supabase
         .from("transactions")
-        .update({
-            kind: patch.kind,
-            amount: patch.amount,
-            date: patch.date,
-            status: patch.status,
-            gruppe_id: patch.gruppeId,
-            anbieter_id: patch.anbieterId,
-            quelle_id: patch.quelleId,
-            income_kategorie_id: patch.incomeKategorieId,
-            konto_id: patch.kontoId,
-            remark: patch.remark,
-            repeat: patch.repeat,
-        })
+        .update(updateData)
         .eq("id", id)
         .eq("user_id", userId);
 

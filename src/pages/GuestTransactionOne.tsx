@@ -26,7 +26,6 @@ import { txDraft } from "../store/transactionDraft";
 import type { TxStatus } from "../types/tx";
 import { Account } from "../types/account";
 import { Combobox, type ComboOption } from "../components/ui/combobox";
-import { useDicts } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 import { fmtEur, toCents } from "../utils/currency";
 import { getMostUsedGroupForProvider } from "../services/providerStatsService";
@@ -35,6 +34,8 @@ import { useTransactionForm } from "../hooks/useTransactionForm";
 import { useAccountsStore } from "../store/accounts";
 
 import TransactionDateField from "../components/TransactionDateField";
+
+import { paymentTypeLabels, PaymentType, useDicts } from "../store/dicts";
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -74,6 +75,7 @@ const GuestTransactionOne: React.FC = () => {
 
     const { addAccount, updateAccount, removeAccount } = useAccountsStore();
 
+
     const {
         accounts,
         selectedAccountId,
@@ -88,6 +90,8 @@ const GuestTransactionOne: React.FC = () => {
     const {
         date, setDate,
         isPlanned, setIsPlanned,
+        paymentType,
+        setPaymentType,
         saving,
         amountStr,
         providerStats,
@@ -347,6 +351,21 @@ const GuestTransactionOne: React.FC = () => {
                         </div>
                     )}
 
+                    <label className="block text-sm font-medium text-slate-700">
+                        Zahlungsart
+                    </label>
+
+                    <select
+                        value={paymentType}
+                        onChange={(e) => setPaymentType(e.target.value as PaymentType)}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                    >
+                        {Object.entries(paymentTypeLabels).map(([value, label]) => (
+                            <option key={value} value={value}>
+                                {label}
+                            </option>
+                        ))}
+                    </select>
 
                     <div className="flex gap-3 mt-6" />
                     <TransactionDateField

@@ -5,7 +5,7 @@ import { Settings } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 
 import { useAccountsStore } from "../store/accounts";
-import { useDicts } from "../store/dicts";
+import { useDicts, paymentTypeLabels } from "../store/dicts";
 import { useIncomeDicts } from "../store/incomeDicts";
 
 import CategoryBarChart from "../components/CategoryBarChart";
@@ -173,6 +173,43 @@ export default function Analytics() {
     const expenses = useMemo(() => {
         return analyticsTx.filter((tx: any) => tx.kind === "expense");
     }, [analyticsTx]);
+
+    const byPaymentType = useMemo(() => {
+        const map = new Map<string, number>();
+
+        map.set("fixed", 0);
+        map.set("subscription", 0);
+        map.set("installment", 0);
+        map.set("normal", 0);
+
+        for (const tx of expenses as any[]) {
+            const key = tx.paymentType ?? "normal";
+            map.set(key, (map.get(key) ?? 0) + Math.abs(tx.amount ?? 0));
+        }
+
+        return [
+            {
+                id: "fixed",
+                name: "Fixkosten",
+                amount: map.get("fixed") ?? 0,
+            },
+            {
+                id: "subscription",
+                name: "Abos",
+                amount: map.get("subscription") ?? 0,
+            },
+            {
+                id: "installment",
+                name: "Ratenzahlungen",
+                amount: map.get("installment") ?? 0,
+            },
+            {
+                id: "normal",
+                name: "Variable Ausgaben",
+                amount: map.get("normal") ?? 0,
+            },
+        ];
+    }, [expenses]);
 
     const incomes = useMemo(() => {
         return analyticsTx.filter((tx: any) => tx.kind === "income");
@@ -393,6 +430,24 @@ export default function Analytics() {
                                 name: row.name,
                                 amount: Math.abs(row.amount),
                             }))} />
+
+                        <DetailsTable title="Ausgaben nach Zahlungsart">
+                            <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">
+                                <tbody>
+                                    {byPaymentType.map((row) => (
+                                        <tr key={row.id} className="border-b border-gray-100">
+                                            <td className="border-b border-gray-100 px-3 py-1.5 text-gray-700">
+                                                {row.name}
+                                            </td>
+                                            <td className="w-[35%] whitespace-nowrap border-b border-gray-100 px-3 py-1.5 text-right font-semibold tabular-nums text-red-700">
+                                                {fmtMoney(row.amount)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </DetailsTable>
+
 
 
                         <DetailsTable title="Ausgaben nach Gruppen">

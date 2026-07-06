@@ -14,6 +14,8 @@ import { calculateMonthMetrics } from "../logic/monthMetrics";
 
 import MetricCard from "../components/MetricCard";
 
+import { paymentTypeLabels } from "../store/dicts";
+
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
         style: "currency",
@@ -185,6 +187,7 @@ export default function MonthPage() {
         amount: true,
         actions: true,
         status: true,
+        paymentType: true,
     };
 
     const [visibleCols, setVisibleCols] = useState(DEFAULT_VISIBLE_COLS);
@@ -543,9 +546,18 @@ export default function MonthPage() {
                                                 Datum
                                             </th>)}
 
+
+
+
                                             {visibleCols.status && (
                                                 <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                     Status
+                                                </th>
+                                            )}
+
+                                            {visibleCols.paymentType && (
+                                                <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                    Zahlungstyp
                                                 </th>
                                             )}
 
@@ -580,6 +592,7 @@ export default function MonthPage() {
                                             const isOverdue = isPlanned && d < todayISO;
                                             const isDueToday = isPlanned && d === todayISO;
 
+
                                             const rowClass = isCancelled
                                                 ? "bg-gray-50 text-gray-500"
                                                 : isOverdue
@@ -606,6 +619,8 @@ export default function MonthPage() {
                                                     .forEach((tx) => updateTransaction(tx.id, { status: "planned" }));
                                             };
 
+                                            const paymentType = tx.paymentType ?? "normal";
+                                            const paymentTypeLabel = paymentTypeLabels[paymentType];
 
                                             return (
                                                 <tr key={tx.id} className={rowClass}>
@@ -613,6 +628,14 @@ export default function MonthPage() {
                                                     {visibleCols.date && (
                                                         <td className="border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
                                                             {fmtDate(tx.date)}
+                                                        </td>
+                                                    )}
+
+                                                    {visibleCols.paymentType && (
+                                                        <td className="px-3 py-2 text-sm text-slate-600">
+                                                            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">
+                                                                {paymentTypeLabels[tx.paymentType ?? "normal"]}
+                                                            </span>
                                                         </td>
                                                     )}
 

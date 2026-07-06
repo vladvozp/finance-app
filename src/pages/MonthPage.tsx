@@ -631,8 +631,8 @@ export default function MonthPage() {
                                                     )}
 
                                                     {visibleCols.paymentType && (
-                                                        <td className="px-3 py-2 text-sm text-slate-600">
-                                                            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs">
+                                                        <td className="min-w-0 border-b border-gray-200 px-2 py-2 sm:px-3 sm:py-3 align-middle">
+                                                            <span className="border border-gray-300 px-2 py-[1px] text-[10px] text-gray-600">
                                                                 {paymentTypeLabels[tx.paymentType ?? "normal"]}
                                                             </span>
                                                         </td>

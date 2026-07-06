@@ -547,7 +547,11 @@ export default function MonthPage() {
                                             </th>)}
 
 
-
+                                            {visibleCols.paymentType && (
+                                                <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                                    Zahlungstyp
+                                                </th>
+                                            )}
 
                                             {visibleCols.status && (
                                                 <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
@@ -555,12 +559,7 @@ export default function MonthPage() {
                                                 </th>
                                             )}
 
-                                            {visibleCols.paymentType && (
-                                                <th className="w-[110px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-                                                    Zahlungstyp
-                                                </th>
-                                            )}
-
+                                            =
                                             {visibleCols.konto && (<th className="w-[120px] border-b border-gray-300 px-2 py-2 sm:px-3 sm:py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                                                 Konto
                                             </th>)}

@@ -423,7 +423,7 @@ export default function Analytics() {
                             </p>
                         </div>
 
-    // Anzeige des CategoryBarChart mit den gruppierten Ausgaben
+                         // Anzeige des CategoryBarChart mit den gruppierten Ausgaben
                         <CategoryBarChart data={byGroup
                             .filter((row) => row.amount !== 0)
                             .map((row) => ({

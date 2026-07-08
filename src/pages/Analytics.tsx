@@ -183,6 +183,7 @@ export default function Analytics() {
         map.set("subscription", 0);
         map.set("installment", 0);
         map.set("normal", 0);
+        map.set("savings", 0);
 
         for (const tx of expenses as any[]) {
             const key = tx.paymentType ?? "normal";
@@ -209,6 +210,11 @@ export default function Analytics() {
                 id: "normal",
                 name: "Variable Ausgaben",
                 amount: map.get("normal") ?? 0,
+            },
+            {
+                id: "savings",
+                name: "Sparen",
+                amount: map.get("savings") ?? 0,
             },
         ];
     }, [expenses]);

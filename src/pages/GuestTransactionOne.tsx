@@ -381,27 +381,25 @@ const GuestTransactionOne: React.FC = () => {
                         </div>
                     )}
 
-                    <label className="block text-sm font-medium text-slate-700">
-                        Zahlungsart
-                    </label>
+                    <div className="mt-3">
+                        <select
+                            value={paymentType}
+                            onChange={(e) => setPaymentType(e.target.value as PaymentType)}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            {Object.entries(paymentTypeLabels).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="mt-1 text-xs text-slate-500">
+                            Zahlungsart
+                        </p>
+                    </div>
 
-                    <select
-                        value={paymentType}
-                        onChange={(e) => setPaymentType(e.target.value as PaymentType)}
-                        className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                    >
-                        {Object.entries(paymentTypeLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                                {label}
-                            </option>
-                        ))}
-                    </select>
 
                     <div className="mt-3">
-                        <label className="block text-sm font-medium text-slate-700">
-                            Budgetgruppe
-                        </label>
-
                         <select
                             value={budgetGroupOverride ?? ""}
                             onChange={(e) => {
@@ -429,7 +427,7 @@ const GuestTransactionOne: React.FC = () => {
                         </select>
 
                         <p className="mt-1 text-xs text-slate-500">
-                            Aktuell: {budgetGroupLabels[effectiveBudgetGroup]}
+                            Budgetgruppe
                         </p>
                     </div>
 

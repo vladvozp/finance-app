@@ -35,7 +35,13 @@ import { useAccountsStore } from "../store/accounts";
 
 import TransactionDateField from "../components/TransactionDateField";
 
-import { paymentTypeLabels, PaymentType, useDicts } from "../store/dicts";
+import {
+    paymentTypeLabels,
+    budgetGroupLabels,
+    type PaymentType,
+    type BudgetGroup,
+    useDicts,
+} from "../store/dicts";
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -51,19 +57,23 @@ const GuestTransactionOne: React.FC = () => {
     const navigate = useNavigate();
 
     const draft = useTxDraft() as any;
+
     const {
         amount = 0,
         accountId = "",
         gruppeId = "",
         anbieterId = "",
         remark = "",
+        budgetGroupOverride = null,
     } = draft as {
         amount?: number;
         accountId?: string;
         gruppeId?: string;
         anbieterId?: string;
         remark?: string;
+        budgetGroupOverride?: BudgetGroup | null;
     };
+
 
     const [query, setQuery] = useState<string>("");
     const [open, setOpen] = useState<boolean>(false);
@@ -132,7 +142,12 @@ const GuestTransactionOne: React.FC = () => {
         gruppen, createGroup, renameGroup, deleteGroup,
         createProvider, renameProvider, deleteProvider,
     } = useDicts();
+
+
+
     const { categories, sources } = useIncomeDicts();
+
+
 
     const anbieter = useDicts((s) => s.anbieter);
 
@@ -156,7 +171,24 @@ const GuestTransactionOne: React.FC = () => {
 
     const onGroupChange = useCallback((id: string) => {
         txDraft.set("gruppeId", id);
-    }, []);
+
+        const selectedGroup = gruppen.find((g) => g.id === id);
+
+        if (selectedGroup?.paymentType) {
+            setPaymentType(selectedGroup.paymentType);
+        }
+
+        txDraft.set("budgetGroupOverride", null);
+    }, [gruppen, setPaymentType]);
+
+
+    const selectedGroup = useMemo(
+        () => gruppen.find((g) => g.id === gruppeId),
+        [gruppen, gruppeId]
+    );
+
+    const effectiveBudgetGroup =
+        budgetGroupOverride ?? selectedGroup?.budgetGroup ?? "free";
 
     const startEdit = (acc: AccountWithBalance) => {
         setEditingId(acc.id);
@@ -281,8 +313,6 @@ const GuestTransactionOne: React.FC = () => {
                         }}
                     />
 
-
-
                     <div className="flex gap-3 mt-6" />
 
                     <div className="relative">
@@ -366,6 +396,42 @@ const GuestTransactionOne: React.FC = () => {
                             </option>
                         ))}
                     </select>
+
+                    <div className="mt-3">
+                        <label className="block text-sm font-medium text-slate-700">
+                            Budgetgruppe
+                        </label>
+
+                        <select
+                            value={budgetGroupOverride ?? ""}
+                            onChange={(e) => {
+                                const value = e.target.value;
+
+                                txDraft.set(
+                                    "budgetGroupOverride",
+                                    value === "" ? null : (value as BudgetGroup)
+                                );
+                            }}
+                            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                        >
+                            <option value="">
+                                Aus Kategorie übernehmen
+                                {selectedGroup?.budgetGroup
+                                    ? ` (${budgetGroupLabels[selectedGroup.budgetGroup]})`
+                                    : ""}
+                            </option>
+
+                            {Object.entries(budgetGroupLabels).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
+
+                        <p className="mt-1 text-xs text-slate-500">
+                            Aktuell: {budgetGroupLabels[effectiveBudgetGroup]}
+                        </p>
+                    </div>
 
                     <div className="flex gap-3 mt-6" />
                     <TransactionDateField

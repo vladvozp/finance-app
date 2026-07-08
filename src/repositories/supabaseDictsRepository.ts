@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import type { Gruppe, Anbieter } from "../store/dicts";
+import type { Gruppe, Anbieter, PaymentType, BudgetGroup, PlanType } from "../store/dicts";
 
 async function getUserId(): Promise<string> {
     const { data } = await supabase.auth.getUser();
@@ -18,6 +18,12 @@ export async function fetchGruppen(): Promise<Gruppe[]> {
         id: row.id,
         name: row.name,
         createdAt: row.created_at,
+
+        paymentType: row.payment_type ?? "normal",
+        budgetGroup: row.budget_group ?? "free",
+        planType: row.plan_type ?? "limit",
+        planAmount: row.plan_amount ?? null,
+
     }));
 }
 
@@ -27,13 +33,39 @@ export async function insertGruppe(gruppe: Gruppe, userId: string): Promise<void
         name: gruppe.name,
         created_at: gruppe.createdAt,
         user_id: userId,
+
+        payment_type: gruppe.paymentType ?? "normal",
+        budget_group: gruppe.budgetGroup ?? "free",
+        plan_type: gruppe.planType ?? "limit",
+        plan_amount: gruppe.planAmount ?? null,
     });
     if (error) throw error;
 }
 
 
-export async function updateGruppeInDb(id: string, name: string): Promise<void> {
-    const { error } = await supabase.from("gruppen").update({ name }).eq("id", id);
+export async function updateGruppeInDb(
+    id: string,
+    patch: {
+        name?: string;
+        paymentType?: PaymentType;
+        budgetGroup?: BudgetGroup;
+        planType?: PlanType;
+        planAmount?: number | null;
+    }
+): Promise<void> {
+    const dbPatch: Record<string, unknown> = {};
+
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.paymentType !== undefined) dbPatch.payment_type = patch.paymentType;
+    if (patch.budgetGroup !== undefined) dbPatch.budget_group = patch.budgetGroup;
+    if (patch.planType !== undefined) dbPatch.plan_type = patch.planType;
+    if (patch.planAmount !== undefined) dbPatch.plan_amount = patch.planAmount;
+
+    const { error } = await supabase
+        .from("gruppen")
+        .update(dbPatch)
+        .eq("id", id);
+
     if (error) throw error;
 }
 

@@ -7,24 +7,56 @@ import {
 import { supabase } from "../lib/supabase";
 
 // ---- Types ----
-export type Gruppe = { id: string; name: string; createdAt: string };
-export type Anbieter = { id: string; name: string; gruppenId: string };
 
 export type PaymentType =
     | "normal"
     | "fixed"
     | "subscription"
-    | "installment";
+    | "installment"
+    | "savings";
 
 export const paymentTypeLabels: Record<PaymentType, string> = {
     normal: "Normal",
     fixed: "Fixkosten",
     subscription: "Abo",
     installment: "Ratenzahlung",
+    savings: "Sparkonto"
 };
 
+export type PlanType = "limit" | "target";
 
+export const planTypeLabels: Record<PlanType, string> = {
+    limit: "Limit",
+    target: "Ziel"
+};
 
+export type BudgetGroup =
+    | "required"
+    | "free"
+    | "future";
+
+export const budgetGroupLabels: Record<BudgetGroup, string> = {
+    required: "Notwendig",
+    free: "Frei verfügbar",
+    future: "Zukunft"
+};
+
+export type Gruppe = {
+    id: string;
+    name: string;
+    createdAt: string;
+
+    paymentType?: PaymentType;
+    budgetGroup?: BudgetGroup;
+    planType?: PlanType;
+    planAmount?: number | null;
+};
+
+export type Anbieter = {
+    id: string;
+    name: string;
+    gruppenId: string;
+};
 
 // ---- Utils ----
 const newId = () =>
@@ -34,17 +66,94 @@ const newId = () =>
 
 // ---- Seed data ----
 const DEFAULT_GRUPPEN: Omit<Gruppe, "createdAt">[] = [
-    { id: newId(), name: "Wohnen" },
-    { id: newId(), name: "Lebensmittel & Haushalt" },
-    { id: newId(), name: "Mobilität" },
-    { id: newId(), name: "Kommunikation & Technik" },
-    { id: newId(), name: "Gesundheit" },
-    { id: newId(), name: "Kleidung & Pflege" },
-    { id: newId(), name: "Bildung & Kurse" },
-    { id: newId(), name: "Kinder & Familie" },
-    { id: newId(), name: "Freizeit & Medien" },
-    { id: newId(), name: "Reisen & Urlaub" },
-    { id: newId(), name: "Finanzen & Versicherungen" },
+    {
+        id: newId(),
+        name: "Wohnen",
+        paymentType: "fixed",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Lebensmittel & Haushalt",
+        paymentType: "normal",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Mobilität",
+        paymentType: "normal",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Kommunikation & Technik",
+        paymentType: "subscription",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Gesundheit",
+        paymentType: "normal",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Kleidung & Pflege",
+        paymentType: "normal",
+        budgetGroup: "free",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Bildung & Kurse",
+        paymentType: "normal",
+        budgetGroup: "future",
+        planType: "target",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Kinder & Familie",
+        paymentType: "normal",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Freizeit & Medien",
+        paymentType: "subscription",
+        budgetGroup: "free",
+        planType: "limit",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Reisen & Urlaub",
+        paymentType: "savings",
+        budgetGroup: "future",
+        planType: "target",
+        planAmount: null,
+    },
+    {
+        id: newId(),
+        name: "Finanzen & Versicherungen",
+        paymentType: "fixed",
+        budgetGroup: "required",
+        planType: "limit",
+        planAmount: null,
+    },
 ];
 
 const DEFAULT_ANBIETER = [
@@ -64,9 +173,23 @@ type DictsState = {
     loadFromSupabase: () => Promise<void>;
     seedIfEmpty: () => Promise<void>;
 
-    createGroup: (name: string) => Promise<string>;
+    createGroup: (
+        name: string,
+        options?: Partial<Omit<Gruppe, "id" | "name" | "createdAt">>
+    ) => Promise<string>;
+
     renameGroup: (id: string, newName: string) => Promise<void>;
     deleteGroup: (id: string) => Promise<void>;
+
+    updateGroupSettings: (
+        id: string,
+        patch: {
+            paymentType?: PaymentType;
+            budgetGroup?: BudgetGroup;
+            planType?: PlanType;
+            planAmount?: number | null;
+        }
+    ) => Promise<void>;
 
     createProvider: (name: string, gruppenId?: string) => Promise<string>;
     renameProvider: (id: string, newName: string) => Promise<void>;
@@ -118,19 +241,33 @@ export const useDicts = create<DictsState>()(
         },
 
 
-        createGroup: async (name) => {
+
+        createGroup: async (name, options = {}) => {
             const id = newId();
-            const gruppe: Gruppe = { id, name, createdAt: new Date().toISOString() };
+
+            const gruppe: Gruppe = {
+                id,
+                name,
+                createdAt: new Date().toISOString(),
+                paymentType: options.paymentType ?? "normal",
+                budgetGroup: options.budgetGroup ?? "free",
+                planType: options.planType ?? "limit",
+                planAmount: options.planAmount ?? null,
+            };
+
             set((s) => ({ gruppen: [...s.gruppen, gruppe] }));
+
             const { data } = await supabase.auth.getSession();
             const userId = data.session?.user?.id ?? "";
+
             await insertGruppe(gruppe, userId);
+
             return id;
         },
 
         renameGroup: async (id, newName) => {
             set((s) => ({ gruppen: s.gruppen.map(g => g.id === id ? { ...g, name: newName } : g) }));
-            await updateGruppeInDb(id, newName);
+            await updateGruppeInDb(id, { name: newName });
         },
 
         deleteGroup: async (id) => {
@@ -139,6 +276,16 @@ export const useDicts = create<DictsState>()(
                 anbieter: s.anbieter.map(a => a.gruppenId === id ? { ...a, gruppenId: "" } : a),
             }));
             await deleteGruppeFromDb(id);
+        },
+
+        updateGroupSettings: async (id, patch) => {
+            set((s) => ({
+                gruppen: s.gruppen.map(g =>
+                    g.id === id ? { ...g, ...patch } : g
+                )
+            }));
+
+            await updateGruppeInDb(id, patch);
         },
 
         createProvider: async (name, gruppenId = "") => {

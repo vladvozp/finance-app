@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabase";
 import type { Account } from "../types/account";
 import type { Tx } from "../types/tx";
+import { type BudgetGroup } from "../store/dicts";
 
 async function getUserId(): Promise<string> {
     const { data, error } = await supabase.auth.getUser();
@@ -123,6 +124,7 @@ export async function fetchTransactions(): Promise<Tx[]> {
         remark: row.remark,
         repeat: row.repeat,
         paymentType: row.payment_type ?? "normal"
+        budgetGroupOverride: row.budget_group_override ?? null,
     }));
 }
 
@@ -145,6 +147,7 @@ export async function insertTransaction(tx: Tx): Promise<void> {
         repeat: tx.repeat,
         user_id: userId,
         payment_type: tx.paymentType ?? "normal"
+        budget_group_override: tx.budgetGroupOverride ?? null,
     });
 
     if (error) throw error;
@@ -165,6 +168,9 @@ export async function updateTransactionInDb(
 
     if (patch.paymentType !== undefined) {
         updateData.payment_type = patch.paymentType;
+    }
+    if (patch.budgetGroupOverride !== undefined) {
+        updateData.budget_group_override = patch.budgetGroupOverride;
     }
 
     if (patch.gruppeId !== undefined) updateData.gruppe_id = patch.gruppeId;

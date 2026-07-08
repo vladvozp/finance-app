@@ -1,8 +1,7 @@
-import type { PaymentType } from "../store/dicts";
+import type { PaymentType, BudgetGroup } from "../store/dicts";
 
 
 export type TxStatus = "planned" | "booked" | "cancelled";
-
 
 export type Tx = {
     id: string;
@@ -10,6 +9,7 @@ export type Tx = {
     kind: "expense" | "income";
     status: TxStatus;
 
+    // actual / override
     paymentType?: PaymentType;
 
     amount: number;
@@ -33,5 +33,7 @@ export type Tx = {
     // repeat pattern
     recurringSeriesId?: string;
 
+    // optional override for budget analytics
+    budgetGroupOverride?: BudgetGroup | null;
 
 };

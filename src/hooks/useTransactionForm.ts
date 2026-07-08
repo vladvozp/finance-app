@@ -7,7 +7,7 @@ import { bumpProviderStats } from "../services/providerStatsService";
 import { loadProviderStats, saveProviderStats, type ProviderStats } from "../repositories/providerStatsRepository";
 import type { Tx, TxStatus } from "../types/tx";
 import { useAccountsStore } from "../store/accounts";
-import type { PaymentType } from "../store/dicts";
+import type { BudgetGroup, PaymentType } from "../store/dicts";
 
 function formatLocalDate(date: Date): string {
     const y = date.getFullYear();
@@ -127,7 +127,8 @@ export function useTransactionForm(
             const repeatInterval = txDraft.getField("repeat_interval");
             const repeatByweekday = txDraft.getField("repeat_byweekday");
             const repeatUntil = txDraft.getField("repeat_until");
-
+            const budgetGroupOverride =
+                txDraft.getField("budgetGroupOverride") as BudgetGroup | null;
 
 
 
@@ -152,6 +153,7 @@ export function useTransactionForm(
                     paymentType,
                     gruppeId: gruppeId || undefined,
                     anbieterId: anbieterId || undefined,
+                    budgetGroupOverride: budgetGroupOverride ?? null,
                 };
 
                 addTransaction(tx);
@@ -166,6 +168,7 @@ export function useTransactionForm(
                     paymentType,
                     accountId: selectedAccountId,
                     kontoName: selectedAccountName,
+                    budgetGroupOverride: budgetGroupOverride ?? null,
                 });
 
                 if (anbieterId) {
@@ -196,6 +199,7 @@ export function useTransactionForm(
                         paymentType,
                         gruppeId: gruppeId || undefined,
                         anbieterId: anbieterId || undefined,
+                        budgetGroupOverride: budgetGroupOverride ?? null,
                     };
 
                     addTransaction(tx);
@@ -231,6 +235,7 @@ export function useTransactionForm(
                     paymentType,
                     gruppeId: gruppeId || undefined,
                     anbieterId: anbieterId || undefined,
+                    budgetGroupOverride: budgetGroupOverride ?? null,
                 }));
 
                 repeatTxs.forEach((tx) => addTransaction(tx));

@@ -10,6 +10,8 @@ import { useIncomeDicts } from "../store/incomeDicts";
 
 import CategoryBarChart from "../components/CategoryBarChart";
 
+import { GroupBudgetSettings } from "../components/analytics/GroupBudgetSettings";
+
 type AnalyticsView = "booked" | "planned" | "active";
 
 function fmtMoney(n: number) {
@@ -448,7 +450,7 @@ export default function Analytics() {
                             </table>
                         </DetailsTable>
 
-
+                        <GroupBudgetSettings />
 
                         <DetailsTable title="Ausgaben nach Gruppen">
                             <table className="w-full table-fixed border-collapse text-[11px] sm:text-xs">

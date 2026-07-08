@@ -123,7 +123,7 @@ export async function fetchTransactions(): Promise<Tx[]> {
         kontoId: row.konto_id,
         remark: row.remark,
         repeat: row.repeat,
-        paymentType: row.payment_type ?? "normal",
+        paymentType: row.payment_type ?? undefined,
         budgetGroupOverride: row.budget_group_override ?? null,
     }));
 }

@@ -11,8 +11,11 @@ import { useIncomeDicts } from "../store/incomeDicts";
 import CategoryBarChart from "../components/CategoryBarChart";
 
 import { GroupBudgetSettings } from "../components/analytics/GroupBudgetSettings";
+import type { PaymentType } from "../store/dicts";
+
 
 type AnalyticsView = "booked" | "planned" | "active";
+
 
 function fmtMoney(n: number) {
     return new Intl.NumberFormat("de-DE", {
@@ -177,7 +180,7 @@ export default function Analytics() {
     }, [analyticsTx]);
 
     const byPaymentType = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<PaymentType, number>();
 
         map.set("fixed", 0);
         map.set("subscription", 0);
@@ -185,8 +188,11 @@ export default function Analytics() {
         map.set("normal", 0);
         map.set("savings", 0);
 
-        for (const tx of expenses as any[]) {
-            const key = tx.paymentType ?? "normal";
+        for (const tx of expenses) {
+            const gruppe = gruppen.find((g) => g.id === tx.gruppeId);
+
+            const key = tx.paymentType ?? gruppe?.paymentType ?? "normal";
+
             map.set(key, (map.get(key) ?? 0) + Math.abs(tx.amount ?? 0));
         }
 
@@ -217,7 +223,7 @@ export default function Analytics() {
                 amount: map.get("savings") ?? 0,
             },
         ];
-    }, [expenses]);
+    }, [expenses, gruppen]);
 
     const incomes = useMemo(() => {
         return analyticsTx.filter((tx: any) => tx.kind === "income");

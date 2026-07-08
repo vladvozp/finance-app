@@ -123,7 +123,7 @@ export async function fetchTransactions(): Promise<Tx[]> {
         kontoId: row.konto_id,
         remark: row.remark,
         repeat: row.repeat,
-        paymentType: row.payment_type ?? "normal"
+        paymentType: row.payment_type ?? "normal",
         budgetGroupOverride: row.budget_group_override ?? null,
     }));
 }
@@ -146,7 +146,7 @@ export async function insertTransaction(tx: Tx): Promise<void> {
         remark: tx.remark,
         repeat: tx.repeat,
         user_id: userId,
-        payment_type: tx.paymentType ?? "normal"
+        payment_type: tx.paymentType ?? "normal",
         budget_group_override: tx.budgetGroupOverride ?? null,
     });
 

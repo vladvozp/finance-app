@@ -16,11 +16,11 @@ export type PaymentType =
     | "savings";
 
 export const paymentTypeLabels: Record<PaymentType, string> = {
-    normal: "Normal",
+    normal: "Variable Ausgaben",
     fixed: "Fixkosten",
-    subscription: "Abo",
-    installment: "Ratenzahlung",
-    savings: "Sparkonto"
+    subscription: "Abos",
+    installment: "Ratenzahlungen",
+    savings: "Sparen & Rücklagen"
 };
 
 export type PlanType = "limit" | "target";

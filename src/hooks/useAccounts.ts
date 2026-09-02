@@ -10,7 +10,12 @@ export function useAccounts(
     query: string,
     setQuery: (q: string) => void,
 ) {
-    const { accounts, getAccountsWithBalance, getTotalBalance } = useAccountsStore();
+    const {
+        accounts,
+        transactions,
+        getAccountsWithBalance,
+        getTotalBalance
+    } = useAccountsStore();
 
     const [account, setAccount] = useState<Account | null>(null);
     const [selectedAccountId, setSelectedAccountId] = useState<string>("");
@@ -46,12 +51,12 @@ export function useAccounts(
 
     const accountsWithBalance: AccountWithBalance[] = useMemo(
         () => getAccountsWithBalance(),
-        [accounts]
+        [accounts, transactions]
     );
 
     const totalBalance = useMemo(
         () => getTotalBalance(),
-        [accounts]
+        [accounts, transactions]
     );
 
     const filtered: AccountWithBalance[] = useMemo(() => {

@@ -172,9 +172,14 @@ export default function MonthPage() {
         expenseTotal,
         plannedExpenseTotal,
         plannedIncomeTotal,
+        availableToday,
         monthEndForecast,
     } = useMemo(
-        () => calculateMonthMetrics(transactions, selectedMonthPrefix, totalBalance),
+        () => calculateMonthMetrics(
+            transactions,
+            selectedMonthPrefix,
+            totalBalance
+        ),
         [transactions, selectedMonthPrefix, totalBalance]
     );
 
@@ -298,7 +303,15 @@ export default function MonthPage() {
                     <MetricCard
                         title="Was dir bleibt"
                         value={fmtMoney(monthEndForecast)}
-                        hint="Mit geplanten Ausgaben"
+                        hint="Mit geplanten Einnahmen und Ausgaben"
+                        tone="green"
+                        featured
+                    />
+
+                    <MetricCard
+                        title="Heute verfügbar"
+                        value={fmtMoney(availableToday)}
+                        hint="Nach geplanten Ausgaben"
                         tone="green"
                         featured
                     />
@@ -323,6 +336,7 @@ export default function MonthPage() {
                         hint="Ausgaben in diesem Monat"
                         tone="red"
                     />
+
                 </section>
                 <Link to="/analytics" className="btn btn-outline">
                     Analytik öffnen

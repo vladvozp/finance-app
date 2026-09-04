@@ -17,6 +17,7 @@ export type MonthMetrics<T extends MonthTxLike = MonthTxLike> = {
     plannedExpenseTotal: number;
     plannedIncomeTotal: number;
     monthEndForecast: number;
+    availableToday: number;
 };
 
 function safeAmount(value: unknown): number {
@@ -53,7 +54,12 @@ export function calculateMonthMetrics<T extends MonthTxLike>(
         return sum + safeAmount(tx.amount);
     }, 0);
 
-    const monthEndForecast = totalBalance - plannedExpenseTotal; //+ plannedIncomeTotal;
+    const availableToday = totalBalance - plannedExpenseTotal;
+
+    const monthEndForecast =
+        totalBalance +
+        plannedIncomeTotal -
+        plannedExpenseTotal;
 
     return {
         monthTx,
@@ -63,5 +69,6 @@ export function calculateMonthMetrics<T extends MonthTxLike>(
         plannedExpenseTotal,
         plannedIncomeTotal,
         monthEndForecast,
+        availableToday
     };
 }

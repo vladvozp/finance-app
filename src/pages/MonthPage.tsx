@@ -312,7 +312,7 @@ export default function MonthPage() {
                         title="Heute verfügbar"
                         value={fmtMoney(availableToday)}
                         hint="Nach geplanten Ausgaben"
-                        tone="green"
+                        tone={availableToday >= 0 ? "green" : "red"}
                         featured
                     />
 
@@ -320,7 +320,7 @@ export default function MonthPage() {
                         title="Geplante Einnahmen"
                         value={fmtMoney(plannedIncomeTotal)}
                         hint="Noch nicht gebucht"
-                        tone="neutral"
+                        tone="blue"
                     />
 
                     <MetricCard
@@ -389,71 +389,6 @@ export default function MonthPage() {
                                     />
                                 </div>
                             </div>
-
-
-                            {/*      <div className="flex flex-col gap-3 border border-gray-300 bg-white p-3 sm:flex-row sm:items-end sm:justify-between">
-                                <div className="flex min-w-0 items-center gap-2">
-                                    <input
-                                        id="only-planned"
-                                        type="checkbox"
-                                        checked={onlyPlanned}
-                                        onChange={(e) => setOnlyPlanned(e.target.checked)}
-                                        className="h-4 w-4"
-                                    />
-                                    <label htmlFor="only-planned" className="text-sm text-gray-700">
-                                        Nur geplant
-                                    </label>
-                                </div>
-                                <div className="flex min-w-0 items-center gap-2">
-                                    <input
-                                        id="show-cancelled"
-                                        type="checkbox"
-                                        checked={showCancelled}
-                                        onChange={(e) => setShowCancelled(e.target.checked)}
-                                        className="h-4 w-4"
-                                    />
-                                    <label
-                                        htmlFor="show-cancelled"
-                                        className="text-sm text-gray-700"
-                                    >
-                                        Stornierte anzeigen
-                                    </label>
-                                </div>
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                    <div className="flex flex-col">
-                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
-                                            Status
-                                        </label>
-                                        <select
-                                            value={statusFilter}
-                                            onChange={(e) => setStatusFilter(e.target.value as any)}
-                                            className="border border-gray-300 bg-white px-2 py-2 sm:px-3 sm:py-3 text-sm"
-                                        >
-                                            <option value="all">Alle</option>
-                                            <option value="planned">Geplant</option>
-                                            <option value="booked">Gebucht</option>
-                                            <option value="cancelled">Storniert</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="flex flex-col">
-                                        <label className="mb-1 text-[11px] uppercase tracking-wide text-gray-500">
-                                            Sortierung
-                                        </label>
-                                        <select
-                                            value={sortMode}
-                                            onChange={(e) => setSortMode(e.target.value as any)}
-                                            className="border border-gray-300 bg-white px-2 py-2 sm:px-3 sm:py-3 text-sm"
-                                        >
-                                            <option value="date-desc">Datum: neu zuerst</option>
-                                            <option value="date-asc">Datum: alt zuerst</option>
-                                            <option value="amount-desc">Betrag: hoch zuerst</option>
-                                            <option value="amount-asc">Betrag: niedrig zuerst</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div> */}
-
 
                             <details className="border border-gray-300 bg-white p-3">
                                 <summary className="cursor-pointer text-sm font-medium text-gray-700">

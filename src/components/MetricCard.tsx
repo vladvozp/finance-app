@@ -2,7 +2,7 @@ type MetricCardProps = {
     title: string;
     value: string;
     hint?: string;
-    tone?: "neutral" | "red" | "yellow" | "green";
+    tone?: "neutral" | "red" | "yellow" | "green" | "blue";
     featured?: boolean;
 };
 
@@ -37,6 +37,12 @@ export default function MetricCard({
             title: "text-gray-700",
             value: "text-green-700",
             hint: "text-gray-500",
+        },
+        blue: {
+            wrap: "border-blue-200 bg-blue-50",
+            title: "text-blue-700",
+            value: "text-blue-900",
+            hint: "text-blue-600",
         },
     };
 
